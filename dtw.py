@@ -3,6 +3,7 @@
 
         Author: Ch. Godin, Inria
         Date 06/04/19
+        Mosaic Inria team, RDP Lab, Lyon
 
     Implementation of a generic DTW algorithm with symmetric asymmetric or edit
     distance constraints based in particular on basic DTW algorithm described in :
@@ -283,6 +284,10 @@ class dtw:
           v1 = self.seqX[i]
           v2 = self.seqY[j]
           ld = ldist(v1,v2)
+          # Todo: Check whether path cumcost should be compared in a normalized or non-normalized way
+          # during dtw algo. At the moment, paths are compared in a non-normalized way.
+          # However, the final optimal solution is chosen on the basis of the normalized cost
+          # (which looks a bit inconsistent)
           apply_constraints(i,j,tmpcumdist,tmpcumdistindexes)
           optindex = np.argmin(tmpcumdist) # index of min distance
           # case where there exist several identical cumdist values: choose diagonal direction (index 1)
@@ -347,7 +352,7 @@ class dtw:
     optpathlength = len(self.optbacktrackpath)
     return self.minnormalizedcost, self.optbacktrackpath, optpathlength, self.optpathnormalizedcumdist_array,self.bp
 
-######### TESTS ##########
+######### FOR TESTING THE MODULE ##########
 def runtest(test, cumdistflag = True, bpflag = False, freeendsflag = False, optimalpathflag = True):
     print "Test: ", test  # not clear
     print "seq1 = ", test.seq1
