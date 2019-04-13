@@ -40,8 +40,7 @@
 """
 
 import numpy as np
-from pprint import pprint
-
+import matplotlib.pyplot as plt
 
 def euclidean_dist(v1,v2):
     return np.linalg.norm(v1-v2)
@@ -64,7 +63,8 @@ def angular_dist(a1,a2):
     return 1 - np.abs(180-da)/180.
 
 # tools
-def printMatrix(a):
+# Print matrix of backpointers
+def printMatrixBP(a):
    print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
    rows = a.shape[0]
    cols = a.shape[1]
@@ -97,6 +97,9 @@ class dtw:
     # initialization of cummulated distance array
     self.cumdist = np.full((self.N1,self.N2), np.Infinity)
 
+    # edit op
+    self.editop = np.full((self.N1,self.N2), "-")
+
     # border array for boundary conditions on cumdist array
     self.cumdistboundaryX = np.full(self.N1, np.Infinity)
     if a != 0: self.cumdistboundaryX[:a] = 0.0
@@ -109,6 +112,43 @@ class dtw:
     for i in xrange(self.N1):
       for j in xrange(self.N2):
         self.ldist[i,j] = euclidean_dist(self.seqX[i],self.seqY[j])
+
+  def printPath(self,path, editoparray):
+       #print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
+       l = len(path)
+       for i in xrange(l):
+          a = path[i][0]
+          b = path[i][1]
+          #print "[",a,",",b,"] ", editoparray[a,b]
+          print "[%2d,%2d]"% (a,b),
+          print editoparray[a,b]
+
+
+  def printAlignment(self,path, editoparray):
+       #print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
+       l = len(path)
+       for i in xrange(l):
+          a = path[i][0]
+          b = path[i][1]
+          #print "[",a,",",b,"] ", editoparray[a,b]
+          if editoparray[a,b] == "m" or editoparray[a,b] == "s" or editoparray[a,b] == "i":
+            if len(np.shape(self.seqX)) == 1: # for scalar values
+                print "%3d"% self.seqX[a],
+            else: print self.seqX[a],         # for vectorial values
+          if editoparray[a,b] == "d":
+            print "  -",
+       print
+       for i in xrange(l):
+          a = path[i][0]
+          b = path[i][1]
+          #print "[",a,",",b,"] ", editoparray[a,b]
+          if editoparray[a,b] == "m" or editoparray[a,b] == "s" or editoparray[a,b] == "d":
+            if len(np.shape(self.seqY)) == 1:
+                print "%3d"% self.seqY[b],
+            else: print self.seqY[b],
+          if editoparray[a,b] == "i":
+            print "  -",
+       print
 
   # returns a list containing the cells on the path ending at indexes (n1,n2)
   def backtrack_path_old(self, n1,n2):
@@ -141,23 +181,47 @@ class dtw:
     #print "Backtracked path", path
     return np.array(path)
 
-  def printresults(self, cumdistflag = True, bpflag = False, freeendsflag = False, optimalpathflag = True):
+  def printresults(self, cumdistflag = True, bpflag = False, ldflag = False, freeendsflag = False, optimalpathflag = True, graphicoptimalpathflag=False):
+    print "**************   INFOS    ***************"
     print "len seq1 = ", self.N1, "len seq2 = ", self.N2
     print "Type of constraints : ", self.constraints
     print "Beam size = ", (self.beamsize if self.beamsize != -1 else "None"), ", Free endings = ", self.freeends
+    print "**************  RESULTS   ***************"
+    print "Alignment = "
+    self.printAlignment(self.optbacktrackpath, self.editop)
     print "Optimal path length = ", len(self.optbacktrackpath)
-    print "Optimal normalized cost = ", self.minnormalizedcost, "at cell",self.optindex, "(non normalized =", self.nonmormalizedoptcost," )"
+    print "Optimal normalized cost = %3.f"% self.minnormalizedcost, "at cell",self.optindex, "(non normalized =", self.nonmormalizedoptcost," )"
     if cumdistflag: print "Array of global distances = (x downward, y rightward)\n", self.cumdist
     if freeendsflag:
         print "Subarray of normalized distances on relaxed ending region= \n", self.optpathnormalizedcumdist_array
         print "Subarray of optimal path lengths on relaxed ending region= \n", self.optpathlength_array
-    if optimalpathflag: print "Optimal path = \n", self.optbacktrackpath
+    if optimalpathflag:
+        print "Optimal path = "
+        self.printPath(self.optbacktrackpath, self.editop)
 
+    # Print array of local distances
+    if ldflag: print "Local dist array = \n", self.ldist
+
+    # Print backpointer array
     bparray = np.empty( (self.N1,self.N2),dtype=object)
     for i in xrange(self.N1):
       for j in xrange(self.N2):
         bparray[i,j]= (self.bp[i,j][0],self.bp[i,j][1])
-    if bpflag: print "Backpointers array = \n", printMatrix(bparray)
+    if bpflag: print "Backpointers array = \n", printMatrixBP(bparray)
+
+    # Print graphic optimal path
+    if True :
+        plt.figure(0)
+        plt.clf()
+        #print bparray[:,0]
+        #print bparray[:,1]
+        plt.plot(self.optbacktrackpath[:,0],self.optbacktrackpath[:,1])
+        plt.ylim([0, self.N2])
+        plt.xlim([0, self.N1])
+        plt.grid()
+        plt.show()
+        plt.draw()
+
 
   def asymmetric_constraints(self,i,j,tmpcumdist,tmpcumdistindexes):
       """
@@ -289,17 +353,34 @@ class dtw:
           # However, the final optimal solution is chosen on the basis of the normalized cost
           # (which looks a bit inconsistent)
           apply_constraints(i,j,tmpcumdist,tmpcumdistindexes)
+
+          # Add local distance before selecting optimum
+
+          if constraints == "EDITDISTANCE":
+            tmpcumdist[0] = tmpcumdist[0] + delinscost[0]
+            tmpcumdist[1] = tmpcumdist[1] + ld
+            tmpcumdist[2] = tmpcumdist[2] + delinscost[1]
+          else:
+            tmpcumdist[0] = tmpcumdist[0] + ld
+            tmpcumdist[1] = tmpcumdist[1] + ld
+            tmpcumdist[2] = tmpcumdist[2] + ld
+
           optindex = np.argmin(tmpcumdist) # index of min distance
+
           # case where there exist several identical cumdist values: choose diagonal direction (index 1)
-          if optindex != 1 and tmpcumdist[optindex] == tmpcumdist[1]:
-              optindex = 1
+          if optindex != 1 and np.isclose(tmpcumdist[optindex], tmpcumdist[1]):
+            optindex = 1
+
+          # tracks indexes on optimal path
+          # m = matching (defined by np.isclose() ), s =substitution, d = deletion, i = insertion
+          self.editop[i,j] = "m" if optindex == 1 else "d" if optindex == 2 else "i"
+          if self.editop[i,j] == "m" and not np.isclose(ld, 0):
+              self.editop[i,j] = "s"
+
           if tmpcumdist[optindex] != np.Infinity:
             origin = tmpcumdistindexes[optindex] # points from which optimal is coming (origin)
             self.bp[i,j] = origin # backpointers can have value -1
-            if constraints == "EDITDISTANCE":
-                if optindex == 0: ld = delinscost[0]
-                elif optindex == 2: ld = delinscost[1]
-            self.cumdist[i,j] = tmpcumdist[optindex] + ld
+            self.cumdist[i,j] = tmpcumdist[optindex]
           else:
             self.bp[i,j] = (-1,-1)
             self.cumdist[i,j] = np.Infinity
@@ -353,8 +434,8 @@ class dtw:
     return self.minnormalizedcost, self.optbacktrackpath, optpathlength, self.optpathnormalizedcumdist_array,self.bp
 
 ######### FOR TESTING THE MODULE ##########
-def runtest(test, cumdistflag = True, bpflag = False, freeendsflag = False, optimalpathflag = True):
-    print "Test: ", test  # not clear
+def runtest(test, cumdistflag = True, bpflag = False, ldflag = False, freeendsflag = False, optimalpathflag = True, graphicoptimalpathflag= False):
+    print "Test: ", test.__name__
     print "seq1 = ", test.seq1
     print "seq2 = ", test.seq2
     dtwcomputer = dtw(test.seq1,test.seq2)
@@ -382,4 +463,4 @@ def runtest(test, cumdistflag = True, bpflag = False, freeendsflag = False, opti
     else: dc = (1.,1.)
 
     ndist, path, length, ndistarray,backpointers = dtwcomputer.run(ldist = ld, constraints = ct, delinscost = dc, freeends = fe , beamsize = bs)
-    dtwcomputer.printresults(cumdistflag, bpflag, freeendsflag, optimalpathflag)
+    dtwcomputer.printresults(cumdistflag, bpflag, ldflag, freeendsflag, optimalpathflag, graphicoptimalpathflag)
