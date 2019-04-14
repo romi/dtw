@@ -116,12 +116,15 @@ class dtw:
   def printPath(self,path, editoparray):
        #print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
        l = len(path)
+       prev_dist = 0.
        for i in xrange(l):
           a = path[i][0]
           b = path[i][1]
           #print "[",a,",",b,"] ", editoparray[a,b]
           print "[%2d,%2d]"% (a,b),
-          print editoparray[a,b]
+          print editoparray[a,b],
+          print "  cost = ", self.cumdist[a,b]-prev_dist
+          prev_dist = self.cumdist[a,b]
 
 
   def printAlignment(self,path, editoparray):
