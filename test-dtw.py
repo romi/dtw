@@ -118,6 +118,40 @@ class test5_4:
   delinscost = (50.,50.)
   freeends=(0,1)
 
+class test6:
+  seq1 = [136,144,133,139,171,107,137]
+  seq2 = [136,144,133,310,107,137] # simulates a missing branch in the reconstruction
+  constraints = "EDITDISTANCE"
+  delinscost = (75.,75.)
+  freeends=(0,1)
+
+# Interesting: for relative angles it seems equivalent or even better to align
+# the abherent angle (2 alpha, here 295) with one that is maximal also in the first
+# sequence, leading to an arbitrary choice for the inserted angle (here the one
+# whose alignment would cost most = 133)
+class test6_1:
+  seq1 = [136,144,133,139,171,107,137]
+  seq2 = [130,148,138,295,99,130] # simulates a noise and missing branch in the reconstruction
+  constraints = "EDITDISTANCE"
+  delinscost = (75.,75.)
+  freeends=(0,1)
+
+# tests with absolute angles (same positions as in test6)
+class test7:
+  seq1 = [136,280,413,552,723,830,967]
+  seq2 = [136,280,413,723,830,967] # simulates a noise and missing branch in the reconstruction
+  constraints = "EDITDISTANCE"
+  delinscost = (75.,75.)
+  freeends=(0,1)
+
+# tests with absolute angles (same positions as 6_1 - i.e. with noise)
+class test7_1:
+  seq1 = [136,280,413,552,723,830,967]
+  seq2 = [130,278,416,711,810,940] # simulates a noise and missing branch in the reconstruction
+  constraints = "EDITDISTANCE"
+  delinscost = (75.,75.)
+  freeends=(0,1)
+
 class test10: # test of sequences of vectors
   seq1 = [[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1]]
   seq2 = [[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1]]
@@ -156,4 +190,4 @@ dtw.runtest(test4_1, freeendsflag = True, bpflag = False)
 dtw.runtest(test10, freeendsflag = True)
 dtw.runtest(test10_1, freeendsflag = True)
 """
-dtw.runtest(test10_2, freeendsflag = True, bpflag = False, ldflag=False, graphicoptimalpathflag=True)
+dtw.runtest(test7_1, freeendsflag = True, bpflag = False, ldflag=False, graphicoptimalpathflag=True)
