@@ -75,7 +75,7 @@ def printMatrixBP(a):
    print()
 
 # Main DTW class: to build DTW computer objects on a pair of sequences
-class DTW:
+class Dtw:
 
   def __init__(self, seq1, seq2):
     # seq1 and seq2 should be are expected to be two np.arrays of elements of identical dim
@@ -441,7 +441,7 @@ def runtest(test, cumdistflag = True, bpflag = False, ldflag = False, freeendsfl
     print("Test: ", test.__name__)
     print("seq1 = ", test.seq1)
     print("seq2 = ", test.seq2)
-    dtwcomputer = DTW(test.seq1, test.seq2)
+    dtwcomputer = Dtw(test.seq1, test.seq2)
     if hasattr(test, 'constraints'): ct = test.constraints
     else: ct = "SYMMETRIC"
     if hasattr(test, 'disttype'):

@@ -32,9 +32,14 @@ setup_kwds = dict(
     install_requires=[
         ],
     tests_require=[
+        "coverage",
+        "mock",
+        "nose",
         ],
     entry_points={},
     keywords='',
+    
+    test_suite='nose.collector',
     )
 # #}
 # change setup_kwds below before the next pkglts tag

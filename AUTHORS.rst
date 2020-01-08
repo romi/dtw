@@ -17,5 +17,6 @@ Contributors
 .. {# pkglts, doc.contributors
 
 * Christophe Godin <christophe.godin@inria.fr>
+* Guillaume Cerutti <guillaume.cerutti@inria.fr>
 
 .. #}

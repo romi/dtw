@@ -16,6 +16,7 @@
     "pkgname": "dtw",
     "url": null
   },
+  "coverage": {},
   "doc": {
     "description": "Dynamic time warping algorithm(s)",
     "fmt": "rst",
@@ -44,6 +45,9 @@
   },
   "src": {
     "namespace_method": "pkg_util"
+  },
+  "test": {
+    "suite_name": "nose"
   },
   "version": {
     "major": 0,

@@ -10,4 +10,4 @@ from . import version
 __version__ = version.__version__
 # #}
 
-from .dtw import DTW
+from .dtw import Dtw

@@ -1,31 +1,36 @@
 {
+  ".coveragerc": {
+    "coverage": "9eb1r8zYY8qZc/rDQiq5/Qq/+n4mYeakldZ+/DMTKOU9K9JN2a91P38BCOxsW+u41r0BPVOUnYNETNUutlqyUQ=="
+  },
   ".gitignore": {
-    "git": "u/ObzeTaqHGTrAZbrnFmBs2KfSmAiY8RsRT4gCPqmJ3SwScZZtH5Rlf8eqZTr7D1YgmSvvEY1ygmsq4lkSN1pw=="
+    "git": "xz5sdsXjI7WGAMc55vqFNZsMXaWzZuFSXCB1j3DQjzaczdtG2nCdgc6D/I0a4Xm1i4p0NhTmmLYBjzGqMlksiQ=="
   },
   "AUTHORS.rst": {
     "doc.authors": "VoIgzRAXToW0VENV1/Nqo16WOh7wv5HQBt26YnaSx5Vlt17SCWnAI4GsUU8t+tbrnCKf6w2A2oX3NamRidxWtA==",
-    "doc.contributors": "7hOm2EDp0GSjZtMi9AvqCqajnE9oQ0qnREKsA+LzOQSfimMK2J9ujolsG9Gv2EovkWUZXaDMTXqnLxaksE4ZjA=="
+    "doc.contributors": "1QdmW8cr48VrqokScL4W/0r+2n8z3GCcqdIxTCrTxB8hTrQSiHOcmMuhGX4jRbDnwhepI8GZGiSQfMyupuMOYQ=="
   },
   "CONTRIBUTING.rst": {},
   "HISTORY.rst": {},
   "MANIFEST.in": {
-    "pysetup": "cZ43uPMiAmU3DtS5l9Xe1btUeGSBS0ymY2iyQZADNYKoHL+tbnTCEhMQzb8qqZ5zJ5WediRjTN/GVdtulVUV1g=="
+    "pysetup": "OFwRNHpYyEd/+2KkP9E87tVBBxeAAWvRrplYnsLan7pd6TVuLI4GRDiVgrfJ1Cp69qVyHMXv80fletuCALaSWA=="
   },
   "README.rst": {
     "doc": "vmiIOMqGhuXJBom/KrWFzvETfJmbSMcLkvZ6XDTcFWl7XRHJgu1tcb4eHn97TgcziEqpfD96M5qO0DV3z3S+CQ=="
   },
   "requirements.txt": {
-    "reqs": "BQs6dNIOELfVZa+OBew0c84I2X2E9c+Y+uwJ0nvKdVpVkvJTmSjh9vFCaXdiwga9w5O+9zdZt2k3YNSCiQc8FA=="
+    "reqs": "dWHRit/SwJ0iQeJytJ7lJ6lsUExfIxRxTcBG0Ktn7GOivfPZ530qC1zgZwHPACTEkZHFOstHtreW+zjrpcw0Mg=="
   },
   "requirements_minimal.txt": {
     "reqs": "vmiIOMqGhuXJBom/KrWFzvETfJmbSMcLkvZ6XDTcFWl7XRHJgu1tcb4eHn97TgcziEqpfD96M5qO0DV3z3S+CQ=="
   },
   "setup.cfg": {
+    "test.nose": "2xcA0Ys7YlkbDigRxrKja9v148ywtNmttfyvs+u8W3WqTyWJezTw8Ok3XJcl5+X/DIAm5tiquZimRIRsfSD7+Q==",
+    "test.pytest": "vmiIOMqGhuXJBom/KrWFzvETfJmbSMcLkvZ6XDTcFWl7XRHJgu1tcb4eHn97TgcziEqpfD96M5qO0DV3z3S+CQ==",
     "wheel": "pZhz4563YE3KL0KwhzTKkYAC8VXT0uaEvVjwMWPNS0Sqo4THPmHeQkqlKsT2iVqTRN7LLW2f/hN836ZtQE4/+A=="
   },
   "setup.py": {
     "pysetup.call": "t30iIuCMd/sWxStR2XNYb8bCBgwanhKt8YYn2VKACyAqL5cKFRUWpVRIpAR+uxXUZ9PYYy2csMmECcONnRZE8w==",
-    "pysetup.kwds": "5I5PSO5Q1nT5I+QrQWKbsrN/vG4dnnlNPZ+tgB/NnUsRLdKIeA9cMtsix3OzvwgW0O9keYYCT7HQDZkwuGYU+g=="
+    "pysetup.kwds": "MsprltuMEULbl8wmsbptuEUQrSeWOP5EXWyNBTYJgIJgKmgtGoRi4XVh4LA7AcYB/PUNIR3n75+3AZiSJG5evw=="
   },
   "src/dtw/__init__.py": {
     "src": "L2dZgUBRC5qv3o09+1CbMcgYfQtR1ZNSvP8KlP8REQazZiAQAktALjpCC2ijdxvKPv/tN9KsZrzNW+lZMszSfg==",
