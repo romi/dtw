@@ -12,11 +12,11 @@
      ** Run a test:
      Simply execute this file in python. It will execute test examples and
      print results of the tests (included at the end of this file):
-     > python dtw.py
+     > python test-dtw.py
 
-     ou ds un shell python:
+     or in a python shell:
 
-     python> run dtw.py
+     python> run test-dtw.py
 
 """
 
@@ -190,4 +190,4 @@ dtw.runtest(test4_1, freeendsflag = True, bpflag = False)
 dtw.runtest(test10, freeendsflag = True)
 dtw.runtest(test10_1, freeendsflag = True)
 """
-dtw.runtest(test7_1, freeendsflag = True, bpflag = False, ldflag=False, graphicoptimalpathflag=True)
+dtw.runtest(test6_1, freeendsflag = True, bpflag = False, ldflag=False, graphicoptimalpathflag=True)
