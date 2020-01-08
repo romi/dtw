@@ -1,0 +1,37 @@
+{
+  ".gitignore": {
+    "git": "u/ObzeTaqHGTrAZbrnFmBs2KfSmAiY8RsRT4gCPqmJ3SwScZZtH5Rlf8eqZTr7D1YgmSvvEY1ygmsq4lkSN1pw=="
+  },
+  "AUTHORS.rst": {
+    "doc.authors": "VoIgzRAXToW0VENV1/Nqo16WOh7wv5HQBt26YnaSx5Vlt17SCWnAI4GsUU8t+tbrnCKf6w2A2oX3NamRidxWtA==",
+    "doc.contributors": "7hOm2EDp0GSjZtMi9AvqCqajnE9oQ0qnREKsA+LzOQSfimMK2J9ujolsG9Gv2EovkWUZXaDMTXqnLxaksE4ZjA=="
+  },
+  "CONTRIBUTING.rst": {},
+  "HISTORY.rst": {},
+  "MANIFEST.in": {
+    "pysetup": "cZ43uPMiAmU3DtS5l9Xe1btUeGSBS0ymY2iyQZADNYKoHL+tbnTCEhMQzb8qqZ5zJ5WediRjTN/GVdtulVUV1g=="
+  },
+  "README.rst": {
+    "doc": "vmiIOMqGhuXJBom/KrWFzvETfJmbSMcLkvZ6XDTcFWl7XRHJgu1tcb4eHn97TgcziEqpfD96M5qO0DV3z3S+CQ=="
+  },
+  "requirements.txt": {
+    "reqs": "BQs6dNIOELfVZa+OBew0c84I2X2E9c+Y+uwJ0nvKdVpVkvJTmSjh9vFCaXdiwga9w5O+9zdZt2k3YNSCiQc8FA=="
+  },
+  "requirements_minimal.txt": {
+    "reqs": "vmiIOMqGhuXJBom/KrWFzvETfJmbSMcLkvZ6XDTcFWl7XRHJgu1tcb4eHn97TgcziEqpfD96M5qO0DV3z3S+CQ=="
+  },
+  "setup.cfg": {
+    "wheel": "pZhz4563YE3KL0KwhzTKkYAC8VXT0uaEvVjwMWPNS0Sqo4THPmHeQkqlKsT2iVqTRN7LLW2f/hN836ZtQE4/+A=="
+  },
+  "setup.py": {
+    "pysetup.call": "t30iIuCMd/sWxStR2XNYb8bCBgwanhKt8YYn2VKACyAqL5cKFRUWpVRIpAR+uxXUZ9PYYy2csMmECcONnRZE8w==",
+    "pysetup.kwds": "5I5PSO5Q1nT5I+QrQWKbsrN/vG4dnnlNPZ+tgB/NnUsRLdKIeA9cMtsix3OzvwgW0O9keYYCT7HQDZkwuGYU+g=="
+  },
+  "src/dtw/__init__.py": {
+    "src": "L2dZgUBRC5qv3o09+1CbMcgYfQtR1ZNSvP8KlP8REQazZiAQAktALjpCC2ijdxvKPv/tN9KsZrzNW+lZMszSfg==",
+    "version": "skSCnavrYKIlfN9Mpi+cANbU8gXulaKdlHryvkjkoSSpsag1I66dM+6JHm1aOdmKYU0rZNNgcIamCMbIL7IeMg=="
+  },
+  "src/dtw/version.py": {
+    "version": "ru2OHOwItRZYHFrgU5Y54fYS+8TRo6U+81AYdqTp+7fzIDOgBw/BUklAeQLvwUqmwkHxbFuDLBz+c+xzbv3h0w=="
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "_pkglts": {
+    "auto_install": true,
+    "install_front_end": "stdout",
+    "use_prompts": false,
+    "version": 13
+  },
+  "base": {
+    "authors": [
+      [
+        "Christophe Godin",
+        "christophe.godin@inria.fr"
+      ]
+    ],
+    "namespace": null,
+    "pkgname": "dtw",
+    "url": null
+  },
+  "doc": {
+    "description": "Dynamic time warping algorithm(s)",
+    "fmt": "rst",
+    "keywords": []
+  },
+  "git": {},
+  "gitlab": {
+    "owner": "mosaic",
+    "project": "{{ base.pkgname }}",
+    "server": "gitlab.inria.fr",
+    "url": "https://{{ gitlab.server }}/{{ gitlab.owner }}/work-in-progress/{{ gitlab.project }}"
+  },
+  "license": {
+    "name": "cecill-c",
+    "organization": "Inria",
+    "project": "{{ base.pkgname }}",
+    "year": "2019-2020"
+  },
+  "pysetup": {
+    "intended_versions": [
+      "37"
+    ]
+  },
+  "reqs": {
+    "require": []
+  },
+  "src": {
+    "namespace_method": "pkg_util"
+  },
+  "version": {
+    "major": 0,
+    "minor": 0,
+    "post": 1
+  }
+}

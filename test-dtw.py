@@ -20,7 +20,7 @@
 
 """
 
-import dtw
+from dtw import dtw
 import numpy as np
 
 # Tests definition

@@ -65,17 +65,17 @@ def angular_dist(a1,a2):
 # tools
 # Print matrix of backpointers
 def printMatrixBP(a):
-   print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
+   print("Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]")
    rows = a.shape[0]
    cols = a.shape[1]
    for i in range(0,rows):
       for j in range(0,cols):
-         print ("(%2d,%2d)" % (a[i,j][0],a[i,j][1])), # "%6.f" %a[i,j],
-      print
-   print
+         print(("(%2d,%2d)" % (a[i,j][0],a[i,j][1])), end=' ') # "%6.f" %a[i,j],
+      print()
+   print()
 
 # Main DTW class: to build DTW computer objects on a pair of sequences
-class dtw:
+class DTW:
 
   def __init__(self, seq1, seq2):
     # seq1 and seq2 should be are expected to be two np.arrays of elements of identical dim
@@ -109,55 +109,55 @@ class dtw:
     # initialization and computation of the matrix of local distances
     self.ldist = np.full((self.N1,self.N2), np.Infinity)
 
-    for i in xrange(self.N1):
-      for j in xrange(self.N2):
+    for i in range(self.N1):
+      for j in range(self.N2):
         self.ldist[i,j] = euclidean_dist(self.seqX[i],self.seqY[j])
 
   def printPath(self,path, editoparray):
        #print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
        l = len(path)
        prev_dist = 0.
-       for i in xrange(l):
+       for i in range(l):
           a = path[i][0]
           b = path[i][1]
           #print "[",a,",",b,"] ", editoparray[a,b]
-          print "[%2d,%2d]"% (a,b),
-          print editoparray[a,b],
-          print "  cost = ", self.cumdist[a,b]-prev_dist
+          print("[%2d,%2d]"% (a,b), end=' ')
+          print(editoparray[a,b], end=' ')
+          print("  cost = ", self.cumdist[a,b]-prev_dist)
           prev_dist = self.cumdist[a,b]
 
 
   def printAlignment(self,path, editoparray):
        #print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
        l = len(path)
-       for i in xrange(l):
+       for i in range(l):
           a = path[i][0]
           b = path[i][1]
           #print "[",a,",",b,"] ", editoparray[a,b]
           if editoparray[a,b] == "m" or editoparray[a,b] == "s" or editoparray[a,b] == "i":
             if len(np.shape(self.seqX)) == 1: # for scalar values
-                print "%3d"% self.seqX[a],
-            else: print self.seqX[a],         # for vectorial values
+                print("%3d"% self.seqX[a], end=' ')
+            else: print(self.seqX[a], end=' ')         # for vectorial values
           if editoparray[a,b] == "d":
-            print "  -",
-       print
-       for i in xrange(l):
+            print("  -", end=' ')
+       print()
+       for i in range(l):
           a = path[i][0]
           b = path[i][1]
           #print "[",a,",",b,"] ", editoparray[a,b]
           if editoparray[a,b] == "m" or editoparray[a,b] == "s" or editoparray[a,b] == "d":
             if len(np.shape(self.seqY)) == 1:
-                print "%3d"% self.seqY[b],
-            else: print self.seqY[b],
+                print("%3d"% self.seqY[b], end=' ')
+            else: print(self.seqY[b], end=' ')
           if editoparray[a,b] == "i":
-            print "  -",
-       print
+            print("  -", end=' ')
+       print()
 
   # returns a list containing the cells on the path ending at indexes (n1,n2)
   def backtrack_path_old(self, n1,n2):
     path = [(n1,n2)]  #initialize path to recover with last endpoint
     j = n2
-    for i in xrange(n1):
+    for i in range(n1):
       # go backward
       k = n1-i
       path.append(self.bp[k,j])
@@ -185,32 +185,32 @@ class dtw:
     return np.array(path)
 
   def printresults(self, cumdistflag = True, bpflag = False, ldflag = False, freeendsflag = False, optimalpathflag = True, graphicoptimalpathflag=False):
-    print "**************   INFOS    ***************"
-    print "len seq1 = ", self.N1, "len seq2 = ", self.N2
-    print "Type of constraints : ", self.constraints
-    print "Beam size = ", (self.beamsize if self.beamsize != -1 else "None"), ", Free endings = ", self.freeends
-    print "**************  RESULTS   ***************"
-    print "Alignment = "
+    print("**************   INFOS    ***************")
+    print("len seq1 = ", self.N1, "len seq2 = ", self.N2)
+    print("Type of constraints : ", self.constraints)
+    print("Beam size = ", (self.beamsize if self.beamsize != -1 else "None"), ", Free endings = ", self.freeends)
+    print("**************  RESULTS   ***************")
+    print("Alignment = ")
     self.printAlignment(self.optbacktrackpath, self.editop)
-    print "Optimal path length = ", len(self.optbacktrackpath)
-    print "Optimal normalized cost = %3.f"% self.minnormalizedcost, "at cell",self.optindex, "(non normalized =", self.nonmormalizedoptcost," )"
-    if cumdistflag: print "Array of global distances = (x downward, y rightward)\n", self.cumdist
+    print("Optimal path length = ", len(self.optbacktrackpath))
+    print("Optimal normalized cost = %3.f"% self.minnormalizedcost, "at cell",self.optindex, "(non normalized =", self.nonmormalizedoptcost," )")
+    if cumdistflag: print("Array of global distances = (x downward, y rightward)\n", self.cumdist)
     if freeendsflag:
-        print "Subarray of normalized distances on relaxed ending region= \n", self.optpathnormalizedcumdist_array
-        print "Subarray of optimal path lengths on relaxed ending region= \n", self.optpathlength_array
+        print("Subarray of normalized distances on relaxed ending region= \n", self.optpathnormalizedcumdist_array)
+        print("Subarray of optimal path lengths on relaxed ending region= \n", self.optpathlength_array)
     if optimalpathflag:
-        print "Optimal path = "
+        print("Optimal path = ")
         self.printPath(self.optbacktrackpath, self.editop)
 
     # Print array of local distances
-    if ldflag: print "Local dist array = \n", self.ldist
+    if ldflag: print("Local dist array = \n", self.ldist)
 
     # Print backpointer array
     bparray = np.empty( (self.N1,self.N2),dtype=object)
-    for i in xrange(self.N1):
-      for j in xrange(self.N2):
+    for i in range(self.N1):
+      for j in range(self.N2):
         bparray[i,j]= (self.bp[i,j][0],self.bp[i,j][1])
-    if bpflag: print "Backpointers array = \n", printMatrixBP(bparray)
+    if bpflag: print("Backpointers array = \n", printMatrixBP(bparray))
 
     # Print graphic optimal path
     if True :
@@ -340,8 +340,8 @@ class dtw:
     else: apply_constraints = self.symmetric_constraints # default is SYMMETRIC
 
     # main dtw algorithm
-    for i in xrange(self.N1):
-      for j in xrange(self.N2):
+    for i in range(self.N1):
+      for j in range(self.N2):
         #take into account the beam size (only make computation in case indexes are not too distorted)
         if self.beamsize == -1 or np.abs(i-j) <= self.beamsize :
           # temporary cumulated values (here 3) to make the local optimization choice
@@ -407,8 +407,8 @@ class dtw:
      # 2/3. Computation of normalized cost and extraction of minimal value
     self.minnormalizedcost = np.Infinity
     self.optindex = (0,0)
-    for k in xrange(b):
-      for l in xrange(b):
+    for k in range(b):
+      for l in range(b):
         #print "Backtracking indexes: ", self.N1-k-1, self.N2-l-1
         #print self.backtrack_path(self.N1-k-1, self.N2-l-1)
         self.optpath_array[k,l] = self.backtrack_path(self.N1-k-1, self.N2-l-1)
@@ -438,10 +438,10 @@ class dtw:
 
 ######### FOR TESTING THE MODULE ##########
 def runtest(test, cumdistflag = True, bpflag = False, ldflag = False, freeendsflag = False, optimalpathflag = True, graphicoptimalpathflag= False):
-    print "Test: ", test.__name__
-    print "seq1 = ", test.seq1
-    print "seq2 = ", test.seq2
-    dtwcomputer = dtw(test.seq1,test.seq2)
+    print("Test: ", test.__name__)
+    print("seq1 = ", test.seq1)
+    print("seq2 = ", test.seq2)
+    dtwcomputer = DTW(test.seq1, test.seq2)
     if hasattr(test, 'constraints'): ct = test.constraints
     else: ct = "SYMMETRIC"
     if hasattr(test, 'disttype'):
@@ -454,9 +454,9 @@ def runtest(test, cumdistflag = True, bpflag = False, ldflag = False, freeendsfl
         else:
             stg = "EUCLIDEAN"
             ld = euclidean_dist
-        print stg, " distance used for local distance ..."
+        print(stg, " distance used for local distance ...")
     else:
-        print "EUCLIDEAN distance used for local distance ..."
+        print("EUCLIDEAN distance used for local distance ...")
         ld = euclidean_dist
     if hasattr(test, 'freeends'): fe = test.freeends
     else: fe = (0,1)
