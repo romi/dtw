@@ -1,16 +1,20 @@
 """
-    Generic time warping algorithm
+    Generic dynamic time warping algorithms
 
         Author: Ch. Godin, Inria
-        Date 06/04/19
+        Date 06/04/19 - July 2020
         Mosaic Inria team, RDP Lab, Lyon
 
-    Implementation of a generic DTW algorithm with symmetric asymmetric or edit
-    distance constraints based in particular on basic DTW algorithm described in :
+    Implementation of a generic DTW algorithm with symmetric asymmetric or classical edit
+    distance or split-merge constraints.
+
+    DTW techniques are based in particular on basic DTW algorithm described in :
 
     Sakoe, H., & Chiba, S. (1978) Dynamic programming algorithm optimization for spoken
     word recognition. IEEE Transactions on Acoustic, Speech, and Signal Processing,
     ASSP-26(1),43-49.
+
+    and new dynamic time warping based techniques such as MERGE_SPLIT.
 
     ** Call:
     # create a class instance of dtw to compute the distance between two sequences
@@ -24,6 +28,8 @@
     - seq1, seq2: two arrays (lists or np.arrays of scalars or of vectors with identical dimension)
 
     ** Optional args:
+    - Different algorithms are available and can be selected by the following flags:
+    SYMMETRIC, ASYMMETRIC, EDITDISTANCE, MERGE_SPLIT
     - ldist (func(val,val)-->positive float)= local distance used for pointwise comparison
     - freeends  ((int,int)): should be greater than (0,1). Elements are respectively
                 relaxations at beginning and end of the sequences (identical for both sequences)
@@ -36,18 +42,18 @@
     - ndistarray: numpy array of normalized distances
     - backpointers: numpy array of backpointers
 
-    tests: see the file test-dtw for this
+    tests: see the file example-dtw for this
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def euclidean_dist(v1, v2):
+def euclidean_dist(v1, v2, **args):
     return np.linalg.norm(v1 - v2)
 
-
-def angular_dist(a1, a2):
+# Can only be called for scalar arguments a1 and a2
+def angular_dist(a1, a2, **args):
     """
     a1 and a2 are two angles given in degrees.
     The function compares two angles and returns their distance as a percentage of
@@ -60,9 +66,79 @@ def angular_dist(a1, a2):
     # da is the angle corresponding to the difference between
     # the original angles. 0 <= da < 360.
     da = Da % 360.
-    assert (da >= 0.)
+    #assert (da >= 0.)
 
     return 1 - np.abs(180 - da) / 180.
+
+# to use this angular distance with numpy arrays
+vangular_dist = np.vectorize(angular_dist)
+
+# Can only be called for scalar arguments a1 and a2
+def mixed_dist(v1, v2, type=[], spread=[], weight=[]):
+    """
+    computes a distance where normal components are mixed with periodic ones (here angles)
+    - v1 and v2 are the input vectors to compared (of same dimension = dim)
+    - type is a boolean (dim) vector indicating by a boolean value whether the kth component should be treated as an angle (True) or a regular scalar value
+    - spread is (dim) vector of positive scalars used to normalize the dist values computed for each component with their typical spread
+    - weight is a (dim) vector of positive weights (does not necessarily sum to 1 - but normalized if not - )
+
+    The resulting distance is:
+
+    D(v1,v2) = sqrt ( sum_k { weight[k] * d_k^2(v1[k],v2[k])/ spread[k]^2})
+
+    where d_k is a distance that depends on type[k]
+    """
+
+    # default values
+    dim = len(v1)
+    if type == []:
+        type = np.full((dim,), False)  # by default type indicates only normal v1_coords
+    if spread == []:
+        spread = np.full((dim,), 1)    # spread will not modify the distance by default
+    if weight == []:
+        weight = np.full((dim,), 1)    # equal weights by default
+
+    # if the array alpha is not normalized, it is is normalized first here
+    weight = np.array(weight)
+    sumweight = sum(weight) # should be 1
+    if not np.isclose(sumweight,1.0):
+        weight = weight/sum(weight)
+
+    # Extract the subarrays corresponding to angles types and coord types resp.
+
+    nottype = np.invert(type)          # not type
+    dim1 = np.count_nonzero(type)      # nb of True values in type
+    dim2 = np.count_nonzero(nottype)   # nb of False values in type
+
+    v1_angles = np.extract(type,v1)    # subarray of angles only (dim1)
+    v1_coords = np.extract(nottype,v1) # subarray of coords only (dim2)
+
+    v2_angles = np.extract(type,v2)    # idem for v2
+    v2_coords = np.extract(nottype,v2)
+
+    weight1 = np.extract(type,weight)    # subarray of weights for angles
+    weight2 = np.extract(nottype,weight) # subarray of weights for coords
+
+    spread1 = np.extract(type,spread)    # subarray of spread factors for angles
+    spread2 = np.extract(nottype,spread) # subarray of spread factors for coords
+
+    if not dim1 == 0:
+        DD1 = vangular_dist(v1_angles,v2_angles)**2 # angle dist (squared)
+        DD1 = DD1 / spread1**2
+        DD1 = DD1 * weight1 # adding weights
+    else:
+        DD1 = []
+
+    # case of normal coordinates
+    if not dim2 == 0:
+        DD2 = (v1_coords-v2_coords)**2  # euclidean L2 norm (no sqrt yet)
+        DD2 = DD2 / spread2**2
+        DD2 = DD2 * weight2 # adding weights
+    else:
+        DD2 = []
+
+    DD = sum(DD1) + sum(DD2)
+    return np.sqrt(DD)
 
 
 # tools
@@ -125,37 +201,85 @@ class Dtw:
             a = path[i][0]
             b = path[i][1]
             # print "[",a,",",b,"] ", editoparray[a,b]
-            print("[%2d,%2d]" % (a, b), end=' ')
+            print("%2d : [%2d,%2d]" % (i, a, b), end=' ')
             print(editoparray[a, b], end=' ')
-            print("  cost = ", self.cumdist[a, b] - prev_dist)
+            print("  cost = %6.3f"% (self.cumdist[a, b] - prev_dist))
             prev_dist = self.cumdist[a, b]
 
     def printAlignment(self, path, editoparray):
         # print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
+        print("test seq: ", end=' ')
         l = len(path)
-        for i in range(l):
-            a = path[i][0]
-            b = path[i][1]
-            # print "[",a,",",b,"] ", editoparray[a,b]
-            if editoparray[a, b] == "m" or editoparray[a, b] == "s" or editoparray[a, b] == "i":
+        pi = pj = -1
+        for k in range(l):
+            i = path[k][0]
+            j = path[k][1]
+            #print ("[",a,",",b,"] ", editoparray[a,b])
+            labl =  editoparray[i,j]
+            if labl == 'M' :
+                if i != pi+1:
+                    for h in range(pi+1,i):
+                        if self.seqX.ndim == 1:
+                            print("%3d" % self.seqX[h], end=' ')
+                        else:
+                            print(self.seqX[h], end=' ')
+                if self.seqX.ndim == 1:
+                    print("%3d" % self.seqX[i], end=' ')
+                else:
+                    print(self.seqX[i], end=' ')
+            elif labl == 'S':
+                if j != pj+1:
+                    for h in range(pj+1,j):
+                        print(" - ", end=' ')
+                if self.seqX.ndim == 1:
+                    print("%3d" % self.seqX[i], end=' ')
+                else:
+                    print(self.seqX[i], end=' ')
+            elif labl == "m" or labl == "s" or labl == "i" or labl == "M" or labl == "~" or labl == "=":
                 if len(np.shape(self.seqX)) == 1:  # for scalar values
-                    print("%3d" % self.seqX[a], end=' ')
+                    print("%3d" % self.seqX[i], end=' ')
                 else:
-                    print(self.seqX[a], end=' ')  # for vectorial values
-            if editoparray[a, b] == "d":
-                print("  -", end=' ')
+                    print(self.seqX[i], end=' ')  # for vectorial values
+            elif labl == "d" or labl == "S":
+                print(" - ", end='S')
+            pi = i
+            pj = j
         print()
-        for i in range(l):
-            a = path[i][0]
-            b = path[i][1]
+        print("ref seq : ", end=' ')
+        pi = pj = -1
+        for k in range(l):
+            i = path[k][0]
+            j = path[k][1]
             # print "[",a,",",b,"] ", editoparray[a,b]
-            if editoparray[a, b] == "m" or editoparray[a, b] == "s" or editoparray[a, b] == "d":
-                if len(np.shape(self.seqY)) == 1:
-                    print("%3d" % self.seqY[b], end=' ')
+            labl = editoparray[i, j]
+            if labl == 'M' :
+                if i != pi+1:
+                    for h in range(pi+1,i):
+                        print(" - ", end=' ')
+                if self.seqY.ndim == 1:
+                    print("%3d" % self.seqY[j], end=' ')
                 else:
-                    print(self.seqY[b], end=' ')
-            if editoparray[a, b] == "i":
-                print("  -", end=' ')
+                    print(self.seqY[j], end=' ')
+            elif labl == 'S':
+                if j != pj+1:
+                    for h in range(pj+1,j):
+                        if self.seqY.ndim == 1:
+                            print("%3d" % self.seqY[h], end=' ')
+                        else:
+                            print(self.seqY[h], end=' ')
+                if self.seqY.ndim == 1:
+                    print("%3d" % self.seqY[j], end=' ')
+                else:
+                    print(self.seqY[j], end=' ')
+            elif labl == "m" or labl == "s" or labl == "d" or labl == "S" or labl == "~" or labl == "=":
+                if len(np.shape(self.seqY)) == 1:
+                    print("%3d" % self.seqY[j], end=' ')
+                else:
+                    print(self.seqY[j], end=' ')
+            elif labl == "i" or labl == "M":
+                print(" - ", end=' ')
+            pi = i
+            pj = j
         print()
 
     # returns a list containing the cells on the path ending at indexes (n1,n2)
@@ -189,24 +313,25 @@ class Dtw:
         # print "Backtracked path", path
         return np.array(path)
 
-    def printresults(self, cumdistflag=True, bpflag=False, ldflag=False, freeendsflag=False, optimalpathflag=True,
-                     graphicoptimalpathflag=False):
+    def printresults(self, cumdistflag=True, bpflag=False, ldflag=False, freeendsflag=False, optimalpathflag=True,graphicoptimalpathflag=True,graphicseqalignment=True):
         print("**************   INFOS    ***************")
-        print("len seq1 = ", self.N1, "len seq2 = ", self.N2)
+        print("len seq test (1) = ", self.N1, ", len seq ref (2) = ", self.N2)
         print("Type of constraints : ", self.constraints)
         print("Beam size = ", (self.beamsize if self.beamsize != -1 else "None"), ", Free endings = ", self.freeends)
+        if self.constraints == 'MERGE_SPLIT':
+            print("Mixed_type = ", self.mixed_type, ", Mixed_spread = ", self.mixed_spread, ", Mixed_weight = ", self.mixed_weight)
         print("**************  RESULTS   ***************")
         print("Alignment = ")
         self.printAlignment(self.optbacktrackpath, self.editop)
         print("Optimal path length = ", len(self.optbacktrackpath))
-        print("Optimal normalized cost = %3.f" % self.minnormalizedcost, "at cell", self.optindex, "(non normalized =",
-              self.nonmormalizedoptcost, " )")
+        print("Optimal normalized cost = %6.3f" % self.minnormalizedcost, "at cell", self.optindex, "(non normalized = %6.3f" % self.nonmormalizedoptcost, " )")
+        np.set_printoptions(precision=3)
         if cumdistflag: print("Array of global distances = (x downward, y rightward)\n", self.cumdist)
         if freeendsflag:
             print("Subarray of normalized distances on relaxed ending region= \n", self.optpathnormalizedcumdist_array)
             print("Subarray of optimal path lengths on relaxed ending region= \n", self.optpathlength_array)
         if optimalpathflag:
-            print("Optimal path = ")
+            print("Optimal path (total norm cost = %6.3f)= "% self.minnormalizedcost)
             self.printPath(self.optbacktrackpath, self.editop)
 
         # Print array of local distances
@@ -220,7 +345,8 @@ class Dtw:
         if bpflag: print("Backpointers array = \n", printMatrixBP(bparray))
 
         # Print graphic optimal path
-        if True:
+        if graphicoptimalpathflag:
+
             plt.figure(0)
             plt.clf()
             # print bparray[:,0]
@@ -229,31 +355,133 @@ class Dtw:
             plt.ylim([0, self.N2])
             plt.xlim([0, self.N1])
             plt.grid()
+            plt.ion()
             plt.show()
-            plt.draw()
+            #plt.draw()
+
+            ### FAIRE DES SOUS FIGS
+            plt.figure(1)
+            plt.clf()
+            l = len(self.optbacktrackpath)
+            prev_dist = 0.
+            locdist = []
+            for i in range(l):
+                a = self.optbacktrackpath[i][0]
+                b = self.optbacktrackpath[i][1]
+                locdist.append(self.cumdist[a, b] - prev_dist)
+                prev_dist = self.cumdist[a, b]
+            plt.hist(locdist, bins = 10)
+            plt.xlim([0, 1])
+            plt.ion()
+            plt.show()
+
+        # Print signal alignemment
+        if graphicseqalignment:
+            dim = self.seqX.ndim
+
+            # Loop on the dimensions of test/ref vector space
+            for d in range(dim):
+                plt.figure(d+2) # 0 and 1 are already used
+                plt.clf()
+                # print bparray[:,0]
+                # print bparray[:,1]
+                if dim == 1:
+                    seqX = self.seqX # Test sequencce
+                    seqY = self.seqY # Ref sequence
+                else:
+                    seqX = self.seqX[:,d] # take the dth scalar sequence of the vector-sequence
+                    seqY = self.seqY[:,d]
+
+                # Find the best shift of the two sequences
+                optpathlen = len(self.optbacktrackpath)
+                test_indexes = np.arange(len(seqX))
+                shift = 0
+                if True: #OPTIMIZE_ALIGNMENT_DISPLAY:
+                    # compute a more optimal test_index
+                    minh = optpathlen
+                    maxh = -optpathlen
+                    # First find all the shifts that appear in the aligment from test to ref
+                    for k in range(optpathlen):
+                        i = self.optbacktrackpath[k, 0] # test
+                        j = self.optbacktrackpath[k, 1] # ref
+                        delta = j-i
+                        if delta < minh:
+                            minh = delta
+                        if delta > maxh:
+                            maxh = delta
+                    scorearray = np.zeros(maxh-minh+1)
+                    print("-----> minh,maxh=",minh,maxh,)
+                    # Second finds a shift s that would best compensate the different shifts:
+                    # the aligment would become j - (i+s)
+                    for s in range(minh,maxh+1):
+                        score = 0
+                        for k in range(optpathlen):
+                            i = self.optbacktrackpath[k, 0]
+                            j = self.optbacktrackpath[k, 1]
+                            delta = abs(j-i-s)
+                            score += delta
+                        scorearray[s-minh]=score
+                    # shift = minh - index of minimal score
+                    print("score array=", scorearray)
+                    shift = minh + np.argmin(scorearray) # take the first available shift
+                    print(" shift = ", shift)
+                    test_indexes = np.arange(shift,shift+len(seqX))
+                plt.plot(test_indexes,seqX, 'b^', label='test sequence') # test sequence + shift
+                plt.plot(seqY, 'ro', label='ref sequence')  # ref sequence
+                pi,pj = -1,-1 # previous i,j
+                for k in range(optpathlen):
+                    i = self.optbacktrackpath[k, 0]
+                    j = self.optbacktrackpath[k, 1]
+                    if i != pi+1:
+                        for h in range(pi+1,i):
+                            plt.plot([h+shift,j],[seqX[h],seqY[j]], 'g--')
+                    elif j != pj+1:
+                        for h in range(pj+1,j):
+                            plt.plot([i+shift,h],[seqX[i],seqY[h]], 'g--')
+                    plt.plot([i+shift,j],[seqX[i],seqY[j]], 'g--')
+                    pi = i
+                    pj = j
+                maxval = max(max(seqX),max(seqY))*1.2
+                plt.ylim([-1, maxval])
+                plt.xlim([-1+shift, max(self.N1,self.N2)])
+                plt.xlabel('Rank')
+                if dim == 1:
+                    plt.ylabel('Sequence Value')
+                else:
+                    if self.mixed_type[d]:
+                        plt.ylabel(str(d) + ' - Angle')
+                    else:
+                        plt.ylabel(str(d) + ' - Coord')
+                plt.title('Comparison of test/ref sequences')
+                plt.legend()
+                plt.grid()
+                plt.ion()
+                plt.show()
+
+
 
     # These two functions add up the attributes of a sub-sequence of X (resp. of Y)
     # from i1 to i2 and compare them to the attribute at index j in sequence Y.
     # - ipair is a pair of integers (i1,i2)
     # Preconditions:
     # rmq: if i1 == i2, then norm(v_i1, v_i2 is returned)
-    def ldistcumX(self,ipair,j):
+    def ldistcumX(self,ipair,j,ldist):
         i1, i2 = ipair
         vi = self.seqX[i2]
         v2 = self.seqY[j]
         for i in range(i1,i2):
             vi = vi + self.seqX[i]
-        return np.linalg.norm(vi - v2)
+        return ldist(vi,v2,type = self.mixed_type,spread = self.mixed_spread, weight = self.mixed_weight)
 
-    def ldistcumY(self,i,jpair):
+    def ldistcumY(self,i,jpair,ldist):
         j1, j2 = jpair
         v1 = self.seqX[i]
         vj = self.seqY[j2]
         for j in range(j1,j2):
             vj = vj + self.seqY[j]
-        return np.linalg.norm(v1 - vj)
+        return ldist(v1,vj,type = self.mixed_type,spread = self.mixed_spread, weight = self.mixed_weight)
 
-    def asymmetric_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, stretch):
+    def asymmetric_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, max_stretch):
         """
       Implements constraints from (see Sakoe-Chiba 73 and Itakura 1975):
       path may be coming from either (i-1,j), (i-1,j-1), (i-1,j-2)
@@ -286,7 +514,7 @@ class Dtw:
         if i > 0 and self.bp[i - 1, j][1] == j:  # to forbid horizontal move twice in a raw
             tmpcumdist[0] = np.Infinity
 
-    def symmetric_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, stretch):
+    def symmetric_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, max_stretch):
         """
       Implements constraints from (see Sakoe and Chiba 1773 and 1978):
       paths may be coming from either (i-1,j), (i-1,j-1), (i,j)
@@ -320,7 +548,7 @@ class Dtw:
         if j > 0 and self.bp[i, j - 1][0] == i:  # to forbid vertical move twice in a raw
             tmpcumdist[2] = np.Infinity
 
-    def editdist_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, stretch):
+    def editdist_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, max_stretch):
         """
       Implements edit distance constraints.
       When processing point i,j, paths may be coming from either
@@ -347,7 +575,7 @@ class Dtw:
                 tmpcumdist[1] = self.cumdist[i - 1, j - 1]
                 tmpcumdist[2] = self.cumdist[i, j - 1]
 
-    def merge_split_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, stretch):
+    def merge_split_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, max_stretch):
         """
       Implements merge/split edit distance constraints.
       When processing point i,j, paths may be coming from either
@@ -358,9 +586,9 @@ class Dtw:
       tmpcumdist[1] must contain the min of {D(i-1,j)+dcum(i,j)}
       tmpcumdist[2] must contain the min of {D(i,j-k-1)+dcum( i , (j-k)-->j )} over k in 1..K, K>=1
       """
-        K = stretch
+        K = max_stretch
         if i == 0 and j == 0:
-            d = self.ldistcumX([0,0],0) # equivalent to ldist(seqi[0],seqj[0])
+            d = self.ldistcumX([0,0],0,ldist) # equivalent to ldist(seqi[0],seqj[0])
             tmpcumdist[0] = self.cumdistboundaryY[j] + d
             tmpcumdist[1] = d
             tmpcumdist[2] = self.cumdistboundaryX[i] + d
@@ -379,24 +607,24 @@ class Dtw:
             if ii < 0: # Horizontal initialization
                 Ki = K + ii # update memory so that min index to test is at least 0
                 if j == 0:
-                    tmpcumdist[0] = self.ldistcumX([0,i],j)
+                    tmpcumdist[0] = self.ldistcumX([0,i],j,ldist)
                     tmpcumdistindexes[0] = (-1, -1)
                 else:
-                    tmpcumdist[0] = self.cumdistboundaryY[j - 1] + self.ldistcumX([0,i],j)
+                    tmpcumdist[0] = self.cumdistboundaryY[j - 1] + self.ldistcumX([0,i],j,ldist)
                     tmpcumdistindexes[0] = (-1, j - 1)
 
             if jj < 0: # Vertical initialization
                 Kj = K + jj # update memory so that min index to test is at least 0
                 if i == 0:
-                    tmpcumdist[2] = self.ldistcumY(i,[0,j])
+                    tmpcumdist[2] = self.ldistcumY(i,[0,j],ldist)
                     tmpcumdistindexes[2] = (-1, -1)
                 else:
-                    tmpcumdist[2] = self.cumdistboundaryX[i - 1] + self.ldistcumY(i,[0,j])
+                    tmpcumdist[2] = self.cumdistboundaryX[i - 1] + self.ldistcumY(i,[0,j],ldist)
                     tmpcumdistindexes[2] = (i - 1, -1)
             # first horizontal
             for k in range(Ki):
                 if k == 0: continue # (diagonal case as j-k-1 = j-1)
-                cumD0 =  self.cumdist[i - k - 1, j - 1] + self.ldistcumX([i - k,i],j)
+                cumD0 =  self.cumdist[i - k - 1, j - 1] + self.ldistcumX([i - k,i],j,ldist)
                 if cumD0 < tmpcumdist[0]:
                     tmpcumdist[0] = cumD0
                     tmpcumdistindexes[0] = (i - k - 1, j - 1)
@@ -404,23 +632,23 @@ class Dtw:
             # Second vertical
             for k in range(Kj):
                 if k == 0: continue # (diagonal case as j-k-1 = j-1)
-                cumD2 =  self.cumdist[i - 1, j - k - 1] + self.ldistcumY(i,[j - k,j])
+                cumD2 =  self.cumdist[i - 1, j - k - 1] + self.ldistcumY(i,[j - k,j],ldist)
                 if cumD2 < tmpcumdist[2]:
                     tmpcumdist[2] = cumD2
                     tmpcumdistindexes[2] = (i - 1, j - k - 1)
 
             # Eventually, diagonal case:
             if i == 0: # we already made sure that then j!=0
-                tmpcumdist[1] =  self.cumdistboundaryY[j - 1] + self.ldistcumY(0,[j,j]) # equivalent to ldist(seqi[0],seqj[0])
+                tmpcumdist[1] =  self.cumdistboundaryY[j - 1] + self.ldistcumY(0,[j,j],ldist) # equivalent to ldist(seqi[0],seqj[0])
             elif j == 0: # we already made sure that then i!=0
-                tmpcumdist[1] =  self.cumdistboundaryX[i - 1] + self.ldistcumX([i,i],0) # equivalent to ldist(seqi[0],seqj[0])
+                tmpcumdist[1] =  self.cumdistboundaryX[i - 1] + self.ldistcumX([i,i],0,ldist) # equivalent to ldist(seqi[0],seqj[0])
             else:
-                tmpcumdist[1] =  self.cumdist[i - 1, j - 1] + self.ldistcumX([i,i],j) # equivalent to ldist(seqi[0],seqj[0])
+                tmpcumdist[1] =  self.cumdist[i - 1, j - 1] + self.ldistcumX([i,i],j,ldist) # equivalent to ldist(seqi[0],seqj[0])
             tmpcumdistindexes[1] = (i - 1, j - 1)
 
 
 
-    def run(self, ldist=euclidean_dist, constraints="SYMMETRIC", delinscost=(1.0, 1.0), freeends=(0, 1), beamsize=-1, stretch=3):
+    def run(self, ldist=euclidean_dist, constraints="SYMMETRIC", delinscost=(1.0, 1.0), mixed_type = [], mixed_spread = [], mixed_weight = [], freeends=(0, 1), beamsize=-1, max_stretch=3):
         """
     Carries out the DTW algorithm on both sequences
     - ldist is the local distance used to compare values of both sequences
@@ -432,6 +660,12 @@ class Dtw:
         self.freeends = freeends
         self.beamsize = beamsize
         self.constraints = constraints
+
+        # for mixed_mode
+        self.mixed_type = mixed_type
+        self.mixed_spread = mixed_spread
+        self.mixed_weight = mixed_weight
+
         # initialize the arrays of backpointers and cumulated distance
         self.initdtw()
 
@@ -455,12 +689,12 @@ class Dtw:
                     tmpcumdistindexes = np.full((3, 2), -1)
                     v1 = self.seqX[i]
                     v2 = self.seqY[j]
-                    ld = ldist(v1, v2)
+                    ld = ldist(v1, v2, type = self.mixed_type,spread = self.mixed_spread, weight = self.mixed_weight)
                     # Todo: Check whether path cumcost should be compared in a normalized or non-normalized way
                     # during dtw algo. At the moment, paths are compared in a non-normalized way.
                     # However, the final optimal solution is chosen on the basis of the normalized cost
                     # (which looks a bit inconsistent)
-                    apply_constraints(i, j, tmpcumdist, tmpcumdistindexes, ldist, stretch)
+                    apply_constraints(i, j, tmpcumdist, tmpcumdistindexes, ldist, max_stretch)
 
                     # Add local distance before selecting optimum
                     # In case of MERGE_SPLIT, nothing must be done as the local distance was already added in apply_constraints
@@ -550,21 +784,48 @@ class Dtw:
         return self.minnormalizedcost, self.optbacktrackpath, optpathlength, self.optpathnormalizedcumdist_array, self.bp
 
 
+# Call this function from outside to launch the comparison of two sequences
+def runCompare(seq1,seq2,
+               constraint_type = 'MERGE_SPLIT', dist_type = 'EUCLIDEAN',
+               mixed_type = [], mixed_spread = [], mixed_weight = [],
+               freeends = (0,1), beamsize = -1, delinscost = (1.,1.),
+               cumdistflag=False, bpflag=False, ldflag=False, freeendsflag=False,
+               optimalpathflag=True, graphicoptimalpathflag=True):
+
+    dtwcomputer = Dtw(seq1, seq2)
+    ct = constraint_type
+    if dist_type == "EUCLIDEAN":
+        stg = "EUCLIDEAN"
+        ld = euclidean_dist
+    elif dist_type == "ANGULAR":
+        stg = "ANGULAR"
+        ld = angular_dist
+    else: # mixed and normalize distance
+        stg = "MIXED"
+        ld = mixed_dist
+    fe = freeends
+    bs = beamsize
+    dc = delinscost
+    ndist, path, length, ndistarray, backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delinscost=dc,mixed_type = mixed_type, mixed_spread = mixed_spread, mixed_weight = mixed_weight, freeends=fe, beamsize=bs)
+    dtwcomputer.printresults(cumdistflag, bpflag, ldflag, freeendsflag, optimalpathflag, graphicoptimalpathflag)
+
+
+
+
 ######### FOR TESTING THE MODULE ##########
-def runtest(test, cumdistflag=True, bpflag=False, ldflag=False, freeendsflag=False, optimalpathflag=True,
-            graphicoptimalpathflag=False):
+def runtest(test, cumdistflag=True, bpflag=False, ldflag=False, freeendsflag=False, optimalpathflag=True, graphicoptimalpathflag=True,graphicseqalignment=True):
     print("Test: ", test.__name__)
-    print("seq1 = ", test.seq1)
-    print("seq2 = ", test.seq2)
+    print("test seq (1) = ", test.seq1)
+    print("ref  seq (2) = ", test.seq2)
     dtwcomputer = Dtw(test.seq1, test.seq2)
     if hasattr(test, 'constraints'):
         ct = test.constraints
     else: # default
         ct = "SYMMETRIC"
     if hasattr(test, 'disttype'):
-        if test.disttype == "EUCLIDEAN":
-            stg = "EUCLIDEAN"
-            ld = euclidean_dist
+        if test.disttype == "MIXED":
+            stg = "MIXED"
+            ld = mixed_dist
         elif test.disttype == "ANGULAR":
             stg = "ANGULAR"
             ld = angular_dist
@@ -587,7 +848,21 @@ def runtest(test, cumdistflag=True, bpflag=False, ldflag=False, freeendsflag=Fal
         dc = test.delinscost
     else:  # Default
         dc = (1., 1.)
+    if hasattr(test, 'mixed_type'):
+        mt = test.mixed_type
+    else:  # Default
+        mt = []
+    if hasattr(test, 'mixed_spread'):
+        ms = test.mixed_spread
+    else:  # Default
+        ms = []
+    if hasattr(test, 'mixed_weight'):
+        mw = test.mixed_weight
+    else:  # Default
+        mw = []
+
 
     ndist, path, length, ndistarray, backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delinscost=dc,
-                                                                    freeends=fe, beamsize=bs)
-    dtwcomputer.printresults(cumdistflag, bpflag, ldflag, freeendsflag, optimalpathflag, graphicoptimalpathflag)
+    mixed_type = mt, mixed_spread = ms, mixed_weight = mw,freeends=fe, beamsize=bs)
+
+    dtwcomputer.printresults(cumdistflag, bpflag, ldflag, freeendsflag, optimalpathflag, graphicoptimalpathflag,graphicseqalignment)
