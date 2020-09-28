@@ -27,4 +27,7 @@ To run an example file go in data-analysis dir and launch ipython. Then,
 ipython> run arabido-test.py
 
 . Editing the code and testing
-If one modifies the code (example by modifying the dtw.py file), one should reload the modified files in python to take modifications into account. Al
+If one modifies the code (example by modifying the dtw.py file), one should reinstall the modified files in python to take modifications into account.
+This is done using:
+
+my_env> python setup.py install

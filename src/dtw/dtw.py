@@ -370,7 +370,7 @@ class Dtw:
                 b = self.optbacktrackpath[i][1]
                 locdist.append(self.cumdist[a, b] - prev_dist)
                 prev_dist = self.cumdist[a, b]
-            plt.hist(locdist, bins = 10)
+            plt.hist(locdist, bins = 20, range = (0,1))
             plt.xlim([0, 1])
             plt.ion()
             plt.show()

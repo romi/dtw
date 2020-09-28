@@ -11,7 +11,8 @@ from dtw import dtw
 # Construction of the main dataframe from a csv file
 groundtruth_df = pd.read_csv('DB_eval_v1/groundtruth.csv')
 # Construction of the main dataframe from a csv file
-predicted_df = pd.read_csv('DB_eval_v1/predicted_v0.4.csv')
+#predicted_df = pd.read_csv('DB_eval_v1/predicted_v0.4.csv')
+predicted_df = pd.read_csv('DB_eval_v1/predicted_v20200727.csv')
 
 # Labels of the found olumns
 # col_labs = testdf.columns
