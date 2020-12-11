@@ -17,6 +17,8 @@ setup the right conda env:
 Then,
 
 my_env> python setup.py develop --prefix=$CONDA_PREFIX
+or
+ipython> run setup.py develop --prefix=$CONDA_PREFIX
 
 Note: 'develop' is used here to use the code that is being developed rather than a python package.
 

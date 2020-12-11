@@ -48,6 +48,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+import pandas as pd
 
 def euclidean_dist(v1, v2, **args):
     return np.linalg.norm(v1 - v2)
@@ -197,14 +198,25 @@ class Dtw:
         # print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
         l = len(path)
         prev_dist = 0.
+        localcost = []
         for i in range(l):
             a = path[i][0]
             b = path[i][1]
             # print "[",a,",",b,"] ", editoparray[a,b]
             print("%2d : [%2d,%2d]" % (i, a, b), end=' ')
             print(editoparray[a, b], end=' ')
-            print("  cost = %6.3f"% (self.cumdist[a, b] - prev_dist))
+            lc = self.cumdist[a, b] - prev_dist
+            print("  cost = %6.3f"% lc)
+            localcost.append(lc)
             prev_dist = self.cumdist[a, b]
+
+        data = {'Test': path[:,0],
+                'Ref':path[:,1],
+                'Type': [editoparray[path[i][0], path[i][1]] for i in range(l)],
+                'Cost': localcost}
+
+        return data
+
 
     def printAlignment(self, path, editoparray):
         # print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
@@ -330,9 +342,11 @@ class Dtw:
         if freeendsflag:
             print("Subarray of normalized distances on relaxed ending region= \n", self.optpathnormalizedcumdist_array)
             print("Subarray of optimal path lengths on relaxed ending region= \n", self.optpathlength_array)
+        data = {}
         if optimalpathflag:
             print("Optimal path (total norm cost = %6.3f)= "% self.minnormalizedcost)
-            self.printPath(self.optbacktrackpath, self.editop)
+            data = self.printPath(self.optbacktrackpath, self.editop)
+        df = pd.DataFrame(data)
 
         # Print array of local distances
         if ldflag: print("Local dist array = \n", self.ldist)
@@ -457,6 +471,7 @@ class Dtw:
                 plt.grid()
                 plt.ion()
                 plt.show()
+        return df
 
 
 
@@ -790,7 +805,8 @@ def runCompare(seq1,seq2,
                mixed_type = [], mixed_spread = [], mixed_weight = [],
                freeends = (0,1), beamsize = -1, delinscost = (1.,1.),
                cumdistflag=False, bpflag=False, ldflag=False, freeendsflag=False,
-               optimalpathflag=True, graphicoptimalpathflag=True):
+               optimalpathflag=True, graphicoptimalpathflag=True,
+               graphicseqalignment=True):
 
     dtwcomputer = Dtw(seq1, seq2)
     ct = constraint_type
@@ -807,7 +823,7 @@ def runCompare(seq1,seq2,
     bs = beamsize
     dc = delinscost
     ndist, path, length, ndistarray, backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delinscost=dc,mixed_type = mixed_type, mixed_spread = mixed_spread, mixed_weight = mixed_weight, freeends=fe, beamsize=bs)
-    dtwcomputer.printresults(cumdistflag, bpflag, ldflag, freeendsflag, optimalpathflag, graphicoptimalpathflag)
+    return dtwcomputer.printresults(cumdistflag, bpflag, ldflag, freeendsflag, optimalpathflag, graphicoptimalpathflag,graphicseqalignment)
 
 
 
