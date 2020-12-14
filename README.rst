@@ -33,3 +33,5 @@ If one modifies the code (example by modifying the dtw.py file), one should rein
 This is done using:
 
 my_env> python setup.py install
+
+Create a env.yaml file to set conda dependencies 
