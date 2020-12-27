@@ -34,4 +34,4 @@ This is done using:
 
 my_env> python setup.py install
 
-Create a env.yaml file to set conda dependencies 
+Create an env.yaml file to set conda dependencies 
