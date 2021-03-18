@@ -15,6 +15,8 @@ groundtruth_df = pd.read_csv(Databasis_dir + 'groundtruth.csv')
 #predicted_df = pd.read_csv('DB_eval_v1/predicted_v0.4.csv')
 predicted_df = pd.read_csv(Databasis_dir + 'predicted_v20200727.csv')
 
+testname = 'v20200727'
+
 # Labels of the found olumns
 # col_labs = testdf.columns
 
@@ -57,12 +59,21 @@ dtw.runCompare(vecseq_test,vecseq_ref,
 #plantname = 'Col0_26_10_2018_B'    # facile
 #plantname = 'Col0_26_10_2018_C'    # facile
 
-plantnames = ['Col0_26_10_2018_B','Col0_12_10_2018_C' ]
+# Analyze a list of plants given explicitly
+#plantnames = ['Col0_26_10_2018_B'] #,'Col0_12_10_2018_C' ]
+plantnames = ['Col0_12_10_2018_C']
+
+# Analyze the whole set of plants in the given databases
+# plantnames = groundtruth_df.PlantID.unique()
+
+VERBOSE = True
+
+df = pd.DataFrame()
 
 for plantname in plantnames:
 
-    gtruth = angles_array(groundtruth_df, 'Plant ID', plantname)
-    predicted = angles_array(predicted_df, 'Plant ID', plantname)
+    gtruth = angles_array(groundtruth_df, 'PlantID', plantname)
+    predicted = angles_array(predicted_df, 'PlantID', plantname)
 
     # extract angle arrays from plant grround truth and predicted dataframes
     seq_ref  = gtruth['angles'].values
@@ -81,18 +92,34 @@ for plantname in plantnames:
     max1 = max(vecseq_ref[:,1])
     max2 = max(vecseq_test[:,1])
 
-    filestg = '############## PROCESSING FILE : ' + plantname + ' ##############'
-    dashline = '#' * len(filestg)
-    print()
-    print(dashline)
-    print(filestg)
+    if VERBOSE:
+        filestg = '############## PROCESSING FILE : ' + plantname + ' ##############'
+        dashline = '#' * len(filestg)
+        print()
+        print(dashline)
+        print(filestg)
+
     df_result = dtw.runCompare(vecseq_test,vecseq_ref,
                    constraint_type = 'MERGE_SPLIT', dist_type = 'MIXED',
                    mixed_type = [True,False], mixed_spread = [1,max(max1,max2)], mixed_weight = [0.5,0.5],
-                   freeends = (2,2), beamsize = -1, delinscost = (1.,1.),
+#                   freeends = (2,1),
+                   freeends = 0.3,
+                   freeendseps = 1e-3,
+                   beamsize = -1, delinscost = (1.,1.),
                    cumdistflag=False, bpflag=False, ldflag=False, freeendsflag=False,
                    optimalpathflag=True, graphicoptimalpathflag=False,
-                   graphicseqalignment = False)
+                   graphicseqalignment = False,
+                   Verbose = VERBOSE)
 
-    #print(df_result)
-    df_result.to_csv(Databasis_dir + plantname + '_result.csv')
+    #Add a column containing name
+
+    # df_result['PlantID'] = [plantname] * len(df_result.index)
+    df_result.insert(loc = 0, column = 'PlantID', value = [plantname] * len(df_result.index) )
+
+    if df.empty:
+        df = df_result
+    else:
+        df = pd.concat([df, df_result])
+
+#print(df_result)
+df.to_csv(Databasis_dir + testname + '_result.csv')

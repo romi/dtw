@@ -194,7 +194,7 @@ class Dtw:
             for j in range(self.N2):
                 self.ldist[i, j] = euclidean_dist(self.seqX[i], self.seqY[j])
 
-    def printPath(self, path, editoparray):
+    def findPath(self, path, editoparray, Verbose = True):
         # print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
         l = len(path)
         prev_dist = 0.
@@ -203,10 +203,12 @@ class Dtw:
             a = path[i][0]
             b = path[i][1]
             # print "[",a,",",b,"] ", editoparray[a,b]
-            print("%2d : [%2d,%2d]" % (i, a, b), end=' ')
-            print(editoparray[a, b], end=' ')
+            if Verbose:
+                print("%2d : [%2d,%2d]" % (i, a, b), end=' ')
+                print(editoparray[a, b], end=' ')
             lc = self.cumdist[a, b] - prev_dist
-            print("  cost = %6.3f"% lc)
+            if Verbose:
+                print("  cost = %6.3f"% lc)
             localcost.append(lc)
             prev_dist = self.cumdist[a, b]
 
@@ -325,38 +327,40 @@ class Dtw:
         # print "Backtracked path", path
         return np.array(path)
 
-    def printresults(self, cumdistflag=True, bpflag=False, ldflag=False, freeendsflag=False, optimalpathflag=True,graphicoptimalpathflag=True,graphicseqalignment=True):
-        print("**************   INFOS    ***************")
-        print("len seq test (1) = ", self.N1, ", len seq ref (2) = ", self.N2)
-        print("Type of constraints : ", self.constraints)
-        print("Beam size = ", (self.beamsize if self.beamsize != -1 else "None"), ", Free endings = ", self.freeends)
-        if self.constraints == 'MERGE_SPLIT':
-            print("Mixed_type = ", self.mixed_type, ", Mixed_spread = ", self.mixed_spread, ", Mixed_weight = ", self.mixed_weight)
-        print("**************  RESULTS   ***************")
-        print("Alignment = ")
-        self.printAlignment(self.optbacktrackpath, self.editop)
-        print("Optimal path length = ", len(self.optbacktrackpath))
-        print("Optimal normalized cost = %6.3f" % self.minnormalizedcost, "at cell", self.optindex, "(non normalized = %6.3f" % self.nonmormalizedoptcost, " )")
+    def printresults(self, cumdistflag=True, bpflag=False, ldflag=False, freeendsflag=False, optimalpathflag=True,graphicoptimalpathflag=True,graphicseqalignment=True,Verbose = True):
+        if Verbose:
+            print("**************   INFOS    ***************")
+            print("len seq test (1) = ", self.N1, ", len seq ref (2) = ", self.N2)
+            print("Type of constraints : ", self.constraints)
+            print("Beam size = ", (self.beamsize if self.beamsize != -1 else "None"), ", Free endings = ", self.freeends)
+            if self.constraints == 'MERGE_SPLIT':
+                print("Mixed_type = ", self.mixed_type, ", Mixed_spread = ", self.mixed_spread, ", Mixed_weight = ", self.mixed_weight)
+            print("**************  RESULTS   ***************")
+            print("Alignment = ")
+            self.printAlignment(self.optbacktrackpath, self.editop)
+            print("Optimal path length = ", len(self.optbacktrackpath))
+            print("Optimal normalized cost = %6.3f" % self.minnormalizedcost, "at cell", self.optindex, "(non normalized = %6.3f" % self.nonmormalizedoptcost, " )")
         np.set_printoptions(precision=3)
         if cumdistflag: print("Array of global distances = (x downward, y rightward)\n", self.cumdist)
-        if freeendsflag:
+        if freeendsflag and Verbose :
             print("Subarray of normalized distances on relaxed ending region= \n", self.optpathnormalizedcumdist_array)
             print("Subarray of optimal path lengths on relaxed ending region= \n", self.optpathlength_array)
         data = {}
         if optimalpathflag:
-            print("Optimal path (total norm cost = %6.3f)= "% self.minnormalizedcost)
-            data = self.printPath(self.optbacktrackpath, self.editop)
+            if Verbose:
+                print("Optimal path (total norm cost = %6.3f)= "% self.minnormalizedcost)
+            data = self.findPath(self.optbacktrackpath, self.editop,Verbose)
         df = pd.DataFrame(data)
 
         # Print array of local distances
-        if ldflag: print("Local dist array = \n", self.ldist)
+        if ldflag and Verbose: print("Local dist array = \n", self.ldist)
 
         # Print backpointer array
         bparray = np.empty((self.N1, self.N2), dtype=object)
         for i in range(self.N1):
             for j in range(self.N2):
                 bparray[i, j] = (self.bp[i, j][0], self.bp[i, j][1])
-        if bpflag: print("Backpointers array = \n", printMatrixBP(bparray))
+        if bpflag and Verbose: print("Backpointers array = \n", printMatrixBP(bparray))
 
         # Print graphic optimal path
         if graphicoptimalpathflag:
@@ -801,12 +805,17 @@ class Dtw:
 
 # Call this function from outside to launch the comparison of two sequences
 def runCompare(seq1,seq2,
-               constraint_type = 'MERGE_SPLIT', dist_type = 'EUCLIDEAN',
+               constraint_type = 'MERGE_SPLIT',
+               dist_type = 'EUCLIDEAN',
                mixed_type = [], mixed_spread = [], mixed_weight = [],
-               freeends = (0,1), beamsize = -1, delinscost = (1.,1.),
+               freeends = (0,1),
+               freeendseps = 1e-4, # threshold to detect a better distance in freeends automatic detection: should be integrated more carefully in the code
+               beamsize = -1,
+               delinscost = (1.,1.),
                cumdistflag=False, bpflag=False, ldflag=False, freeendsflag=False,
-               optimalpathflag=True, graphicoptimalpathflag=True,
-               graphicseqalignment=True):
+               optimalpathflag=True,
+               graphicoptimalpathflag=True,graphicseqalignment=True,
+               maxstretch = 3, Verbose = True):
 
     dtwcomputer = Dtw(seq1, seq2)
     ct = constraint_type
@@ -819,12 +828,62 @@ def runCompare(seq1,seq2,
     else: # mixed and normalize distance
         stg = "MIXED"
         ld = mixed_dist
-    fe = freeends
     bs = beamsize
     dc = delinscost
-    ndist, path, length, ndistarray, backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delinscost=dc,mixed_type = mixed_type, mixed_spread = mixed_spread, mixed_weight = mixed_weight, freeends=fe, beamsize=bs)
-    return dtwcomputer.printresults(cumdistflag, bpflag, ldflag, freeendsflag, optimalpathflag, graphicoptimalpathflag,graphicseqalignment)
+    if type(freeends) == tuple: # if freeends is tuple: NOT AUTOMATIC --> uses the tuple values
+        fe = freeends
+        ndist, path, length, ndistarray, backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delinscost=dc,mixed_type = mixed_type, mixed_spread = mixed_spread, mixed_weight = mixed_weight, freeends=fe, beamsize=bs, max_stretch=maxstretch)
+    else: # if freeends is NOT tuple: AUTOMATIC --> it is assumed to be int or real <= 0.4 and this corresponds to a percentage of sequence length for max exploration of freeends
+        automatic_freeends = float(freeends)
+        if automatic_freeends > 0.4:
+            automatic_freeends = 0.4 # (max value for exploration of freeends)
+            if Verbose:
+                print("Automatic free-ends capped to 40 percent on both sequence sides. ")
+        # first find the limits of the tested freeends
+        Ntot = min(len(seq1), len(seq2))
+        N = int(automatic_freeends * Ntot)
+        ''' # Assumption that free end detection could be made on both sides independently (but obviously not true: find why)
+        ndist = np.Infinity
+        for i in range(N):
+            fe = (i,1)  # (vary only the left hand side freeends )
+            _ndist, _path, _length, _ndistarray, _backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delinscost=dc,mixed_type = mixed_type, mixed_spread = mixed_spread, mixed_weight = mixed_weight, freeends=fe, beamsize=bs, max_stretch=maxstretch)
+            print("(i=",i,"cost=",_ndist,end=') ')
+            if _ndist < ndist:
+                left_freeindex = i
+                ndist, path, length, ndistarray, backpointers = _ndist, _path, _length, _ndistarray, _backpointers
+        print("--> ", left_freeindex)
+        ndist = np.Infinity
+        for j in range(N): # same value explore on both left and right
+            fe = (0,j+1)  # (vary only the left hand side freeends )
+            _ndist, _path, _length, _ndistarray, _backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delinscost=dc,mixed_type = mixed_type, mixed_spread = mixed_spread, mixed_weight = mixed_weight, freeends=fe, beamsize=bs, max_stretch=maxstretch)
+            print("(j=",j,"cost=",_ndist,end=') ')
+            if _ndist < ndist:
+                right_freeindex = j
+                ndist, path, length, ndistarray, backpointers = _ndist, _path, _length, _ndistarray, _backpointers
+        print("--> ", right_freeindex)
+        '''
+        # Compute all free-ends combinations in the prescribed limits, brute force ...
+        ndist = np.Infinity
+        if Verbose:
+            print("AUTOMATIC DETECTION OF FREE ENDS:")
 
+        for i in range(N):
+            for j in range(N): # same value explore on both left and right
+                fe = (i,j+1)  # (vary only the left hand side freeends )
+                _ndist, _path, _length, _ndistarray, _backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delinscost=dc,mixed_type = mixed_type, mixed_spread = mixed_spread, mixed_weight = mixed_weight, freeends=fe, beamsize=bs, max_stretch=maxstretch)
+                if Verbose:
+                    print("i,j=",i,j,"cost={:.4f}".format(_ndist),end=' ')
+                if _ndist < ndist-freeendseps:
+                    left_freeindex = i
+                    right_freeindex = j
+                    ndist, path, length, ndistarray, backpointers = _ndist, _path, _length, _ndistarray, _backpointers
+            if Verbose:
+                print("--> ", left_freeindex, right_freeindex)
+        # finallly computes the DTW for freeends found
+        # fe = (left_freeindex,right_freeindex+1)
+        #ndist, path, length, ndistarray, backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delinscost=dc,mixed_type = mixed_type, mixed_spread = mixed_spread, mixed_weight = mixed_weight, freeends=fe, beamsize=bs, max_stretch=maxstretch)
+
+    return dtwcomputer.printresults(cumdistflag, bpflag, ldflag, freeendsflag, optimalpathflag, graphicoptimalpathflag,graphicseqalignment, Verbose = Verbose)
 
 
 
