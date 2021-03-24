@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 
 short_descr = "Dynamic time warping algorithm(s)"
-readme = open('README.rst').read()
+readme = open('README.md').read()
 history = open('HISTORY.rst').read()
 
 # find packages
