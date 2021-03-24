@@ -20,8 +20,8 @@ anaconda:
     - conda install conda-build conda-verify anaconda-client
     - conda convert -p osx-64 conda-bld/linux-64/dtw* --output-dir conda-bld/
     - conda convert -p win-64 conda-bld/linux-64/dtw* --output-dir conda-bld/
-    - anaconda --token=$ANACONDA_TOKEN --verbose upload conda-bld/linux-64/dtw* --user romi-eu
-    - anaconda --token=$ANACONDA_TOKEN --verbose upload conda-bld/osx-64/dtw* --user romi-eu
-    - anaconda --token=$ANACONDA_TOKEN --verbose upload conda-bld/win-64/dtw* --user romi-eu
+    - anaconda --token=$ANACONDA_TOKEN --verbose upload conda-bld/linux-64/dtw* --user romi-eu --force
+    - anaconda --token=$ANACONDA_TOKEN --verbose upload conda-bld/osx-64/dtw* --user romi-eu --force
+    - anaconda --token=$ANACONDA_TOKEN --verbose upload conda-bld/win-64/dtw* --user romi-eu --force
   only:
     - master
