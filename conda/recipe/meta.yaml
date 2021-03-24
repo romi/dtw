@@ -18,8 +18,9 @@ requirements:
     - python {{ python }}
   run:
     - python
-    - numpy
     - matplotlib
+    - numpy
+    - pandas
 
 about:
   summary: Dynamic time warping algorithm(s)
