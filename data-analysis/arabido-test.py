@@ -8,6 +8,7 @@ Data: F. Besnard, Inra, RDP, April 2020
 import pandas as pd
 from dtw import dtw
 
+
 Databasis_dir = 'DB_eval_v1/'
 # Construction of the main dataframe from a csv file
 groundtruth_df = pd.read_csv(Databasis_dir + 'groundtruth.csv')
@@ -59,12 +60,14 @@ dtw.runCompare(vecseq_test,vecseq_ref,
 #plantname = 'Col0_26_10_2018_B'    # facile
 #plantname = 'Col0_26_10_2018_C'    # facile
 
-# Analyze a list of plants given explicitly
+# Analyze
+# 1. a list of plants given explicitly
 #plantnames = ['Col0_26_10_2018_B'] #,'Col0_12_10_2018_C' ]
-plantnames = ['Col0_12_10_2018_C']
+#plantnames = ['Col0_12_10_2018_C']
 
+# 2. a whole set of plants:
 # Analyze the whole set of plants in the given databases
-# plantnames = groundtruth_df.PlantID.unique()
+plantnames = groundtruth_df.PlantID.unique()
 
 VERBOSE = True
 

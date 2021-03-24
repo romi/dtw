@@ -842,7 +842,8 @@ def runCompare(seq1,seq2,
         # first find the limits of the tested freeends
         Ntot = min(len(seq1), len(seq2))
         N = int(automatic_freeends * Ntot)
-        ''' # Assumption that free end detection could be made on both sides independently (but obviously not true: find why)
+        '''
+        # Assumption that free end detection could be made on both sides independently (but obviously not true: find why)
         ndist = np.Infinity
         for i in range(N):
             fe = (i,1)  # (vary only the left hand side freeends )
