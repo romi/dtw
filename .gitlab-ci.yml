@@ -1,0 +1,27 @@
+image: conda/miniconda3
+
+conda_build:
+  stage: build
+  script:
+    - conda update --all
+    - conda install conda-build conda-verify git
+    - mkdir conda-bld
+    - conda build . --output-folder conda-bld/
+  artifacts:
+    paths:
+      - conda-bld
+  only:
+    - master
+
+anaconda:
+  stage: deploy
+  script:
+    - conda update --all
+    - conda install conda-build conda-verify anaconda-client
+    - conda convert -p osx-64 conda-bld/linux-64/dtw* --output-dir conda-bld/
+    - conda convert -p win-64 conda-bld/linux-64/dtw* --output-dir conda-bld/
+    - anaconda --token=$ANACONDA_TOKEN --verbose upload conda-bld/linux-64/dtw* --user romi-eu
+    - anaconda --token=$ANACONDA_TOKEN --verbose upload conda-bld/osx-64/dtw* --user romi-eu
+    - anaconda --token=$ANACONDA_TOKEN --verbose upload conda-bld/win-64/dtw* --user romi-eu
+  only:
+    - master
