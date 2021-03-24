@@ -1,0 +1,5 @@
+name: dtw
+channels:
+  - defaults
+dependencies:
+  - numpy
