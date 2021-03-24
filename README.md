@@ -33,7 +33,11 @@ my_env> python setup.py install
 Create an `env.yaml` file to set conda dependencies.
 
 ## Publish master branch to GitHub
+
+### The first time:
 0. Create a GitHub empty repo
 1. Clone this repository and go to the directory
-2. Add a 'romi' remote pointing to the empty GitHub repo: ``git remote add romi https://github.com/romi/dtw.git``
-3. Push your modifications to GitHub (from the repository root): ``git push romi master``
+2. Add a 'romi' remote pointing to the empty GitHub repo: `git remote add romi https://github.com/romi/dtw.git`
+
+### To update GitHub master from Inria GitLab
+3. Push your modifications to GitHub (from the repository root): `git push romi master`
