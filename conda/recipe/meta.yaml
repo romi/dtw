@@ -1,0 +1,28 @@
+package:
+  name: dtw
+  version: {{ GIT_DESCRIBE_TAG }}
+
+source:
+  git_url: https://gitlab.inria.fr/cgodin-dev/dtw
+  git_tag: master
+
+build:
+  number: {{ GIT_DESCRIBE_NUMBER }}
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - setuptools
+    - python >=3.6
+    - scons
+    - zlib
+    - git
+  run:
+    - python >=3.6
+    - numpy
+
+about:
+  license: Inria
+  license_file: LICENSE
+  summary: Dynamic time warping algorithm(s)
+  dev_url: https://gitlab.inria.fr/cgodin-dev/dtw
