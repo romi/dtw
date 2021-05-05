@@ -147,15 +147,12 @@ def main(args):
                         'mixed_weight': [0.5, 0.5],
                         'mixed_spread': [1, max(max_gt, max_pred)]}
 
-    flag_kwargs = {'cumdistflag': False, 'bpflag': False, 'ldflag': False,
-                   'freeendsflag': False, 'optimalpathflag': True,
-                   'graphicoptimalpathflag': False, 'graphicseqalignment': False}
+    flag_kwargs = {'cum_dist_flag': False, 'bp_flag': False, 'ld_flag': False,
+                   'free_ends_flag': False, 'optimal_path_flag': True,
+                   'graphic_optimal_path_flag': False, 'graphic_seq_alignment': False}
 
-    df = sequence_comparison(vecseq_pred, vecseq_gt,
-                             constraint=args.constraint, dist_type=args.dist_type,
-                             free_ends=args.free_ends, beamsize=args.beamsize,
-                             delins_cost=args.delins_cost, max_stretch=args.max_stretch,
-                             verbose=True, **mixed_kwargs, **flag_kwargs)
+    df = sequence_comparison(vecseq_pred, vecseq_gt, constraint=args.constraint, dist_type=args.dist_type, free_ends=args.free_ends, beam_size=args.beamsize,
+                             delins_cost=args.delins_cost, max_stretch=args.max_stretch, verbose=True, **mixed_kwargs, **flag_kwargs)
     df.to_csv(join(args.db_path, args.scan, 'dtw_result.csv'))
 
 

@@ -65,7 +65,7 @@ from joblib import Parallel
 from joblib import delayed
 
 FORMATTER = "%(asctime)s - %(name)s - %(lineno)d - %(levelname)s - %(message)s"
-logging.basicConfig(format=FORMATTER, level=logging.DEBUG)
+logging.basicConfig(format=FORMATTER, level=logging.INFO)
 
 
 def euclidean_dist(v1, v2, **args):
@@ -367,7 +367,7 @@ class DTW(object):
         self.min_normalized_cost = None
         self.non_mormalized_optcost = None
         self.opt_index = None
-        self.opt_backtrackpath = None
+        self.opt_backtrack_path = None
 
         # seqX and seqY are expected to be two np.arrays of elements of identical dim
         # an element can be a scalar or a vector
@@ -577,7 +577,7 @@ class DTW(object):
         >>> dtwcomputer.get_results()
 
         """
-        return self.find_path(self.opt_backtrackpath, self.editop, verbose)
+        return self.find_path(self.opt_backtrack_path, self.editop, verbose)
 
     def get_better_results(self, start_index=1, verbose=True):
         """
@@ -1011,7 +1011,6 @@ class DTW(object):
             pj = j
         print()
 
-
     def backtrack_path_old(self, n1, n2):
         """Returns a list containing the cells on the path ending at indexes (n1, n2).
 
@@ -1073,7 +1072,7 @@ class DTW(object):
 
     def print_results(self, cum_dist_flag=True, bp_flag=False, ld_flag=False,
                       free_ends_flag=False, optimal_path_flag=True, graphic_optimal_path_flag=False,
-                      graphic_seq_alignment=False, verbose=True):
+                      graphic_seq_alignment=False, verbose=True, **kwargs):
         """Print results in terminal.
 
         Parameters
@@ -1110,27 +1109,29 @@ class DTW(object):
                 print(f"Mixed weight: {self.mixed_weight}")
             print(f"{' RESULTS ':*^80}")
             print(f"Alignment:")
-            self.print_alignment(self.opt_backtrackpath, self.editop)
-            print("Optimal path length = ", len(self.opt_backtrackpath))
-            print("Optimal normalized cost = %6.3f" % self.min_normalized_cost, "at cell", self.opt_index, "(non normalized = %6.3f" % self.non_mormalized_optcost,
-                  " )")
-        np.set_printoptions(precision=3)
-        if cum_dist_flag: print("Array of global distances = (x downward, y rightward)\n", self.cum_dist)
+            self.print_alignment(self.opt_backtrack_path, self.editop)
+            print(f"Optimal path length: {len(self.opt_backtrack_path)}")
+            print(f"Optimal normalized cost: {self.min_normalized_cost} at cell {self.opt_index} (non normalized: {self.non_mormalized_optcost}")
+
+        if cum_dist_flag:
+            print(f"Array of global distances (x downward, y rightward):\n {self.cum_dist}")
+
         if free_ends_flag and verbose:
             print("Sub-array of normalized distances on relaxed ending region= \n", self.optpath_normalized_cumdist_array)
             print("Sub-array of optimal path lengths on relaxed ending region= \n", self.optpathlength_array)
+
         data = {}
         if optimal_path_flag:
             if verbose:
-                print("Optimal path (total norm cost = %6.3f)= " % self.min_normalized_cost)
-            data = self.find_path(self.opt_backtrackpath, self.editop, verbose)
+                print(f"Optimal path (total norm cost = {self.min_normalized_cost}): ")
+            data = self.find_path(self.opt_backtrack_path, self.editop, verbose)
         df = pd.DataFrame(data)
 
         # Print array of local distances
         if ld_flag and verbose:
             print("Local dist array = \n", self.l_dist)
 
-        # Print backpointer array
+        # Print back-pointer array
         bparray = np.empty((self.nX, self.nY), dtype=object)
         for i in range(self.nX):
             for j in range(self.nY):
@@ -1145,7 +1146,7 @@ class DTW(object):
             plt.clf()
             # print bparray[:,0]
             # print bparray[:,1]
-            plt.plot(self.opt_backtrackpath[:, 0], self.opt_backtrackpath[:, 1])
+            plt.plot(self.opt_backtrack_path[:, 0], self.opt_backtrack_path[:, 1])
             plt.ylim([0, self.nY])
             plt.xlim([0, self.nX])
             plt.grid()
@@ -1156,12 +1157,12 @@ class DTW(object):
             ### FAIRE DES SOUS FIGS
             plt.figure(1)
             plt.clf()
-            l = len(self.opt_backtrackpath)
+            l = len(self.opt_backtrack_path)
             prev_dist = 0.
             locdist = []
             for i in range(l):
-                a = self.opt_backtrackpath[i][0]
-                b = self.opt_backtrackpath[i][1]
+                a = self.opt_backtrack_path[i][0]
+                b = self.opt_backtrack_path[i][1]
                 locdist.append(self.cum_dist[a, b] - prev_dist)
                 prev_dist = self.cum_dist[a, b]
             plt.hist(locdist, bins=20, range=(0, 1))
@@ -1187,7 +1188,7 @@ class DTW(object):
                     seqY = self.seqY[:, d]
 
                 # Find the best shift of the two sequences
-                optpathlen = len(self.opt_backtrackpath)
+                optpathlen = len(self.opt_backtrack_path)
                 test_indexes = np.arange(len(seqX))
                 shift = 0
                 if True:  # OPTIMIZE_ALIGNMENT_DISPLAY:
@@ -1196,8 +1197,8 @@ class DTW(object):
                     maxh = -optpathlen
                     # First find all the shifts that appear in the alignment from test to ref
                     for k in range(optpathlen):
-                        i = self.opt_backtrackpath[k, 0]  # test
-                        j = self.opt_backtrackpath[k, 1]  # ref
+                        i = self.opt_backtrack_path[k, 0]  # test
+                        j = self.opt_backtrack_path[k, 1]  # ref
                         delta = j - i
                         if delta < minh:
                             minh = delta
@@ -1210,8 +1211,8 @@ class DTW(object):
                     for s in range(minh, maxh + 1):
                         score = 0
                         for k in range(optpathlen):
-                            i = self.opt_backtrackpath[k, 0]
-                            j = self.opt_backtrackpath[k, 1]
+                            i = self.opt_backtrack_path[k, 0]
+                            j = self.opt_backtrack_path[k, 1]
                             delta = abs(j - i - s)
                             score += delta
                         score_array[s - minh] = score
@@ -1224,8 +1225,8 @@ class DTW(object):
                 plt.plot(seqY, 'ro', label='ref sequence')  # ref sequence
                 pi, pj = -1, -1  # previous i,j
                 for k in range(optpathlen):
-                    i = self.opt_backtrackpath[k, 0]
-                    j = self.opt_backtrackpath[k, 1]
+                    i = self.opt_backtrack_path[k, 0]
+                    j = self.opt_backtrack_path[k, 1]
                     if i != pi + 1:
                         for h in range(pi + 1, i):
                             plt.plot([h + shift, j], [seqX[h], seqY[j]], 'g--')
@@ -1273,7 +1274,7 @@ class DTW(object):
 
         Returns
         -------
-        ?type?
+        float
             ???.
 
         Notes
@@ -1293,22 +1294,22 @@ class DTW(object):
 
         Parameters
         ----------
-        i :  : int
+        i : int
             Index in sequence X ???.
         jpair : (int, int)
             Pair of ???.
         ldist : function, default euclidean_dist
             The function to compute the local distance used to compare values of both sequences.
-            Typically `euclidean_dist()`,  `angular_dist()` or `mixed_dist()`.
+            Typically `euclidean_dist()`, `angular_dist()` or `mixed_dist()`.
 
         Returns
         -------
-        ?type?
+        float
             ???.
 
         Notes
         -----
-        if i1 == i2, then norm(v_i1, v_i2 is returned)
+        If ``i1 == i2``, then ``norm(v_i1, v_i2)`` is returned.
 
         """
         j1, j2 = jpair
@@ -1322,8 +1323,8 @@ class DTW(object):
         """Compute asymmetric constraints.
 
         Implements constraints from [sakoe_chiba78]_ and [itakura75]_.
-        Path may be coming from either (i-1,j), (i-1,j-1), (i-1,j-2)
-        ( (i-i,j) only if not coming from j at i-2).
+        Path may be coming from either ``(i-1,j)``, ``(i-1,j-1)``, ``(i-1,j-2)``
+        ( ``(i-i,j)`` only if not coming from `j` at ``i-2``).
 
         Parameters
         ----------
@@ -1337,7 +1338,7 @@ class DTW(object):
             ??
         ldist : function, default euclidean_dist
             The function to compute the local distance used to compare values of both sequences.
-            Typically `euclidean_dist()`,  `angular_dist()` or `mixed_dist()`.
+            Typically `euclidean_dist()`, `angular_dist()` or `mixed_dist()`.
         maxstretch : bool, default 3
             maximum amount of stretching allowed for signal warping.
 
@@ -1379,7 +1380,7 @@ class DTW(object):
         """Compute symmetric constraints.
 
         Implements constraints from [sakoe_chiba78]_ and [itakura75]_.
-        Paths may be coming from either (i-1,j), (i-1,j-1), (i,j)
+        Paths may be coming from either ``(i-1,j)``, ``(i-1,j-1)``, ``(i,j)``
         but cannot go twice consecutively in either horizontal or vertical directions.
 
         Parameters
@@ -1394,16 +1395,16 @@ class DTW(object):
             ??
         ldist : function, default euclidean_dist
             The function to compute the local distance used to compare values of both sequences.
-            Typically `euclidean_dist()`,  `angular_dist()` or `mixed_dist()`.
+            Typically `euclidean_dist()`, `angular_dist()` or `mixed_dist()`.
         maxstretch : bool, default 3
             maximum amount of stretching allowed for signal warping.
 
         Notes
         -----
         Weighting function is not implemented!
-      WARNING: Path weights have not yet been implemented (all origins have the same weights).
-      This would require score normalization by the sum of weights in the end ...
-      one would also have to pass the local distance to this function to make the decision here.
+        WARNING: Path weights have not yet been implemented (all origins have the same weights).
+        This would require score normalization by the sum of weights in the end ...
+        one would also have to pass the local distance to this function to make the decision here.
 
         References
         ----------
@@ -1436,9 +1437,9 @@ class DTW(object):
         return tmpcumdist, tmpcumdistindexes
 
     def editdist_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, max_stretch):
-        """
-      Implements edit distance constraints.
-        When processing point i,j, paths may be coming from either (i-1,j), (i-1,j-1), (i,j-1)
+        """Implements edit distance constraints.
+
+        When processing point `i`,`j`, paths may be coming from either ``(i-1,j)``, ``(i-1,j-1)``, ``(i,j-1)``
         like in the symmetric distance but and can go in principle several times consecutively
         in either horizontal or vertical directions.
         What will drive path construction is matching, insertion and deletion operations and their relative costs.
@@ -1455,7 +1456,7 @@ class DTW(object):
             ??
         ldist : function, default euclidean_dist
             The function to compute the local distance used to compare values of both sequences.
-            Typically `euclidean_dist()`,  `angular_dist()` or `mixed_dist()`.
+            Typically `euclidean_dist()`, `angular_dist()` or `mixed_dist()`.
         max_stretch : bool, default 3
             maximum amount of stretching allowed for signal warping.
 
@@ -1510,7 +1511,7 @@ class DTW(object):
 
         """
         if i == 0 and j == 0:
-            d = self.ldistcumX((0, 0), 0, ldist)  # equivalent to l_dist(seqi[0],seqj[0])
+            d = self.ldistcumX((0, 0), 0, ldist)  # equivalent to ldist(seqi[0],seqj[0])
             tmpcumdist[0] = self.cum_dist_boundaryY[j] + d
             tmpcumdist[1] = d
             tmpcumdist[2] = self.cum_dist_boundaryX[i] + d
@@ -1610,7 +1611,7 @@ class DTW(object):
         >>> ndist, path, length, ndistarray, backpointers = dtwcomputer.run()
 
         """
-        # initialize the arrays of backpointers and cumulated distance
+        # initialize the arrays of back-pointers and cumulated distance
         self.initdtw()
 
         if self.constraints == "edit_distance":
@@ -1702,7 +1703,7 @@ class DTW(object):
         self.opt_index = (0, 0)
         for k in range(b):
             for l in range(b):
-                logging.debug(f"Back-tracking indexes: {self.nX-k-1, self.nY-l-1}")
+                logging.debug(f"Back-tracking indexes: {self.nX - k - 1, self.nY - l - 1}")
                 self.optpath_array[k, l] = self.backtrack_path(self.nX - k - 1, self.nY - l - 1)
                 logging.debug(f"Back-tracking path: {self.optpath_array[k, l]}")
                 pathlen = len(self.optpath_array[k, l])
@@ -1711,11 +1712,11 @@ class DTW(object):
                 logging.debug(f"Back-tracked path length: {len(self.optpath_array[k, l])}")
                 self.optpathlength_array[k, l] = pathlen  # due to the local constraint used here
                 logging.debug(f"Cumulative distances: {self.cum_dist}")
-                normalizedcost = self.cum_dist[self.nX - k - 1, self.nY - l - 1] / float(pathlen)
-                self.optpath_normalized_cumdist_array[k, l] = normalizedcost
-                logging.debug(f"Normalized score: {normalizedcost}")
-                if normalizedcost < self.min_normalized_cost:
-                    self.min_normalized_cost = normalizedcost
+                normalized_cost = self.cum_dist[self.nX - k - 1, self.nY - l - 1] / float(pathlen)
+                self.optpath_normalized_cumdist_array[k, l] = normalized_cost
+                logging.debug(f"Normalized score: {normalized_cost}")
+                if normalized_cost < self.min_normalized_cost:
+                    self.min_normalized_cost = normalized_cost
                     index = (self.nX - k - 1, self.nY - l - 1)
                     logging.debug(f"Saved optimal index: {index}")
                     self.non_mormalized_optcost = self.cum_dist[index[0], index[1]]
@@ -1724,10 +1725,11 @@ class DTW(object):
         # 4. Optimal solution
         k, l = self.opt_index[0], self.opt_index[1]
         logging.debug(f"Optimal solution: {k, l}")
-        optpath = self.optpath_array[self.nX - k - 1, self.nY - l - 1]  # retrieve opt path (listed backward)
-        self.opt_backtrackpath = np.flip(optpath, 0)  # reverse the order of path to start from beginning
-        optpathlength = len(self.opt_backtrackpath)
-        return self.min_normalized_cost, self.opt_backtrackpath, optpathlength, self.optpath_normalized_cumdist_array, self.bp
+        opt_path = self.optpath_array[self.nX - k - 1, self.nY - l - 1]  # retrieve optimal path (listed backward)
+        self.opt_backtrack_path = np.flip(opt_path, 0)  # reverse the order of path to start from beginning
+        optpathlength = len(self.opt_backtrack_path)
+        return self.min_normalized_cost, self.opt_backtrack_path, optpathlength, self.optpath_normalized_cumdist_array, self.bp
+
 
 def _get_ndist(test_seq, ref_seq, free_ends, **kwargs) -> float:
     """ Creates and run DTW algorithm for selected free-ends."""
@@ -1832,6 +1834,133 @@ DEF_DELINS_COST = (1., 1.)
 DEF_MAX_STRETCH = 3
 
 
+# Call this function from outside to launch the comparison of two sequences
+def sequence_comparison(seqX, seqY, constraint=DEF_CONSTRAINT, dist_type=DEF_DIST_TYPE,
+                        free_ends=DEF_FREE_ENDS, free_ends_eps=1e-4, beamsize=DEF_BEAMSIZE,
+                        delins_cost=DEF_DELINS_COST, max_stretch=DEF_MAX_STRETCH,
+                        mixed_type=None, mixed_spread=None, mixed_weight=None, **kwargs):
+    """Run the DTW comparison between two angles & inter-nodes sequences.
+
+    Phylotaxis comparison by means of angles & inter-nodes sequences alignment & comparison.
+
+    Parameters
+    ----------
+    seqX, seqY : numpy.ndarray
+        Arrays of angles & inter-nodes to compare.
+    constraint : {"merge_split", "edit_distance", "asymmetric", "symmetric"}, default "merge_split"
+        Type of constraint to use.
+    dist_type : {"euclidean", "angular", "mixed"}, default "euclidean"
+        Type of distance to use.
+    free_ends : float or tuple of int, default (0, 1)
+        A float corresponds to a percentage of sequence length for max exploration of `free_ends`,
+        and in that case ``free_ends <= 0.4``.
+        A tuple of 2 integers ``(k,l)`` that specifies relaxation bounds on
+        the alignment of sequences endpoints: relaxed by ``k`` at the sequence beginning
+        and relaxed by ``l`` at the sequence ending.
+    free_ends_eps : float, default 1e-4
+        ???.
+    beamsize : int, default -1
+        maximum amount of distortion allowed for signal warping.
+    delins_cost : tuple of float, default (1., 1.)
+        Deletion and insertion costs.
+    max_stretch : bool, default 3
+        ???.
+    mixed_type : list(bool), optional
+        A boolean vector, of size ``dim``, indicating whether the k^th component should be treated
+        as an angle (``True``) or a regular scalar value (``False``).
+    mixed_spread : list(float), optional
+        A vector of positive scalars, of size ``dim``, used to normalize the distance values computed
+        for each component with their typical spread.
+    mixed_weight : list(float), optional
+        A vector of positive weights, of size ``dim``.
+        Does not necessarily sum to 1, but normalized if not.
+
+    Other Parameters
+    ----------------
+    cumdistflag : bool, default True
+        If ``True``, print the array of global distances.
+    bpflag : bool, default False
+        If ``True``, print the back-pointers array.
+    ldflag : bool, default False
+        If ``True``, print the local distance array.
+    freeendsflag : bool, default False
+        If ``True``, print the sub-arrays of normalized distances on relaxed ending region and of optimal path lengths on relaxed ending region.
+    optimalpathflag : bool, default True
+        If ``True``, print the optimal path.
+    graphicoptimalpathflag : bool, default True
+        If ``True``, ?then?.
+    graphicseqalignment : bool, default True
+        If ``True``, ?then?.
+    verbose : bool, default True
+        If ``True``, increase code verbosity.
+
+    Notes
+    -----
+    For the `free_ends`, we must have:
+
+      - ``k+l < min(nt,nr)``
+      - ``k >=0`` and ``l>=1``
+
+    """
+    try:
+        assert constraint in CONSTRAINTS
+    except AssertionError:
+        print(f"Valid values for `constraint` parameter: {CONSTRAINTS}")
+        raise ValueError(f"Unknown '{constraint}' value for `constraint` parameter.")
+    try:
+        assert dist_type in DIST_TYPES
+    except AssertionError:
+        print(f"Valid values for `dist_type` parameter: {DIST_TYPES}")
+        raise ValueError(f"Unknown '{dist_type}' value for `dist_type` parameter.")
+
+    if dist_type == "euclidean":
+        ld = euclidean_dist
+    elif dist_type == "angular":
+        ld = angular_dist
+    else:  # mixed and normalize distance
+        ld = mixed_dist
+
+    dtwcomputer = DTW(seqX, seqY, constraints=constraint, delins_cost=delins_cost, ldist=ld,
+                      mixed_type=mixed_type, mixed_spread=mixed_spread, mixed_weight=mixed_weight,
+                      beamsize=beamsize, max_stretch=max_stretch)
+    if type(free_ends) == tuple:  # if free-ends is tuple: NOT AUTOMATIC --> uses the tuple values
+        dtwcomputer.free_ends = free_ends
+    else:
+        # if free-ends is NOT tuple: AUTOMATIC --> it is assumed to be int or real <= 0.4
+        # and this corresponds to a percentage of sequence length for max exploration of free-ends
+        '''
+        # Assumption that free end detection could be made on both sides independently (but obviously not true: find why)
+        ndist = np.Infinity
+        for i in range(N):
+            fe = (i,1)  # (vary only the left hand side free_ends )
+            _ndist, _path, _length, _ndistarray, _backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delins_cost=delins_cost,mixed_type = mixed_type, mixed_spread = mixed_spread, mixed_weight = mixed_weight, free_ends=fe, beamsize=beamsize, max_stretch=maxstretch)
+            print("(i=",i,"cost=",_ndist,end=') ')
+            if _ndist < ndist:
+                left_freeindex = i
+                ndist, path, length, ndistarray, backpointers = _ndist, _path, _length, _ndistarray, _backpointers
+        print("--> ", left_freeindex)
+        ndist = np.Infinity
+        for j in range(N): # same value explore on both left and right
+            fe = (0,j+1)  # (vary only the left hand side free_ends )
+            _ndist, _path, _length, _ndistarray, _backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delins_cost=delins_cost,mixed_type = mixed_type, mixed_spread = mixed_spread, mixed_weight = mixed_weight, free_ends=fe, beamsize=beamsize, max_stretch=maxstretch)
+            print("(j=",j,"cost=",_ndist,end=') ')
+            if _ndist < ndist:
+                right_freeindex = j
+                ndist, path, length, ndistarray, backpointers = _ndist, _path, _length, _ndistarray, _backpointers
+        print("--> ", right_freeindex)
+        '''
+        print(f"Starting brute force search...")
+        free_ends, norm_dist = brute_force_free_ends_search(dtwcomputer, max_value=free_ends,
+                                                            free_ends_eps=free_ends_eps)
+        print(f"Found freend-ends {free_ends} at a cost of {norm_dist}.")
+        # finally computes the DTW for free-ends found
+        dtwcomputer.free_ends = free_ends
+
+    _ = dtwcomputer.run()
+
+    return dtwcomputer.print_results(**kwargs)
+
+
 def duplicate_idx(l, idx, n):
     """Duplicate, n times, the index of a given list.
 
@@ -1869,6 +1998,7 @@ def duplicate_idx(l, idx, n):
         return l[0:idx] + [l[idx]] * n
     else:
         return l[0:idx] + [l[idx]] * n + l[idx:]
+
 
 # TODO: dtw_eval_summarize & compare_align (test_eval.R)
 
