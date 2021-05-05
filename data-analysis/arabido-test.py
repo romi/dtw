@@ -47,9 +47,9 @@ def angles_array(df, plantname_col, plantname):
 # Example of call for the comparison of two sequence with all the flags set:
 
 dtw.runCompare(vecseq_test,vecseq_ref,
-               constraint_type = 'MERGE_SPLIT', dist_type = 'MIXED',
+               constraint_type = 'merge_split', dist_type = 'mixed',
                mixed_type = [True,False], mixed_spread = [1,max(max1,max2)], mixed_weight = [0.5,0.5],
-               freeends = (2,2), beamsize = -1, delinscost = (1.,1.),
+               free_ends = (2,2), beam_size = -1, delins_cost = (1.,1.),
                cumdistflag=False, bpflag=False, ldflag=False, freeendsflag=False,
                optimalpathflag=True, graphicoptimalpathflag=True)
 
@@ -102,17 +102,10 @@ for plantname in plantnames:
         print(dashline)
         print(filestg)
 
-    df_result = dtw.runCompare(vecseq_test,vecseq_ref,
-                   constraint_type = 'MERGE_SPLIT', dist_type = 'MIXED',
-                   mixed_type = [True,False], mixed_spread = [1,max(max1,max2)], mixed_weight = [0.5,0.5],
-#                   freeends = (2,1),
-                   freeends = 0.3,
-                   freeendseps = 1e-3,
-                   beamsize = -1, delinscost = (1.,1.),
-                   cumdistflag=False, bpflag=False, ldflag=False, freeendsflag=False,
-                   optimalpathflag=True, graphicoptimalpathflag=False,
-                   graphicseqalignment = False,
-                   Verbose = VERBOSE)
+    df_result = dtw.runCompare(vecseq_test, vecseq_ref, constraint_type='merge_split', dist_type='mixed', mixed_type=[True, False],
+                               mixed_spread=[1, max(max1, max2)], mixed_weight=[0.5, 0.5], free_ends=0.3, free_ends_eps=1e-3, beam_size=-1,
+                               delins_cost=(1., 1.), cum_dist_flag=False, bp_flag=False, ld_flag=False, freeends_flag=False, optimal_path_flag=True,
+                               graphic_optimalpath_flag=False, graphic_seq_alignment=False)
 
     #Add a column containing name
 
