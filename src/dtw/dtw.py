@@ -60,7 +60,6 @@ import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from joblib import Parallel
 from joblib import delayed
 
@@ -347,7 +346,7 @@ class DTW(object):
 
         Example
         -------
-        >>> from dtw import DTW
+        >>> from dtw.dtw import DTW
         >>> test_seq = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]
         >>> ref_seq = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
         >>> dtwcomputer = DTW(test_seq, ref_seq)
@@ -483,7 +482,7 @@ class DTW(object):
 
         Example
         -------
-        >>> from dtw import DTW
+        >>> from dtw.dtw import DTW
         >>> test_seq = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]
         >>> ref_seq = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
         >>> dtwcomputer = DTW(test_seq, ref_seq)
@@ -508,7 +507,7 @@ class DTW(object):
 
         Example
         -------
-        >>> from dtw import DTW
+        >>> from dtw.dtw import DTW
         >>> test_seq = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]
         >>> ref_seq = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
         >>> dtwcomputer = DTW(test_seq, ref_seq)
@@ -567,7 +566,7 @@ class DTW(object):
         Example
         -------
         >>> import numpy as np
-        >>> from dtw import DTW
+        >>> from dtw.dtw import DTW
         >>> from dtw.dtw import mixed_dist
         >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
@@ -596,7 +595,7 @@ class DTW(object):
         Example
         -------
         >>> import numpy as np
-        >>> from dtw import DTW
+        >>> from dtw.dtw import DTW
         >>> from dtw.dtw import mixed_dist
 
         >>> # Example #1 - Alignment of angles and inter-nodes sequences without free-ends:
@@ -807,7 +806,7 @@ class DTW(object):
         Example
         -------
         >>> import numpy as np
-        >>> from dtw import DTW
+        >>> from dtw.dtw import DTW
         >>> from dtw.dtw import mixed_dist
         >>> # Alignment of angles and inter-nodes sequences with left and right free-ends:
         >>> seq_test = np.array([[166, 348, 150, 140, 294, 204, 168, 125, 125, 145, 173, 123, 127, 279, 102, 144, 136, 146, 137, 175, 103], [42, 31, 70, 55, 0, 0, 42, 27, 31, 33, 21, 23, 1, 56, 26, 18, 17, 16, 3, 0, 8]]).T
@@ -832,7 +831,7 @@ class DTW(object):
         Example
         -------
         >>> import numpy as np
-        >>> from dtw import DTW
+        >>> from dtw.dtw import DTW
         >>> from dtw.dtw import mixed_dist
         >>> # Alignment of angles and inter-nodes sequences with left and right free-ends:
         >>> seq_test = np.array([[166, 348, 150, 140, 294, 204, 168, 125, 125, 145, 173, 123, 127, 279, 102, 144, 136, 146, 137, 175, 103], [42, 31, 70, 55, 0, 0, 42, 27, 31, 33, 21, 23, 1, 56, 26, 18, 17, 16, 3, 0, 8]]).T
@@ -857,7 +856,7 @@ class DTW(object):
         Example
         -------
         >>> import numpy as np
-        >>> from dtw import DTW
+        >>> from dtw.dtw import DTW
         >>> from dtw.dtw import mixed_dist
         >>> # Alignment of angles and inter-nodes sequences with left and right free-ends:
         >>> seq_test = np.array([[166, 348, 150, 140, 294, 204, 168, 125, 125, 145, 173, 123, 127, 279, 102, 144, 136, 146, 137, 175, 103], [42, 31, 70, 55, 0, 0, 42, 27, 31, 33, 21, 23, 1, 56, 26, 18, 17, 16, 3, 0, 8]]).T
@@ -882,7 +881,7 @@ class DTW(object):
         Example
         -------
         >>> import numpy as np
-        >>> from dtw import DTW
+        >>> from dtw.dtw import DTW
         >>> from dtw.dtw import mixed_dist
         >>> # Alignment of angles and inter-nodes sequences with left and right free-ends:
         >>> seq_test = np.array([[166, 348, 150, 140, 294, 204, 168, 125, 125, 145, 173, 123, 127, 279, 102, 144, 136, 146, 137, 175, 103], [42, 31, 70, 55, 0, 0, 42, 27, 31, 33, 21, 23, 1, 56, 26, 18, 17, 16, 3, 0, 8]]).T
@@ -1098,6 +1097,7 @@ class DTW(object):
             If ``True``, increase code verbosity.
 
         """
+        import pandas as pd
         np.set_printoptions(precision=3)
         if verbose:
             print(f"{' INFOS ':*^80}")
@@ -1290,7 +1290,7 @@ class DTW(object):
         v2 = self.seqY[j]
         for i in range(i1, i2):
             vi = vi + self.seqX[i]
-        return ldist(vi, v2, type=self.mixed_type, spread=self.mixed_spread, weight=self.mixed_weight)
+        return ldist(vi, v2, is_angular=self.mixed_type, spread=self.mixed_spread, weight=self.mixed_weight)
 
     def ldistcumY(self, i, jpair, ldist):
         """Add up the attributes of a sub-sequence of Y.
@@ -1320,7 +1320,7 @@ class DTW(object):
         vj = self.seqY[j2]
         for j in range(j1, j2):
             vj = vj + self.seqY[j]
-        return ldist(v1, vj, type=self.mixed_type, spread=self.mixed_spread, weight=self.mixed_weight)
+        return ldist(v1, vj, is_angular=self.mixed_type, spread=self.mixed_spread, weight=self.mixed_weight)
 
     def asymmetric_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, max_stretch):
         """Compute asymmetric constraints.
@@ -1604,7 +1604,7 @@ class DTW(object):
         Example
         -------
         >>> import numpy as np
-        >>> from dtw import DTW
+        >>> from dtw.dtw import DTW
         >>> from dtw.dtw import mixed_dist
         >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
@@ -1640,7 +1640,7 @@ class DTW(object):
                     tmpcumdistindexes = np.full((3, 2), -1)
                     v1 = self.seqX[i]
                     v2 = self.seqY[j]
-                    ld = self.ldist_f(v1, v2, type=self.mixed_type, spread=self.mixed_spread, weight=self.mixed_weight)
+                    ld = self.ldist_f(v1, v2, is_angular=self.mixed_type, spread=self.mixed_spread, weight=self.mixed_weight)
                     # Todo: Check whether path cumcost should be compared in a normalized or non-normalized way
                     # during dtw algo. At the moment, paths are compared in a non-normalized way.
                     # However, the final optimal solution is chosen on the basis of the normalized cost
@@ -1769,7 +1769,7 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
     Examples
     --------
     >>> import numpy as np
-    >>> from dtw import DTW
+    >>> from dtw.dtw import DTW
     >>> from dtw.dtw import brute_force_free_ends_search
     >>> from dtw.dtw import mixed_dist
     >>> seq_test = np.array([[123, 169, 224, 103, 131, 143, 113, 163, 148, 11, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124], [70, 1, 32, 15, 56, 42, 39, 46, 4, 29, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0]]).T
