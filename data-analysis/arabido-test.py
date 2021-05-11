@@ -15,7 +15,7 @@
 # ------------------------------------------------------------------------------
 
 """
-Data provided by F. Besnard, Inra, RDP, April 2020.
+Data provided by F. Besnard, INRAe, RDP, ENS de Lyon - UMR 5667, April 2020.
 """
 
 import pandas as pd

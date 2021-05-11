@@ -39,7 +39,6 @@ To define a test, create a class with a chosen ``testname`` and create attribute
 
 """
 
-import dtw
 import numpy as np
 from dtw import DTW
 from dtw.dtw import angular_dist
@@ -49,6 +48,7 @@ from dtw.dtw import mixed_dist
 
 def runtest(test, cum_dist_flag=True, bp_flag=False, ld_flag=False, free_ends_flag=False, optimal_path_flag=True, graphic_optimal_path_flag=True,
             graphic_seq_alignment=True):
+    """ Run one of the test examples below. """
     print("Test: ", test.__name__)
     print("test seq (1) = ", test.seq1)
     print("ref  seq (2) = ", test.seq2)
@@ -57,11 +57,12 @@ def runtest(test, cum_dist_flag=True, bp_flag=False, ld_flag=False, free_ends_fl
         ct = test.constraints
     else:  # default
         ct = "symmetric"
-    if hasattr(test, 'disttype'):
-        if test.disttype == "mixed":
+
+    if hasattr(test, 'dist_type'):
+        if test.dist_type == "mixed":
             stg = "mixed"
             ld = mixed_dist
-        elif test.disttype == "angular":
+        elif test.dist_type == "angular":
             stg = "angular"
             ld = angular_dist
         else:
@@ -71,26 +72,32 @@ def runtest(test, cum_dist_flag=True, bp_flag=False, ld_flag=False, free_ends_fl
     else:  # Default
         print("euclidean distance used for local distance ...")
         ld = euclidean_dist
+
     if hasattr(test, 'free_ends'):
         fe = test.free_ends
     else:  # Default
         fe = (0, 1)
+
     if hasattr(test, 'beam_size'):
         bs = test.beam_size
     else:  # Default
         bs = -1
+
     if hasattr(test, 'delins_cost'):
         dc = test.delins_cost
     else:  # Default
         dc = (1., 1.)
+
     if hasattr(test, 'mixed_type'):
         mt = test.mixed_type
     else:  # Default
         mt = []
+
     if hasattr(test, 'mixed_spread'):
         ms = test.mixed_spread
     else:  # Default
         ms = []
+
     if hasattr(test, 'mixed_weight'):
         mw = test.mixed_weight
     else:  # Default
@@ -109,7 +116,7 @@ class test1:
     seq1 = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]
     seq2 = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
     constraints = "symmetric"  # by default = symmetric
-    disttype = "euclidean"  # not necessary (can be removed). option by default
+    dist_type = "euclidean"  # not necessary (can be removed). option by default
     free_ends = (0, 3)
 
 
@@ -117,7 +124,7 @@ class test1_1:
     seq1 = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]
     seq2 = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
     constraints = "symmetric"
-    dist = "euclidean"
+    dist_type = "euclidean"
     beamsize = 1  # <---  size of beam bounding distance between indexes
     free_ends = (0, 3)
 
@@ -126,7 +133,7 @@ class test1_2:
     seq1 = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]
     seq2 = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
     constraints = "symmetric"
-    dist = "euclidean"
+    dist_type = "euclidean"
     free_ends = (3, 3)  # <--- add free starting point at beginning of length 3 (on both X and Y)
 
 
@@ -135,21 +142,21 @@ class test1_3:
     seq2 = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
     constraints = "edit_distance"
     delinscost = (5., 5.)
-    dist = "euclidean"
+    dist_type = "euclidean"
     free_ends = (3, 3)  # <--- add free starting point at beginning of length 3 (on both X and Y)
 
 
 class test2:
     seq1 = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     seq2 = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    dist = "euclidean"
+    dist_type = "euclidean"
     free_ends = (0, 1)
 
 
 class test2_1:
     seq1 = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     seq2 = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    dist = "euclidean"
+    dist_type = "euclidean"
     free_ends = (0, 3)
 
 
@@ -330,7 +337,7 @@ class test20_21:
     seq1 = [136, 144, 133, 139, 171, 107, 137]
     seq2 = [136, 144, 133, 310, 107, 137]  # simulates a missing branch in the reconstruction
     constraints = "merge_split"
-    disttype = "angular"  # Instead of euclidean
+    dist_type = "angular"  # Instead of euclidean
     free_ends = (0, 1)
 
 
@@ -345,7 +352,7 @@ class test20_31:  # When angular distance is taken into account cost is lower.
     seq1 = [136, 144, 133, 139, 171, 107, 137]
     seq2 = [130, 148, 138, 295, 99, 130]  # simulates a noise and missing branch in the reconstruction
     constraints = "merge_split"
-    disttype = "angular"  # Instead of euclidean
+    dist_type = "angular"  # Instead of euclidean
     free_ends = (0, 1)
 
 
@@ -354,7 +361,7 @@ class test20_4:
     seq1 = [136, 280, 413, 552, 723, 830, 967]
     seq2 = [136, 280, 413, 723, 830, 967]  # simulates a missing branch in the reconstruction
     constraints = "merge_split"
-    disttype = "angular"  # Instead of euclidean
+    dist_type = "angular"  # Instead of euclidean
     free_ends = (0, 1)
 
 
@@ -363,7 +370,7 @@ class test20_5:
     seq1 = [136, 280, 413, 552, 723, 830, 967]
     seq2 = [130, 278, 416, 711, 810, 940]  # simulates a noise and missing branch in the reconstruction
     constraints = "merge_split"
-    disttype = "angular"  # Instead of euclidean
+    dist_type = "angular"  # Instead of euclidean
     free_ends = (0, 1)
 
 
@@ -372,7 +379,7 @@ class test20_6:
             110, 147, 131, 143, 268, 222, 271, 140, 133, 141, 129, 133, 138, 138, 162, 133, 145, 136, 145, 142, 129, 119, 136, 136, 148, 136, 118, 128, 138,
             121, 164, 111, 129, 148, 115]
     seq2 = np.full((65,), 137)
-    disttype = "angular"  # Instead of euclidean
+    dist_type = "angular"  # Instead of euclidean
     constraints = "merge_split"
     free_ends = (0, 1)
 
@@ -380,7 +387,7 @@ class test20_6:
 class test20_61:  # Test of a simple inversion (note that this results in a S/M with cost 0 !)
     seq1 = [137, 274, 223, 274, 137]
     seq2 = np.full((5,), 137)
-    disttype = "angular"  # Instead of euclidean
+    dist_type = "angular"  # Instead of euclidean
     constraints = "merge_split"
     free_ends = (0, 1)
 
@@ -388,7 +395,7 @@ class test20_61:  # Test of a simple inversion (note that this results in a S/M 
 class test20_62:  # Same thing with noise: note that the costs of the split/merge is of the order of magnitude of the noise on each angle
     seq1 = [133, 114, 138, 268, 222, 271, 140, 133, 141, 129, 133, 138]
     seq2 = np.full((12,), 137)
-    disttype = "angular"  # Instead of euclidean
+    dist_type = "angular"  # Instead of euclidean
     constraints = "merge_split"
     free_ends = (2, 2)
 
@@ -398,10 +405,10 @@ class test21:  # test of sequences of vectors
     seq1 = [[137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10]]
     seq2 = [[137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10]]
     constraints = "merge_split"
-    disttype = "mixed"  # Instead of euclidean
+    dist_type = "mixed"  # Instead of euclidean
     mixed_type = [True, False]  # first component is of type angle, other are normal coords
     mixed_spread = [1, 10]  # will divide dists to normalize them
-    mixed_weight = [1, 1]  # weight of angle dist compared with normal coord dist
+    mixed_weight = [1, 1]  # weight of angle dist_type compared with normal coord dist_type
     free_ends = (0, 1)
 
 
@@ -409,10 +416,10 @@ class test21_1:  # Test sequence perturbed in both angles and internodes
     seq1 = [[138, 10], [120, 2], [140, 11], [139, 10], [130, 8], [137, 12], [125, 9], [137, 5], [139, 11], [137, 10]]
     seq2 = [[137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10], [137, 10]]
     constraints = "merge_split"
-    disttype = "mixed"  # Instead of euclidean
+    dist_type = "mixed"  # Instead of euclidean
     mixed_type = [True, False]  # first component is of type angle, other are normal coords
     mixed_spread = [1, 10]  # will divide dists to normalize them
-    mixed_weight = [1, 1]  # weight of angle dist compared with normal coord dist
+    mixed_weight = [1, 1]  # weight of angle dist_type compared with normal coord dist_type
     free_ends = (0, 1)
 
 
@@ -420,10 +427,10 @@ class test21_2:  # Testing sequences of vectors as 2dim lists
     seq1 = [[138, 10], [120, 2], [140, 11], [139, 10], [130, 10], [137, 10], [125, 9], [137, 5], [139, 11], [137, 10]]
     seq2 = [[137, 10], [137, 10], [137, 10], [274, 10], [223, 1], [274, 20], [137, 10], [137, 10], [137, 10], [137, 10]]
     constraints = "merge_split"
-    disttype = "mixed"  # Instead of euclidean
+    dist_type = "mixed"  # Instead of euclidean
     mixed_type = [True, False]  # first component is of type angle, other are normal coords
     mixed_spread = [1, 1]  # will divide dists to normalize them
-    mixed_weight = [1, 1]  # weight of angle dist compared with normal coord dist
+    mixed_weight = [1, 1]  # weight of angle dist_type compared with normal coord dist_type
     free_ends = (0, 1)
 
 
@@ -432,4 +439,4 @@ class test21_2:  # Testing sequences of vectors as 2dim lists
 # to control display of test results
 # Just uncomment the test(s) you want to run.
 
-runtest(test21_1, free_ends_flag=True, bp_flag=False, ld_flag=False, graphic_optimal_path_flag=True, graphic_seq_alignment=True)
+runtest(test1, free_ends_flag=True, bp_flag=False, ld_flag=False, graphic_optimal_path_flag=False, graphic_seq_alignment=True)

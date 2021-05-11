@@ -1,3 +1,27 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#       File author(s):
+#           Christophe Godin <christophe.godin@inria.fr>
+#
+#       File contributor(s):
+#           Fabrice Besnard <fabrice.besnard@ens-lyon.fr>
+#           Jonathan Legrand <jonathan.legrand@ens-lyon.fr>
+#
+#       File maintainer(s):
+#           Christophe Godin <christophe.godin@inria.fr>
+#
+#       Mosaic Inria team, RDP Lab, Lyon
+# ------------------------------------------------------------------------------
+
+"""
+Need to add tests for:
+ - every type of constraint: "merge_split", "edit_distance", "asymmetric", "symmetric"
+ - mixed distances (phylotaxis sequences?)
+ - brute force search of free-ends
+ - cost evaluation ?
+"""
+
 import unittest
 import numpy as np
 

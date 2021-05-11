@@ -51,7 +51,7 @@ Returned values:
 - optpath: optimal path recovered
 - length: length of the optimal path
 - ndistarray: numpy array of normalized distances
-- backpointers: numpy array of backpointers
+- backpointers: numpy array of back-pointers
 
 tests: see the file example-dtw for this
 """
@@ -65,7 +65,7 @@ from joblib import Parallel
 from joblib import delayed
 
 FORMATTER = "%(asctime)s - %(name)s - %(lineno)d - %(levelname)s - %(message)s"
-logging.basicConfig(format=FORMATTER, level=logging.INFO)
+logging.basicConfig(format=FORMATTER, level=logging.DEBUG)
 
 
 def euclidean_dist(v1, v2, **args):
@@ -126,7 +126,7 @@ vangular_dist = np.vectorize(angular_dist)
 
 
 # Can only be called for scalar arguments a1 and a2
-def mixed_dist(v1, v2, type=[], spread=[], weight=[]):
+def mixed_dist(v1, v2, is_angular=[], spread=[], weight=[]):
     """Distance where normal components are mixed with periodic ones (here angles)
 
     Parameters
@@ -135,7 +135,7 @@ def mixed_dist(v1, v2, type=[], spread=[], weight=[]):
         First input vectors to compare (should be of same dimension ``dim``).
     v2 : float
         Second input vectors to compare (should be of same dimension ``dim``).
-    type : list(bool), optional
+    is_angular : list(bool), optional
         A boolean vector, of size ``dim``, indicating whether the k^th component should be treated
         as an angle (``True``) or a regular scalar value (``False``).
     spread : list(float), optional
@@ -163,8 +163,8 @@ def mixed_dist(v1, v2, type=[], spread=[], weight=[]):
 
     # default values
     dim = len(v1)
-    if type == []:
-        type = np.full((dim,), False)  # by default type indicates only normal v1_coords
+    if is_angular == []:
+        is_angular = np.full((dim,), False)  # by default type indicates only normal v1_coords
     if spread == []:
         spread = np.full((dim,), 1)  # spread will not modify the distance by default
     if weight == []:
@@ -176,23 +176,23 @@ def mixed_dist(v1, v2, type=[], spread=[], weight=[]):
     if not np.isclose(sumweight, 1.0):
         weight = weight / sum(weight)
 
-    # Extract the subarrays corresponding to angles types and coord types resp.
+    # Extract the sub-arrays corresponding to angles types and coord types resp.
 
-    nottype = np.invert(type)  # not type
-    dim1 = np.count_nonzero(type)  # nb of True values in type
+    nottype = np.invert(is_angular)  # not type
+    dim1 = np.count_nonzero(is_angular)  # nb of True values in type
     dim2 = np.count_nonzero(nottype)  # nb of False values in type
 
-    v1_angles = np.extract(type, v1)  # subarray of angles only (dim1)
-    v1_coords = np.extract(nottype, v1)  # subarray of coords only (dim2)
+    v1_angles = np.extract(is_angular, v1)  # sub-array of angles only (dim1)
+    v1_coords = np.extract(nottype, v1)  # sub-array of coords only (dim2)
 
-    v2_angles = np.extract(type, v2)  # idem for v2
+    v2_angles = np.extract(is_angular, v2)  # idem for v2
     v2_coords = np.extract(nottype, v2)
 
-    weight1 = np.extract(type, weight)  # subarray of weights for angles
-    weight2 = np.extract(nottype, weight)  # subarray of weights for coords
+    weight1 = np.extract(is_angular, weight)  # sub-array of weights for angles
+    weight2 = np.extract(nottype, weight)  # sub-array of weights for coords
 
-    spread1 = np.extract(type, spread)  # subarray of spread factors for angles
-    spread2 = np.extract(nottype, spread)  # subarray of spread factors for coords
+    spread1 = np.extract(is_angular, spread)  # sub-array of spread factors for angles
+    spread2 = np.extract(nottype, spread)  # sub-array of spread factors for coords
 
     if not dim1 == 0:
         DD1 = vangular_dist(v1_angles, v2_angles) ** 2  # angle dist (squared)
@@ -217,7 +217,7 @@ def mixed_dist(v1, v2, type=[], spread=[], weight=[]):
 # Tools
 ###############################################################################
 def print_matrix_bp(a):
-    """Print matrix of backpointers
+    """Print matrix of back-pointers.
 
     Parameters
     ----------
@@ -307,9 +307,9 @@ class DTW(object):
         Parameters
         ----------
         seqX : list or numpy.ndarray
-            First Nxd array of *elements* to compare.
+            First ``N_x x n_dim`` array of *elements* to compare.
         seqY : list or numpy.ndarray
-            Second array of *elements* to compare, act as reference.
+            Second ``N_y x n_dim`` array of *elements* to compare, act as reference.
         constraints : {"edit_distance", "asymmetric, "symmetric", "merge_split"}, default "merge_split"
             Type of constraint to use.
         delins_cost : tuple of float, default (1., 1.)
@@ -322,13 +322,13 @@ class DTW(object):
             The function to compute the local distance used to compare values of both sequences.
             Typically `euclidean_dist()`,  `angular_dist()` or `mixed_dist()`.
         mixed_type : list of bool, optional
-            A boolean vector, of size ``dim``, indicating whether the k^th component should be treated
+            A boolean vector, of size ``n_dim``, indicating whether the k^th component should be treated
             as an angle (``True``) or a regular scalar value (``False``).
         mixed_spread : list of float, optional
             A vector of positive scalars, of size ``dim``, used to normalize the distance values computed
             for each component with their typical spread.
         mixed_weight : list of float, optional
-            A vector of positive weights, of size ``dim``.
+            A vector of positive weights, of size ``n_dim``.
             Does not necessarily sum to 1, but normalized if not.
         beam_size : int, default -1
             maximum amount of distortion allowed for signal warping.
@@ -353,6 +353,7 @@ class DTW(object):
         >>> dtwcomputer = DTW(test_seq, ref_seq)
         >>> ndist, path, length, ndistarray, backpointers = dtwcomputer.run()
         >>> dtwcomputer.get_results()
+        >>> dtwcomputer.get_better_results()
 
         """
         # Initialize empty attributes
@@ -549,7 +550,7 @@ class DTW(object):
 
         Note
         ----
-        You have to call the ``run`` method first!
+        You have to call the ``run()`` method first!
 
         Details of 'type' list symbols for 'merge_split' constraints:
           - ``=``: match
@@ -681,6 +682,9 @@ class DTW(object):
             logging.debug(f"Post-duplication reference sequence indexes {idx_ref}")
             # Relabel duplicated reference:
             idx_ref = np.array(idx_ref)
+            logging.debug(idx_ref[np.where(idx_ref == idx_ref[split_idx])[0]])
+            logging.debug((idx_ref[split_idx] - miss_ref, idx_ref[split_idx] + 1))
+
             idx_ref[np.where(idx_ref == idx_ref[split_idx])[0]] = list(range(idx_ref[split_idx] - miss_ref, idx_ref[split_idx] + 1))
             idx_ref = list(idx_ref)
             logging.debug(f"Updated test sequence indexes {idx_test}")
@@ -723,7 +727,6 @@ class DTW(object):
         if self.n_dim == 1:
             ref_val = self.seqY
             test_val = [self.seqX[e] for e in seq_test]
-            print(test_val)
             self._plot_results(axs, ref_indexes + 1, ref_val, seq_ref + 1, test_val, pred_types, self.names[0])
         else:
             for i in range(self.n_dim):
@@ -945,7 +948,7 @@ class DTW(object):
             j = path[k][1]
             # print ("[",a,",",b,"] ", editoparray[a,b])
             labl = editoparray[i, j]
-            if labl == 'M':
+            if labl == 'm':
                 if i != pi + 1:
                     for h in range(pi + 1, i):
                         if self.seqX.ndim == 1:
@@ -956,7 +959,7 @@ class DTW(object):
                     print("%3d" % self.seqX[i], end=' ')
                 else:
                     print(self.seqX[i], end=' ')
-            elif labl == 'S':
+            elif labl == 's':
                 if j != pj + 1:
                     for h in range(pj + 1, j):
                         print(" - ", end=' ')
@@ -964,13 +967,13 @@ class DTW(object):
                     print("%3d" % self.seqX[i], end=' ')
                 else:
                     print(self.seqX[i], end=' ')
-            elif labl == "m" or labl == "s" or labl == "i" or labl == "M" or labl == "~" or labl == "=":
+            elif labl == "m" or labl == "s" or labl == "i" or labl == "~" or labl == "=":
                 if len(np.shape(self.seqX)) == 1:  # for scalar values
                     print("%3d" % self.seqX[i], end=' ')
                 else:
                     print(self.seqX[i], end=' ')  # for vectorial values
-            elif labl == "d" or labl == "S":
-                print(" - ", end='S')
+            elif labl == "d" or labl == "s":
+                print(" - ", end='s')
             pi = i
             pj = j
         print()
@@ -981,7 +984,7 @@ class DTW(object):
             j = path[k][1]
             # print "[",a,",",b,"] ", editoparray[a,b]
             labl = editoparray[i, j]
-            if labl == 'M':
+            if labl == 'm':
                 if i != pi + 1:
                     for h in range(pi + 1, i):
                         print(" - ", end=' ')
@@ -989,7 +992,7 @@ class DTW(object):
                     print("%3d" % self.seqY[j], end=' ')
                 else:
                     print(self.seqY[j], end=' ')
-            elif labl == 'S':
+            elif labl == 's':
                 if j != pj + 1:
                     for h in range(pj + 1, j):
                         if self.seqY.ndim == 1:
@@ -1000,12 +1003,12 @@ class DTW(object):
                     print("%3d" % self.seqY[j], end=' ')
                 else:
                     print(self.seqY[j], end=' ')
-            elif labl == "m" or labl == "s" or labl == "d" or labl == "S" or labl == "~" or labl == "=":
+            elif labl == "m" or labl == "s" or labl == "d" or labl == "~" or labl == "=":
                 if len(np.shape(self.seqY)) == 1:
                     print("%3d" % self.seqY[j], end=' ')
                 else:
                     print(self.seqY[j], end=' ')
-            elif labl == "i" or labl == "M":
+            elif labl == "i" or labl == "m":
                 print(" - ", end=' ')
             pi = i
             pj = j
@@ -1205,7 +1208,7 @@ class DTW(object):
                         if delta > maxh:
                             maxh = delta
                     score_array = np.zeros(maxh - minh + 1)
-                    print("-----> minh,maxh=", minh, maxh, )
+                    print("-----> minh, maxh=", minh, maxh, )
                     # Second finds a shift s that would best compensate the different shifts:
                     # the aligment would become j - (i+s)
                     for s in range(minh, maxh + 1):
@@ -1360,8 +1363,8 @@ class DTW(object):
                 tmpcumdist[2] = 0.0
             if j > 1:
                 tmpcumdist[2] = self.cum_dist_boundaryY[j - 2]
-            # print tmpcumdist
-            # print np.argmin(tmpcumdist)
+            # logging.debug(tmpcumdist)
+            # logging.debug(np.argmin(tmpcumdist))
         else:
             tmpcumdist[0] = self.cum_dist[i - 1, j]
             tmpcumdist[1] = self.cum_dist_boundaryX[i - 1]
@@ -1371,7 +1374,7 @@ class DTW(object):
             if j > 1:
                 tmpcumdist[2] = self.cum_dist[i - 1, j - 2]
             # decision on local optimal path:
-            # print tmpcumdist
+            # logging.debug(tmpcumdist)
         if i > 0 and self.bp[i - 1, j][1] == j:  # to forbid horizontal move twice in a raw
             tmpcumdist[0] = np.Infinity
         return tmpcumdist, tmpcumdistindexes
@@ -1620,6 +1623,8 @@ class DTW(object):
             apply_constraints = self.asymmetric_constraints
         elif self.constraints == "merge_split":
             apply_constraints = self.merge_split_constraints  # default is symmetric
+        elif self.constraints == "symmetric":
+            apply_constraints = self.symmetric_constraints  # default is symmetric
         else:
             logging.warning(f"Unknown constraint '{self.constraints}', using `symmetric` by default!")
             apply_constraints = self.symmetric_constraints  # default is symmetric
@@ -1668,9 +1673,9 @@ class DTW(object):
                     else:  # case of merge_split
                         # a different strategy is used to label edit operation in case of merge_split
                         # "=" or "~" for a match or a quasi-match,
-                        # "M" for a merge (several X have been aggregate to match one Y),
-                        # "S" for a split (several Y have been aggregated to match one X)
-                        self.editop[i, j] = "=" if optindex == 1 else "S" if optindex == 2 else "M"
+                        # "m" for a merge (several X have been aggregate to match one Y),
+                        # "s" for a split (several Y have been aggregated to match one X)
+                        self.editop[i, j] = "=" if optindex == 1 else "s" if optindex == 2 else "m"
                         if self.editop[i, j] == "=" and not np.isclose(ld, 0):
                             self.editop[i, j] = "~"
 
@@ -1803,7 +1808,7 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
     }
     free_ends = [(left_fe, right_fe + 1) for left_fe in range(N) for right_fe in range(N)]
     norm_dists = Parallel(n_jobs=n_jobs)(delayed(_get_ndist)(dtw.seqX, dtw.seqY, fe, **kwargs) for fe in free_ends)
-    print(norm_dists)
+
     # return the free-ends for first occurrence of the min norm distance
     min_ndist = np.Infinity
     left_fe, right_fe = 0, 1
@@ -1826,7 +1831,7 @@ DIST_TYPES = {"euclidean", "angular", "mixed"}
 DEF_DIST_TYPE = 'euclidean'
 #: Default value for `free_ends` parameter.
 DEF_FREE_ENDS = (0, 1)
-#: Default value for `beamsize` parameter.
+#: Default value for `beam_size` parameter.
 DEF_BEAMSIZE = -1
 #: Default value for `delins_cost` parameter.
 DEF_DELINS_COST = (1., 1.)
@@ -1917,42 +1922,22 @@ def sequence_comparison(seqX, seqY, constraint=DEF_CONSTRAINT, dist_type=DEF_DIS
         ld = euclidean_dist
     elif dist_type == "angular":
         ld = angular_dist
-    else:  # mixed and normalize distance
+    else:  # mixed normalized distance
         ld = mixed_dist
 
     dtwcomputer = DTW(seqX, seqY, constraints=constraint, delins_cost=delins_cost, ldist=ld,
                       mixed_type=mixed_type, mixed_spread=mixed_spread, mixed_weight=mixed_weight,
                       beamsize=beamsize, max_stretch=max_stretch)
-    if type(free_ends) == tuple:  # if free-ends is tuple: NOT AUTOMATIC --> uses the tuple values
+    if type(free_ends) == tuple:
+        # if `free_ends` is tuple: NOT AUTOMATIC --> uses the tuple values
         dtwcomputer.free_ends = free_ends
     else:
-        # if free-ends is NOT tuple: AUTOMATIC --> it is assumed to be int or real <= 0.4
+        # if `free_ends` is NOT tuple: AUTOMATIC --> it is assumed to be int or real <= 0.4
         # and this corresponds to a percentage of sequence length for max exploration of free-ends
-        '''
-        # Assumption that free end detection could be made on both sides independently (but obviously not true: find why)
-        ndist = np.Infinity
-        for i in range(N):
-            fe = (i,1)  # (vary only the left hand side free_ends )
-            _ndist, _path, _length, _ndistarray, _backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delins_cost=delins_cost,mixed_type = mixed_type, mixed_spread = mixed_spread, mixed_weight = mixed_weight, free_ends=fe, beamsize=beamsize, max_stretch=maxstretch)
-            print("(i=",i,"cost=",_ndist,end=') ')
-            if _ndist < ndist:
-                left_freeindex = i
-                ndist, path, length, ndistarray, backpointers = _ndist, _path, _length, _ndistarray, _backpointers
-        print("--> ", left_freeindex)
-        ndist = np.Infinity
-        for j in range(N): # same value explore on both left and right
-            fe = (0,j+1)  # (vary only the left hand side free_ends )
-            _ndist, _path, _length, _ndistarray, _backpointers = dtwcomputer.run(ldist=ld, constraints=ct, delins_cost=delins_cost,mixed_type = mixed_type, mixed_spread = mixed_spread, mixed_weight = mixed_weight, free_ends=fe, beamsize=beamsize, max_stretch=maxstretch)
-            print("(j=",j,"cost=",_ndist,end=') ')
-            if _ndist < ndist:
-                right_freeindex = j
-                ndist, path, length, ndistarray, backpointers = _ndist, _path, _length, _ndistarray, _backpointers
-        print("--> ", right_freeindex)
-        '''
-        print(f"Starting brute force search...")
+        logging.info(f"Starting brute force search...")
         free_ends, norm_dist = brute_force_free_ends_search(dtwcomputer, max_value=free_ends,
                                                             free_ends_eps=free_ends_eps)
-        print(f"Found freend-ends {free_ends} at a cost of {norm_dist}.")
+        logging.info(f"Found free-ends {free_ends} at a cost of {norm_dist}.")
         # finally computes the DTW for free-ends found
         dtwcomputer.free_ends = free_ends
 

@@ -134,14 +134,14 @@ def main(args):
     gt_angles = scan.get_measures('angles')
     gt_internodes = scan.get_measures('internodes')
     # Create ground-truth & predicted angles and inter-nodes arrays
-    vecseq_gt = np.array([pred_angles, pred_internodes]).T
-    vecseq_pred = np.array([gt_angles, gt_internodes]).T
+    seq_gt = np.array([pred_angles, pred_internodes]).T
+    seq_pred = np.array([gt_angles, gt_internodes]).T
 
     mixed_kwargs = {}
     if args.dist_type == 'mixed':
         # Get the max value for inter-nodes, used by `mixed_spread`
-        max_gt = np.max(vecseq_gt[:, 1])
-        max_pred = np.max(vecseq_pred[:, 1])
+        max_gt = np.max(seq_gt[:, 1])
+        max_pred = np.max(seq_pred[:, 1])
         # Update the keyword arguments to use with this type of distance
         mixed_kwargs = {'mixed_type': [True, False],
                         'mixed_weight': [0.5, 0.5],
@@ -151,7 +151,7 @@ def main(args):
                    'free_ends_flag': False, 'optimal_path_flag': True,
                    'graphic_optimal_path_flag': False, 'graphic_seq_alignment': False}
 
-    df = sequence_comparison(vecseq_pred, vecseq_gt, constraint=args.constraint, dist_type=args.dist_type, free_ends=args.free_ends, beam_size=args.beamsize,
+    df = sequence_comparison(seq_pred, seq_gt, constraint=args.constraint, dist_type=args.dist_type, free_ends=args.free_ends, beam_size=args.beamsize,
                              delins_cost=args.delins_cost, max_stretch=args.max_stretch, verbose=True, **mixed_kwargs, **flag_kwargs)
     df.to_csv(join(args.db_path, args.scan, 'dtw_result.csv'))
 
