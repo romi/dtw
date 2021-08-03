@@ -40,7 +40,7 @@ To define a test, create a class with a chosen ``testname`` and create attribute
 """
 
 import numpy as np
-from dtw import DTW
+from dtw.dtw import DTW
 from dtw.dtw import angular_dist
 from dtw.dtw import euclidean_dist
 from dtw.dtw import mixed_dist

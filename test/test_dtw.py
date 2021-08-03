@@ -25,7 +25,7 @@ Need to add tests for:
 import unittest
 import numpy as np
 
-from dtw import DTW
+from dtw.dtw import DTW
 
 
 class TestDtw(unittest.TestCase):
