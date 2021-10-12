@@ -21,7 +21,7 @@ from plotly.subplots import make_subplots
 
 
 def sequences_table(dtw: dtw.DTW):
-    """ Plotly table presenting reference and test sequences found in DTW object."""
+    """Plotly table presenting reference and test sequences found in DTW object."""
     titles = ['test', 'reference']
     fig = make_subplots(rows=1, cols=2, shared_yaxes=True, subplot_titles=titles,
                         horizontal_spacing=0.03, specs=[[{"type": "table"}] * 2])
@@ -57,7 +57,7 @@ def _sequence_plot(fig, fig_idx, ref_idx, ref_val, test_idx, test_val, name, pre
 
 
 def plot_sequences(dtw: dtw.DTW):
-    """ Plotly scatter plot presenting reference and test sequences found in DTW object."""
+    """Plotly scatter plot presenting reference and test sequences found in DTW object."""
     n_figs = dtw.ndim
     ref_indexes = np.array(range(dtw.nr))
     test_indexes = np.array(range(dtw.nt))
@@ -76,7 +76,7 @@ def plot_sequences(dtw: dtw.DTW):
 
 
 def plot_aligned_sequences(dtw: dtw.DTW):
-    """ Plotly scatter plot presenting aligned reference and test sequences found in DTW object."""
+    """Plotly scatter plot presenting aligned reference and test sequences found in DTW object."""
     n_figs = dtw.ndim
 
     ref_indexes = np.array(range(dtw.nr))

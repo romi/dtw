@@ -67,27 +67,27 @@ FORMATTER = "%(asctime)s - %(name)s - %(lineno)d - %(levelname)s - %(message)s"
 logging.basicConfig(format=FORMATTER, level=logging.INFO)
 
 
-def euclidean_dist(v1, v2, **args):
-    """Compute the Euclidean distance between `v1` and `v2`, two inter-nodes lengths.
+def euclidean_dist(v1, v2):
+    """Compute the Euclidean distance between two inter-nodes lengths.
 
     Parameters
     ----------
     v1 : float
-        first inter-node length value
+        The first inter-node length value.
     v2 : float
-        second inter-node length value
+        The second inter-node length value.
 
     Returns
     -------
     float
-        the Euclidean distance between the inter-nodes lengths, normalized between [0, 1]
+        The Euclidean distance, normalized in ``[0, 1]``.
 
     """
     return np.linalg.norm(v1 - v2)
 
 
 # Can only be called for scalar arguments a1 and a2
-def angular_dist(a1, a2, **args):
+def angular_dist(a1, a2):
     """Distance between two angles as a percentage of the distance of their difference to 180 degrees.
 
     Parameters
@@ -116,7 +116,6 @@ def angular_dist(a1, a2, **args):
     # the original angles. 0 <= da < 360.
     da = Da % 360.
     # assert (da >= 0.)
-
     return 1 - np.abs(180 - da) / 180.
 
 

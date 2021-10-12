@@ -48,7 +48,7 @@ from dtw.dtw import mixed_dist
 
 def runtest(test, cum_dist_flag=True, bp_flag=False, ld_flag=False, free_ends_flag=False, optimal_path_flag=True, graphic_optimal_path_flag=True,
             graphic_seq_alignment=True):
-    """ Run one of the test examples below. """
+    """Run one of the test examples below. """
     print("Test: ", test.__name__)
     print("test seq (1) = ", test.seq1)
     print("ref  seq (2) = ", test.seq2)
