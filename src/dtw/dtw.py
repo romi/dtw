@@ -64,23 +64,23 @@ from joblib import Parallel
 from joblib import delayed
 
 FORMATTER = "%(asctime)s - %(name)s - %(lineno)d - %(levelname)s - %(message)s"
-logging.basicConfig(format=FORMATTER, level=logging.DEBUG)
+logging.basicConfig(format=FORMATTER, level=logging.INFO)
 
 
 def euclidean_dist(v1, v2, **args):
-    """Compute the Euclidean distance between `v1` and `v2`, two internodes lengths.
+    """Compute the Euclidean distance between `v1` and `v2`, two inter-nodes lengths.
 
     Parameters
     ----------
     v1 : float
-        first internode length value
+        first inter-node length value
     v2 : float
-        second internode length value
+        second inter-node length value
 
     Returns
     -------
     float
-        the Euclidean distance between the internodes lengths, normalized between [0, 1]
+        the Euclidean distance between the inter-nodes lengths, normalized between [0, 1]
 
     """
     return np.linalg.norm(v1 - v2)
@@ -698,8 +698,15 @@ class DTW(object):
         idx_ref = np.array(idx_ref) + start_index
         return {'test': idx_test, 'reference': idx_ref, 'type': np.array(event_types), 'cost': np.array(event_costs)}
 
-    def plot_results(self):
-        """
+    def plot_results(self, figname="", figsize=None):
+        """Generates a figure showing sequence(s) alignment and event types.
+
+        Parameters
+        ----------
+        figname : str, optional
+            If specified, save the figure uder this file name and path.
+        figsize : 2-tuple of floats, optional
+            Figure dimension (width, height) in inches.
 
         Examples
         --------
@@ -722,7 +729,9 @@ class DTW(object):
         pred_types = results['type']
         pred_types[np.where(pred_types == '=')] = ''
 
-        fig, axs = plt.subplots(ncols=1, nrows=self.n_dim, constrained_layout=True)
+        if figsize is None:
+            figsize = (10, 5 * self.n_dim)
+        fig, axs = plt.subplots(ncols=1, nrows=self.n_dim, figsize=figsize, constrained_layout=True)
         if self.n_dim == 1:
             ref_val = self.seqY
             test_val = [self.seqX[e] for e in seq_test]
@@ -733,7 +742,11 @@ class DTW(object):
                 test_val = [self.seqX[e, i] for e in seq_test]
                 self._plot_results(axs[i], ref_indexes + 1, ref_val, seq_ref + 1, test_val, pred_types, self.names[i])
         plt.suptitle(f"DTW - {self.constraints.replace('_', ' ')} alignment")
-        plt.show()
+
+        if figname != "":
+            plt.savefig(figname)
+        else:
+            plt.show()
 
     @staticmethod
     def _plot_results(ax, ref_x, ref_y, test_x, test_y, pred_types, name):
@@ -1737,14 +1750,14 @@ class DTW(object):
 
 
 def _get_ndist(test_seq, ref_seq, free_ends, **kwargs) -> float:
-    """ Creates and run DTW algorithm for selected free-ends."""
+    """Creates and run DTW algorithm for selected free-ends."""
     dtwcomputer = DTW(test_seq, ref_seq, free_ends=free_ends, **kwargs)
     _ndist, _, _, _, _ = dtwcomputer.run()
     return _ndist
 
 
 def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=-1):
-    """ Explore all free-ends combinations in the prescribed limits.
+    """Explore all free-ends combinations in the prescribed limits.
 
     This is a brute force method to search the optimal free-ends values.
     The best model is selected using the lowest minimum normalized cost for a pair of free-ends.
@@ -1761,7 +1774,7 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
 
     Returns
     -------
-    tuple
+    2-tuple of floats
         a length-2 tuple of left & right free-ends.
     float
         the corresponding nomalized distance
@@ -1790,7 +1803,7 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
 
     if max_value > 0.4:
         max_value = 0.4  # (max value for exploration of free-ends)
-        logging.warning("Automatic free-ends capped to 40% of min length on both sides.")
+        logging.warning("Automatic free-ends capped to max 40% of min length on both sides.")
 
     # first find the limits of the tested free-ends
     Nmin = min(dtw.nX, dtw.nY)
@@ -1988,7 +2001,7 @@ def duplicate_idx(l, idx, n):
 # TODO: dtw_eval_summarize & compare_align (test_eval.R)
 
 def dtw_eval_summarize(df, reference_df, verbose=True):
-    """ Evaluate DTW predictions.
+    """Evaluate DTW predictions.
 
     It provides metrics to evaluate the correctness of the prediction of the several alignments of a test sequence on their respective reference sequence knowing the true alignments.
 
