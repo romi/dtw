@@ -1,0 +1,12 @@
+name: dtw
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - matplotlib
+  - numpy
+  - pandas
+  - joblib
+  - sphinx  # documentation: generates documentation with `make html`
+  - myst-parser  # documentation: use markdown instead of reStructuredText with sphinx
+  - sphinx-argparse  # documentation: argparse automatic documentation
