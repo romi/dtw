@@ -12,7 +12,7 @@ git clone https://gitlab.inria.fr/cgodin-dev/dtw.git
 ### Conda environment creation (optional)
 If you don't have an existing conda environment, create one (named `dtw`) with:
 ```bash
-conda env create -f environment.yml
+conda env create -f conda/env/dtw.yaml
 ```
 You can find the official instructions on how to manually create an environment [here](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands).
 
