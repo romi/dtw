@@ -22,8 +22,7 @@ distance or split-merge constraints.
 DTW techniques are based in particular on basic DTW algorithm described in :
 
 Sakoe, H., & Chiba, S. (1978) Dynamic programming algorithm optimization for spoken
-word recognition. IEEE Transactions on Acoustic, Speech, and Signal Processing,
-ASSP-26(1),43-49.
+word recognition. IEEE Transactions on Acoustic, Speech, and Signal Processing, ASSP-26(1),43-49.
 
 and new dynamic time warping based techniques such as merge_split.
 
@@ -53,184 +52,19 @@ Returned values:
 - ndistarray: numpy array of normalized distances
 - backpointers: numpy array of back-pointers
 
-tests: see the file example-dtw for this
+tests: see the file `example-dtw.py` for this
 """
 
 import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
 
 FORMATTER = "%(asctime)s - %(name)s - %(lineno)d - %(levelname)s - %(message)s"
 logging.basicConfig(format=FORMATTER, level=logging.INFO)
 
-
-def euclidean_dist(v1, v2):
-    """Compute the Euclidean distance between two inter-nodes lengths.
-
-    Parameters
-    ----------
-    v1 : float
-        The first inter-node length value.
-    v2 : float
-        The second inter-node length value.
-
-    Returns
-    -------
-    float
-        The Euclidean distance, normalized in ``[0, 1]``.
-
-    """
-    return np.linalg.norm(v1 - v2)
-
-
-# Can only be called for scalar arguments a1 and a2
-def angular_dist(a1, a2):
-    """Distance between two angles as a percentage of the distance of their difference to 180 degrees.
-
-    Parameters
-    ----------
-    a1 : int, float
-        The first angle, given in degrees.
-    a2 : int, float
-        The second angle, given in degrees.
-
-    Returns
-    -------
-    float
-        Angular distance, normalized in ``[0, 1]``.
-
-    Notes
-    -----
-    The returned distance is a number between 0 and 1:
-
-      - 0 means the two angles are equal up to 360 degrees.
-      - 1 means that the two angles are separated by 180 degrees.
-      - A distance of 0.5 corresponds to a difference of 90 degrees between the two angles.
-
-    """
-    Da = a1 - a2
-    # da is the angle corresponding to the difference between
-    # the original angles. 0 <= da < 360.
-    da = Da % 360.
-    # assert (da >= 0.)
-    return 1 - np.abs(180 - da) / 180.
-
-
-# to use this angular distance with numpy arrays
-vangular_dist = np.vectorize(angular_dist)
-
-
-# Can only be called for scalar arguments a1 and a2
-def mixed_dist(v1, v2, is_angular=[], spread=[], weight=[]):
-    """Distance where normal components are mixed with periodic ones (here angles)
-
-    Parameters
-    ----------
-    v1 : float
-        First input vectors to compare (should be of same dimension ``dim``).
-    v2 : float
-        Second input vectors to compare (should be of same dimension ``dim``).
-    is_angular : list(bool), optional
-        A boolean vector, of size ``dim``, indicating whether the k^th component should be treated
-        as an angle (``True``) or a regular scalar value (``False``).
-    spread : list(float), optional
-        A vector of positive scalars, of size ``dim``, used to normalize the distance values computed
-        for each component with their typical spread.
-    weight : list(float), optional
-        A vector of positive weights, of size ``dim``.
-        Does not necessarily sum to 1, but normalized if not.
-
-    Returns
-    -------
-    float
-        The distance value.
-
-    Notes
-    -----
-    The resulting distance is:
-
-    .. math::
-        D(v_1,v_2) = \sqrt{\sum_{k} \text{weight} \[k\] * d{_k}^2(v_1[k],v_2[k])/ \text{spread}[k]^2)}
-
-    where :math:`d\_k` is a distance that depends on ``type[k]``.
-
-    """
-
-    # default values
-    dim = len(v1)
-    if is_angular == []:
-        is_angular = np.full((dim,), False)  # by default type indicates only normal v1_coords
-    if spread == []:
-        spread = np.full((dim,), 1)  # spread will not modify the distance by default
-    if weight == []:
-        weight = np.full((dim,), 1)  # equal weights by default
-
-    # if the array alpha is not normalized, it is is normalized first here
-    weight = np.array(weight)
-    sumweight = sum(weight)  # should be 1
-    if not np.isclose(sumweight, 1.0):
-        weight = weight / sum(weight)
-
-    # Extract the sub-arrays corresponding to angles types and coord types resp.
-
-    nottype = np.invert(is_angular)  # not type
-    dim1 = np.count_nonzero(is_angular)  # nb of True values in type
-    dim2 = np.count_nonzero(nottype)  # nb of False values in type
-
-    v1_angles = np.extract(is_angular, v1)  # sub-array of angles only (dim1)
-    v1_coords = np.extract(nottype, v1)  # sub-array of coords only (dim2)
-
-    v2_angles = np.extract(is_angular, v2)  # idem for v2
-    v2_coords = np.extract(nottype, v2)
-
-    weight1 = np.extract(is_angular, weight)  # sub-array of weights for angles
-    weight2 = np.extract(nottype, weight)  # sub-array of weights for coords
-
-    spread1 = np.extract(is_angular, spread)  # sub-array of spread factors for angles
-    spread2 = np.extract(nottype, spread)  # sub-array of spread factors for coords
-
-    if not dim1 == 0:
-        DD1 = vangular_dist(v1_angles, v2_angles) ** 2  # angle dist (squared)
-        DD1 = DD1 / spread1 ** 2
-        DD1 = DD1 * weight1  # adding weights
-    else:
-        DD1 = []
-
-    # case of normal coordinates
-    if not dim2 == 0:
-        DD2 = (v1_coords - v2_coords) ** 2  # euclidean L2 norm (no sqrt yet)
-        DD2 = DD2 / spread2 ** 2
-        DD2 = DD2 * weight2  # adding weights
-    else:
-        DD2 = []
-
-    DD = sum(DD1) + sum(DD2)
-    return np.sqrt(DD)
-
-
-###############################################################################
-# Tools
-###############################################################################
-def print_matrix_bp(a):
-    """Print matrix of back-pointers.
-
-    Parameters
-    ----------
-    a :
-        ???
-
-    """
-    print("Matrix[" + ("%d" % a.shape[0]) + "][" + ("%d" % a.shape[1]) + "]")
-    rows = a.shape[0]
-    cols = a.shape[1]
-    for i in range(0, rows):
-        for j in range(0, cols):
-            print(("(%2d,%2d)" % (a[i, j][0], a[i, j][1])), end=' ')  # "%6.f" %a[i,j],
-        print()
-    print()
+from dtw.metrics import euclidean_dist
+from dtw.tools import print_matrix_bp
 
 
 # Main DTW class: to build DTW computer objects on a pair of sequences
@@ -368,7 +202,7 @@ class DTW(object):
         self.opt_index = None
         self.opt_backtrack_path = None
 
-        # seqX and seqY are expected to be two np.arrays of elements of identical dim
+        # seqX and seqY are expected to be two numpy.arrays of elements of identical dim
         # an element can be a scalar or a vector
         self.seqX = np.array(seqX)
         self.seqY = np.array(seqY)
@@ -402,6 +236,7 @@ class DTW(object):
             logging.debug("No name given to sequence dimensions, using default names.")
 
     def _check_sequences(self):
+        """Hidden method called upon instance initialization to test requirements are met by provided sequences."""
         try:
             _, rn_dim = self.seqX.shape
         except ValueError:
@@ -566,7 +401,7 @@ class DTW(object):
         -------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
-        >>> from dtw.dtw import mixed_dist
+        >>> from dtw.metrics import mixed_dist
         >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
@@ -595,7 +430,7 @@ class DTW(object):
         -------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
-        >>> from dtw.dtw import mixed_dist
+        >>> from dtw.metrics import mixed_dist
 
         >>> # Example #1 - Alignment of angles and inter-nodes sequences without free-ends:
         >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
@@ -649,7 +484,8 @@ class DTW(object):
             logging.debug(f"Post-duplication reference sequence indexes: {idx_ref}")
             # Relabel duplicated test:
             idx_test = np.array(idx_test)
-            idx_test[np.where(idx_test == idx_test[merge_idx])[0]] = list(range(idx_test[merge_idx] - added_test, idx_test[merge_idx] + 1))
+            idx_test[np.where(idx_test == idx_test[merge_idx])[0]] = list(
+                range(idx_test[merge_idx] - added_test, idx_test[merge_idx] + 1))
             idx_test = list(idx_test)
             logging.debug(f"Updated test sequence indexes: {idx_test}")
             logging.debug(f"Updated reference sequence indexes: {idx_ref}")
@@ -683,7 +519,8 @@ class DTW(object):
             logging.debug(idx_ref[np.where(idx_ref == idx_ref[split_idx])[0]])
             logging.debug((idx_ref[split_idx] - miss_ref, idx_ref[split_idx] + 1))
 
-            idx_ref[np.where(idx_ref == idx_ref[split_idx])[0]] = list(range(idx_ref[split_idx] - miss_ref, idx_ref[split_idx] + 1))
+            idx_ref[np.where(idx_ref == idx_ref[split_idx])[0]] = list(
+                range(idx_ref[split_idx] - miss_ref, idx_ref[split_idx] + 1))
             idx_ref = list(idx_ref)
             logging.debug(f"Updated test sequence indexes {idx_test}")
             logging.debug(f"Updated reference sequence indexes {idx_ref}")
@@ -710,8 +547,8 @@ class DTW(object):
         Examples
         --------
         >>> import numpy as np
-        >>> from dtw.dtw import DTW
-        >>> from dtw.dtw import mixed_dist
+        >>> from dtw import DTW
+        >>> from dtw.metrics import mixed_dist
         >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
@@ -772,7 +609,8 @@ class DTW(object):
         ax.plot(ref_x, ref_y, marker='+', linestyle='dashed', label='Reference')
         ax.plot(test_x, test_y, marker='o', linestyle='dashed', label='Test')
         for x, y, t in zip(test_x, test_y, pred_types):
-            ax.text(x, y, t.upper(), ha='center', va='center', fontfamily='monospace', fontsize='large', fontweight='medium')
+            ax.text(x, y, t.upper(), ha='center', va='center', fontfamily='monospace', fontsize='large',
+                    fontweight='medium')
         x_ticks = np.arange(0, max(ref_x) + 1, 1)
         ax.set_xticks(x_ticks)
         ax.set_title(f"{name.upper()}")
@@ -782,6 +620,23 @@ class DTW(object):
         ax.legend()
 
     def get_split_events(self):
+        """Return the split events.
+
+        Example
+        -------
+        >>> import numpy as np
+        >>> from dtw.dtw import DTW
+        >>> from dtw.metrics import mixed_dist
+        >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
+        >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
+        >>> max_ref = np.max(seq_ref[:, 1])
+        >>> max_test = np.max(seq_test[:, 1])
+        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[1, 1], names=["angles", "inter-nodes"])
+        >>> dtwcomputer.run()
+        >>> dtwcomputer.plot_results()
+        >>> dtwcomputer.get_split_events()
+
+        """
         _, idx_ref, event_types, _ = self.get_results(False).values()
         event_types = np.array(event_types)
         split_indexes = np.where(event_types == 's')[0]
@@ -796,6 +651,23 @@ class DTW(object):
         return miss_ref
 
     def get_merge_events(self):
+        """Return the index of the merge events on the reference sequence.
+
+        Example
+        -------
+        >>> import numpy as np
+        >>> from dtw.dtw import DTW
+        >>> from dtw.metrics import mixed_dist
+        >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
+        >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
+        >>> max_ref = np.max(seq_ref[:, 1])
+        >>> max_test = np.max(seq_test[:, 1])
+        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[1, 1], names=["angles", "inter-nodes"])
+        >>> dtwcomputer.run()
+        >>> dtwcomputer.plot_results()
+        >>> dtwcomputer.get_merge_events()
+
+        """
         idx_test, _, event_types, _ = self.get_results(False).values()
         event_types = np.array(event_types)
         merge_indexes = np.where(event_types == 'm')[0]
@@ -819,14 +691,12 @@ class DTW(object):
         -------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
-        >>> from dtw.dtw import mixed_dist
-        >>> # Alignment of angles and inter-nodes sequences with left and right free-ends:
-        >>> seq_test = np.array([[166, 348, 150, 140, 294, 204, 168, 125, 125, 145, 173, 123, 127, 279, 102, 144, 136, 146, 137, 175, 103], [42, 31, 70, 55, 0, 0, 42, 27, 31, 33, 21, 23, 1, 56, 26, 18, 17, 16, 3, 0, 8]]).T
-        >>> seq_ref = np.array([[150, 140, 138, 168, 125, 125, 145, 173, 123, 127, 99, 180, 102, 144, 136, 146, 137, 142, 136, 134], [70, 55, 0, 42, 27, 31, 33, 21, 23, 1, 28, 28, 26, 18, 17, 16, 3, 0, 8, 18]]).T
+        >>> from dtw.metrics import mixed_dist
+        >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
+        >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[0.5, 0.5])
-        >>> dtwcomputer.free_ends = (2, 4)
+        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[1, 1], names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_aligned_reference_sequence()
 
@@ -844,14 +714,12 @@ class DTW(object):
         -------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
-        >>> from dtw.dtw import mixed_dist
-        >>> # Alignment of angles and inter-nodes sequences with left and right free-ends:
-        >>> seq_test = np.array([[166, 348, 150, 140, 294, 204, 168, 125, 125, 145, 173, 123, 127, 279, 102, 144, 136, 146, 137, 175, 103], [42, 31, 70, 55, 0, 0, 42, 27, 31, 33, 21, 23, 1, 56, 26, 18, 17, 16, 3, 0, 8]]).T
-        >>> seq_ref = np.array([[150, 140, 138, 168, 125, 125, 145, 173, 123, 127, 99, 180, 102, 144, 136, 146, 137, 142, 136, 134], [70, 55, 0, 42, 27, 31, 33, 21, 23, 1, 28, 28, 26, 18, 17, 16, 3, 0, 8, 18]]).T
+        >>> from dtw.metrics import mixed_dist
+        >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
+        >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[0.5, 0.5])
-        >>> dtwcomputer.free_ends = (2, 4)
+        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[1, 1], names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_aligned_test_sequence()
 
@@ -869,7 +737,7 @@ class DTW(object):
         -------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
-        >>> from dtw.dtw import mixed_dist
+        >>> from dtw.metrics import mixed_dist
         >>> # Alignment of angles and inter-nodes sequences with left and right free-ends:
         >>> seq_test = np.array([[166, 348, 150, 140, 294, 204, 168, 125, 125, 145, 173, 123, 127, 279, 102, 144, 136, 146, 137, 175, 103], [42, 31, 70, 55, 0, 0, 42, 27, 31, 33, 21, 23, 1, 56, 26, 18, 17, 16, 3, 0, 8]]).T
         >>> seq_ref = np.array([[150, 140, 138, 168, 125, 125, 145, 173, 123, 127, 99, 180, 102, 144, 136, 146, 137, 142, 136, 134], [70, 55, 0, 42, 27, 31, 33, 21, 23, 1, 28, 28, 26, 18, 17, 16, 3, 0, 8, 18]]).T
@@ -894,7 +762,7 @@ class DTW(object):
         -------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
-        >>> from dtw.dtw import mixed_dist
+        >>> from dtw.metrics import mixed_dist
         >>> # Alignment of angles and inter-nodes sequences with left and right free-ends:
         >>> seq_test = np.array([[166, 348, 150, 140, 294, 204, 168, 125, 125, 145, 173, 123, 127, 279, 102, 144, 136, 146, 137, 175, 103], [42, 31, 70, 55, 0, 0, 42, 27, 31, 33, 21, 23, 1, 56, 26, 18, 17, 16, 3, 0, 8]]).T
         >>> seq_ref = np.array([[150, 140, 138, 168, 125, 125, 145, 173, 123, 127, 99, 180, 102, 144, 136, 146, 137, 142, 136, 134], [70, 55, 0, 42, 27, 31, 33, 21, 23, 1, 28, 28, 26, 18, 17, 16, 3, 0, 8, 18]]).T
@@ -928,9 +796,12 @@ class DTW(object):
         summary["added events per merge"] = self.get_merge_events()
         summary["total number of missed events"] = sum(self.get_split_events())
         summary["total number of added events"] = sum(self.get_merge_events())
-        summary["total event errors"] = summary["number chop start"] + summary["number chop end"] + summary["total number of missed events"] \
-                                        + summary["number tail start"] + summary["number tail end"] + summary["total number of added events"]
-        summary["total matched events"] = len(np.where(aligned_results['type'] == '~')[0]) + len(np.where(aligned_results['type'] == '=')[0])
+        summary["total event errors"] = summary["number chop start"] + summary["number chop end"] + summary[
+            "total number of missed events"] \
+                                        + summary["number tail start"] + summary["number tail end"] + summary[
+                                            "total number of added events"]
+        summary["total matched events"] = len(np.where(aligned_results['type'] == '~')[0]) + len(
+            np.where(aligned_results['type'] == '=')[0])
         matched_ref, matched_test = self.get_matching_sequences()
         for d in range(self.n_dim):
             diff = matched_ref[:, d] - matched_test[:, d]
@@ -1126,13 +997,15 @@ class DTW(object):
             print(f"Alignment:")
             self.print_alignment(self.opt_backtrack_path, self.editop)
             print(f"Optimal path length: {len(self.opt_backtrack_path)}")
-            print(f"Optimal normalized cost: {self.min_normalized_cost} at cell {self.opt_index} (non normalized: {self.non_mormalized_optcost}")
+            print(
+                f"Optimal normalized cost: {self.min_normalized_cost} at cell {self.opt_index} (non normalized: {self.non_mormalized_optcost}")
 
         if cum_dist_flag:
             print(f"Array of global distances (x downward, y rightward):\n {self.cum_dist}")
 
         if free_ends_flag and verbose:
-            print("Sub-array of normalized distances on relaxed ending region= \n", self.optpath_normalized_cumdist_array)
+            print("Sub-array of normalized distances on relaxed ending region= \n",
+                  self.optpath_normalized_cumdist_array)
             print("Sub-array of optimal path lengths on relaxed ending region= \n", self.optpathlength_array)
 
         data = {}
@@ -1577,11 +1450,14 @@ class DTW(object):
 
             # Eventually, diagonal case:
             if i == 0:  # we already made sure that then j!=0
-                tmpcumdist[1] = self.cum_dist_boundaryY[j - 1] + self.ldistcumY(0, (j, j), ldist)  # equivalent to l_dist(seqi[0],seqj[0])
+                tmpcumdist[1] = self.cum_dist_boundaryY[j - 1] + self.ldistcumY(0, (j, j),
+                                                                                ldist)  # equivalent to l_dist(seqi[0],seqj[0])
             elif j == 0:  # we already made sure that then i!=0
-                tmpcumdist[1] = self.cum_dist_boundaryX[i - 1] + self.ldistcumX((i, i), 0, ldist)  # equivalent to l_dist(seqi[0],seqj[0])
+                tmpcumdist[1] = self.cum_dist_boundaryX[i - 1] + self.ldistcumX((i, i), 0,
+                                                                                ldist)  # equivalent to l_dist(seqi[0],seqj[0])
             else:
-                tmpcumdist[1] = self.cum_dist[i - 1, j - 1] + self.ldistcumX((i, i), j, ldist)  # equivalent to l_dist(seqi[0],seqj[0])
+                tmpcumdist[1] = self.cum_dist[i - 1, j - 1] + self.ldistcumX((i, i), j,
+                                                                             ldist)  # equivalent to l_dist(seqi[0],seqj[0])
             tmpcumdistindexes[1] = (i - 1, j - 1)
         return tmpcumdist, tmpcumdistindexes
 
@@ -1617,7 +1493,7 @@ class DTW(object):
         -------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
-        >>> from dtw.dtw import mixed_dist
+        >>> from dtw.metrics import mixed_dist
         >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
@@ -1652,12 +1528,14 @@ class DTW(object):
                     tmpcumdistindexes = np.full((3, 2), -1)
                     v1 = self.seqX[i]
                     v2 = self.seqY[j]
-                    ld = self.ldist_f(v1, v2, is_angular=self.mixed_type, spread=self.mixed_spread, weight=self.mixed_weight)
+                    ld = self.ldist_f(v1, v2, is_angular=self.mixed_type, spread=self.mixed_spread,
+                                      weight=self.mixed_weight)
                     # Todo: Check whether path cumcost should be compared in a normalized or non-normalized way
                     # during dtw algo. At the moment, paths are compared in a non-normalized way.
                     # However, the final optimal solution is chosen on the basis of the normalized cost
                     # (which looks a bit inconsistent)
-                    tmpcumdist, tmpcumdistindexes = apply_constraints(i, j, tmpcumdist, tmpcumdistindexes, self.ldist_f, self.max_stretch)
+                    tmpcumdist, tmpcumdistindexes = apply_constraints(i, j, tmpcumdist, tmpcumdistindexes, self.ldist_f,
+                                                                      self.max_stretch)
 
                     # Add local distance before selecting optimum
                     # In case of merge_split, nothing must be done as the local distance was already added in apply_constraints
@@ -1753,209 +1631,6 @@ def _get_ndist(test_seq, ref_seq, free_ends, **kwargs) -> float:
     dtwcomputer = DTW(test_seq, ref_seq, free_ends=free_ends, **kwargs)
     _ndist, _, _, _, _ = dtwcomputer.run()
     return _ndist
-
-
-def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=-1):
-    """Explore all free-ends combinations in the prescribed limits.
-
-    This is a brute force method to search the optimal free-ends values.
-    The best model is selected using the lowest minimum normalized cost for a pair of free-ends.
-
-    Parameters
-    ----------
-    max_value : float, optional
-        max value for exploration of free-ends on both sequence sides. Default is ``0.4``.
-    free_ends_eps : free_ends_eps, optional
-        Minimum difference to previous minimum normalized cost to consider tested free-ends as the new best combination.
-        Default is ``1e-4``.
-    n_jobs : int, optional
-        Number of jobs to run in parallel, by default `-1` uses all availables cores.
-
-    Returns
-    -------
-    2-tuple of floats
-        a length-2 tuple of left & right free-ends.
-    float
-        the corresponding nomalized distance
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from dtw.dtw import DTW
-    >>> from dtw.dtw import brute_force_free_ends_search
-    >>> from dtw.dtw import mixed_dist
-    >>> seq_test = np.array([[123, 169, 224, 103, 131, 143, 113, 163, 148, 11, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124], [70, 1, 32, 15, 56, 42, 39, 46, 4, 29, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0]]).T
-    >>> seq_ref = np.array([[123, 136, 131, 143, 113, 163, 159, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124, 152, 124, 107, 126], [70, 48, 56, 42, 39, 46, 33, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0, 13, 16, 0, 1]]).T
-    >>> max_ref = np.max(seq_ref[:, 1])
-    >>> max_test = np.max(seq_test[:, 1])
-    >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5])
-    >>> free_ends, norm_dist = brute_force_free_ends_search(dtwcomputer)
-    >>> print(free_ends)
-    >>> dtwcomputer.free_ends = free_ends
-    >>> ndist, path, length, ndistarray, backpointers = dtwcomputer.run()
-    >>> dtwcomputer.get_results()
-    >>> dtwcomputer.get_better_results()
-    >>> dtwcomputer.plot_results()
-
-    """
-    assert isinstance(dtw, DTW)
-
-    if max_value > 0.4:
-        max_value = 0.4  # (max value for exploration of free-ends)
-        logging.warning("Automatic free-ends capped to max 40% of min length on both sides.")
-
-    # first find the limits of the tested free-ends
-    Nmin = min(dtw.nX, dtw.nY)
-    N = int(max_value * Nmin)
-
-    kwargs = {
-        "constraints": dtw.constraints,
-        "delins_cost": dtw.delins_cost,
-        "ldist": dtw.ldist_f,
-        "mixed_type": dtw.mixed_type,
-        "mixed_spread": dtw.mixed_spread,
-        "mixed_weight": dtw.mixed_weight,
-        "beamsize": dtw.beam_size,
-        "max_stretch": dtw.max_stretch
-    }
-    free_ends = [(left_fe, right_fe + 1) for left_fe in range(N) for right_fe in range(N)]
-    norm_dists = Parallel(n_jobs=n_jobs)(delayed(_get_ndist)(dtw.seqX, dtw.seqY, fe, **kwargs) for fe in free_ends)
-
-    # return the free-ends for first occurrence of the min norm distance
-    min_ndist = np.Infinity
-    left_fe, right_fe = 0, 1
-    for i, fe in enumerate(free_ends):
-        ndist = norm_dists[i]
-        if ndist < min_ndist - free_ends_eps:
-            min_ndist = ndist
-            left_fe, right_fe = fe
-
-    return (left_fe, right_fe), min_ndist
-
-
-#: List of valid values for `constraint` parameter.
-CONSTRAINTS = {"merge_split", "edit_distance", "asymmetric", "symmetric"}
-#: Default value for `constraint` parameter.
-DEF_CONSTRAINT = 'merge_split'
-#: List of valid values for `dist_type` parameter.
-DIST_TYPES = {"euclidean", "angular", "mixed"}
-#: Default value for `dist_type` parameter.
-DEF_DIST_TYPE = 'euclidean'
-#: Default value for `free_ends` parameter.
-DEF_FREE_ENDS = (0, 1)
-#: Default value for `beam_size` parameter.
-DEF_BEAMSIZE = -1
-#: Default value for `delins_cost` parameter.
-DEF_DELINS_COST = (1., 1.)
-#: Default value for `max_stretch` parameter.
-DEF_MAX_STRETCH = 3
-
-
-# Call this function from outside to launch the comparison of two sequences
-def sequence_comparison(seqX, seqY, constraint=DEF_CONSTRAINT, dist_type=DEF_DIST_TYPE,
-                        free_ends=DEF_FREE_ENDS, free_ends_eps=1e-4, beamsize=DEF_BEAMSIZE,
-                        delins_cost=DEF_DELINS_COST, max_stretch=DEF_MAX_STRETCH,
-                        mixed_type=None, mixed_spread=None, mixed_weight=None, **kwargs):
-    """Run the DTW comparison between two angles & inter-nodes sequences.
-
-    Phylotaxis comparison by means of angles & inter-nodes sequences alignment & comparison.
-
-    Parameters
-    ----------
-    seqX, seqY : numpy.ndarray
-        Arrays of angles & inter-nodes to compare.
-    constraint : {"merge_split", "edit_distance", "asymmetric", "symmetric"}, default "merge_split"
-        Type of constraint to use.
-    dist_type : {"euclidean", "angular", "mixed"}, default "euclidean"
-        Type of distance to use.
-    free_ends : float or tuple of int, default (0, 1)
-        A float corresponds to a percentage of sequence length for max exploration of `free_ends`,
-        and in that case ``free_ends <= 0.4``.
-        A tuple of 2 integers ``(k,l)`` that specifies relaxation bounds on
-        the alignment of sequences endpoints: relaxed by ``k`` at the sequence beginning
-        and relaxed by ``l`` at the sequence ending.
-    free_ends_eps : float, default 1e-4
-        ???.
-    beamsize : int, default -1
-        maximum amount of distortion allowed for signal warping.
-    delins_cost : tuple of float, default (1., 1.)
-        Deletion and insertion costs.
-    max_stretch : bool, default 3
-        ???.
-    mixed_type : list(bool), optional
-        A boolean vector, of size ``dim``, indicating whether the k^th component should be treated
-        as an angle (``True``) or a regular scalar value (``False``).
-    mixed_spread : list(float), optional
-        A vector of positive scalars, of size ``dim``, used to normalize the distance values computed
-        for each component with their typical spread.
-    mixed_weight : list(float), optional
-        A vector of positive weights, of size ``dim``.
-        Does not necessarily sum to 1, but normalized if not.
-
-    Other Parameters
-    ----------------
-    cumdistflag : bool, default True
-        If ``True``, print the array of global distances.
-    bpflag : bool, default False
-        If ``True``, print the back-pointers array.
-    ldflag : bool, default False
-        If ``True``, print the local distance array.
-    freeendsflag : bool, default False
-        If ``True``, print the sub-arrays of normalized distances on relaxed ending region and of optimal path lengths on relaxed ending region.
-    optimalpathflag : bool, default True
-        If ``True``, print the optimal path.
-    graphicoptimalpathflag : bool, default True
-        If ``True``, ?then?.
-    graphicseqalignment : bool, default True
-        If ``True``, ?then?.
-    verbose : bool, default True
-        If ``True``, increase code verbosity.
-
-    Notes
-    -----
-    For the `free_ends`, we must have:
-
-      - ``k+l < min(nt,nr)``
-      - ``k >=0`` and ``l>=1``
-
-    """
-    try:
-        assert constraint in CONSTRAINTS
-    except AssertionError:
-        print(f"Valid values for `constraint` parameter: {CONSTRAINTS}")
-        raise ValueError(f"Unknown '{constraint}' value for `constraint` parameter.")
-    try:
-        assert dist_type in DIST_TYPES
-    except AssertionError:
-        print(f"Valid values for `dist_type` parameter: {DIST_TYPES}")
-        raise ValueError(f"Unknown '{dist_type}' value for `dist_type` parameter.")
-
-    if dist_type == "euclidean":
-        ld = euclidean_dist
-    elif dist_type == "angular":
-        ld = angular_dist
-    else:  # mixed normalized distance
-        ld = mixed_dist
-
-    dtwcomputer = DTW(seqX, seqY, constraints=constraint, delins_cost=delins_cost, ldist=ld,
-                      mixed_type=mixed_type, mixed_spread=mixed_spread, mixed_weight=mixed_weight,
-                      beamsize=beamsize, max_stretch=max_stretch)
-    if type(free_ends) == tuple:
-        # if `free_ends` is tuple: NOT AUTOMATIC --> uses the tuple values
-        dtwcomputer.free_ends = free_ends
-    else:
-        # if `free_ends` is NOT tuple: AUTOMATIC --> it is assumed to be int or real <= 0.4
-        # and this corresponds to a percentage of sequence length for max exploration of free-ends
-        logging.info(f"Starting brute force search...")
-        free_ends, norm_dist = brute_force_free_ends_search(dtwcomputer, max_value=free_ends,
-                                                            free_ends_eps=free_ends_eps)
-        logging.info(f"Found free-ends {free_ends} at a cost of {norm_dist}.")
-        # finally computes the DTW for free-ends found
-        dtwcomputer.free_ends = free_ends
-
-    _ = dtwcomputer.run()
-
-    return dtwcomputer.print_results(**kwargs)
 
 
 def duplicate_idx(l, idx, n):

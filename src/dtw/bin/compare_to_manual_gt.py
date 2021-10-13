@@ -23,15 +23,15 @@ from os.path import exists
 from os.path import join
 
 import numpy as np
-from dtw.dtw import CONSTRAINTS
-from dtw.dtw import DEF_BEAMSIZE
-from dtw.dtw import DEF_CONSTRAINT
-from dtw.dtw import DEF_DELINS_COST
-from dtw.dtw import DEF_DIST_TYPE
-from dtw.dtw import DEF_FREE_ENDS
-from dtw.dtw import DEF_MAX_STRETCH
-from dtw.dtw import DIST_TYPES
-from dtw.dtw import sequence_comparison
+from dtw.tasks.compare_sequences import CONSTRAINTS
+from dtw.tasks.compare_sequences import DEF_BEAMSIZE
+from dtw.tasks.compare_sequences import DEF_CONSTRAINT
+from dtw.tasks.compare_sequences import DEF_DELINS_COST
+from dtw.tasks.compare_sequences import DEF_DIST_TYPE
+from dtw.tasks.compare_sequences import DEF_FREE_ENDS
+from dtw.tasks.compare_sequences import DEF_MAX_STRETCH
+from dtw.tasks.compare_sequences import DIST_TYPES
+from dtw.tasks.compare_sequences import sequence_comparison
 from dtw.tasks.logger import DEFAULT_LOG_LEVEL
 from dtw.tasks.logger import get_logger
 from plantdb.fsdb import FSDB
