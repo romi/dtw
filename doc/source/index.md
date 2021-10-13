@@ -1,0 +1,47 @@
+# DTW
+
+Dynamic time warping algorithm(s)
+
+Implementation of a generic DTW algorithm with symmetric asymmetric or classical edit
+distance or split-merge constraints.
+
+DTW techniques are based in particular on basic DTW algorithm described in :
+
+Sakoe, H., & Chiba, S. (1978) Dynamic programming algorithm optimization for spoken word recognition. IEEE Transactions on Acoustic, Speech, and Signal Processing, ASSP-26(1),43-49.
+
+And new dynamic time warping based techniques such as "merge split".
+
+
+% Table of contents
+```{eval-rst}
+.. toctree::
+  :maxdepth: 2
+  :hidden:
+
+  install.md
+  reference.md
+  credits.md
+  citing.md
+```
+
+## Organisation
+
+**Lead developer:**
+: Christophe Godin
+
+**Contributors:**
+: Fabrice Besnard
+: Jonathan Legrand
+
+**Active research teams:**
+:    - Inria team [Mosaic](https://team.inria.fr/mosaic/), RDP-ENS Lyon, UMR5667
+:    - [Hormonal Signalling and Development](http://www.ens-lyon.fr/RDP/spip.php?rubrique20) team, RDP-ENS Lyon, UMR5667
+
+**Written in:**
+: Python3
+
+**Supported OS:**
+: Linux, MacOSX
+
+**Licence:**
+: Inria licence, no commercial use.
