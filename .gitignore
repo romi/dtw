@@ -92,4 +92,4 @@ target/
 .DS_Store
 
 # user custom filters
-
+!/doc/source/tutorials/

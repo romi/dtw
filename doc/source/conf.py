@@ -24,15 +24,14 @@ author = 'Christophe Godin'
 # The full version, including alpha/beta/rc tags
 release = '0.0.1'
 
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'myst_parser',  # MyST markdown parser (can be activated by 'myst_nb')
-    # 'myst_nb',  # MyST jupyter notebooks parser
+    # 'myst_parser',  # MyST markdown parser (can be activated by 'myst_nb')
+    'myst_nb',  # MyST jupyter notebooks parser
     'sphinx.ext.autodoc',  # Include documentation from docstrings
     'sphinx.ext.doctest',  # Test snippets in the documentation
     'sphinx.ext.intersphinx',  # Link to other projects’ documentation
@@ -84,6 +83,48 @@ pygments_style = 'colorful'
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
+
+# -- Import Notebooks --------------------------------------------------------
+import os
+
+for file in os.listdir('.'):
+    if '.ipynb' in file:
+        os.remove(file)
+
+nb_path = '../../notebooks'
+notebooks = [nb for nb in os.listdir(nb_path) if nb.endswith('.ipynb')]
+
+for nbf in notebooks:
+    print(f'importing notebook file: {nbf}')
+    os.system(f'cp {nb_path}/{nbf} tutorials/{nbf}')
+
+
+# -- Create tutorial page ----------------------------------------------------
+tuto_header = """
+% Update "fixed" table of contents on the left quick browse panel
+```{eval-rst}
+.. toctree::
+  :maxdepth: 2
+
+"""
+
+with open("tutorials.md", "w+") as f:
+    f.write("# Tutorials\n")
+    # f.write(tuto_header)
+    # for i in notebooks:
+    #     f.write(f"   tutorials/{i}" + "\n")
+    # f.write("```" + "\n")
+    f.write("\n")
+    f.write("Here is a list of tutorials built from the available notebooks:")
+    f.write("\n")
+    for i in notebooks:
+        ref = i.replace("tutorial-", "")
+        ref = ref.replace(".ipynb", "")
+        ref = ref.replace('_', ' ')
+        f.write(f" - [{ref.capitalize()}](tutorials/{i})" + "\n")
+
+# Add this to render plotly figures:
+html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"]
 
 
 # -- Options for HTML output -------------------------------------------------

@@ -368,7 +368,7 @@ class DTW(object):
 
         return
 
-    def get_results(self, verbose=True):
+    def get_results(self, verbose=False):
         """Return a dictionary with aligned sequences, event types and associated local costs.
 
         Parameters
@@ -413,7 +413,7 @@ class DTW(object):
         """
         return self.find_path(self.opt_backtrack_path, self.editop, verbose)
 
-    def get_better_results(self, start_index=1, verbose=True):
+    def get_better_results(self, start_index=1):
         """
 
         Parameters
@@ -650,8 +650,8 @@ class DTW(object):
 
         return miss_ref
 
-    def get_merge_events(self):
-        """Return the index of the merge events on the reference sequence.
+    def get_added_organ_per_merge(self):
+        """Return the number of added organ per merge event.
 
         Example
         -------
@@ -665,7 +665,7 @@ class DTW(object):
         >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[1, 1], names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.plot_results()
-        >>> dtwcomputer.get_merge_events()
+        >>> dtwcomputer.get_added_organ_per_merge(indexed=True)
 
         """
         idx_test, _, event_types, _ = self.get_results(False).values()
@@ -682,10 +682,12 @@ class DTW(object):
         return added_test
 
     def get_aligned_reference_sequence(self):
-        """
+        """Return the aligned reference sequence.
 
         Returns
         -------
+        numpy.array
+            Aligned reference sequence.
 
         Example
         -------
@@ -705,10 +707,12 @@ class DTW(object):
         return np.array([self.seqY[e] for e in aligned_results['reference']])
 
     def get_aligned_test_sequence(self):
-        """
+        """Return the aligned test sequence.
 
         Returns
         -------
+        numpy.array
+            Aligned test sequence.
 
         Example
         -------
@@ -728,19 +732,22 @@ class DTW(object):
         return np.array([self.seqX[e] for e in aligned_results['test']])
 
     def get_matching_sequences(self):
-        """
+        """Return the sequences only when matching (no split or merge).
 
         Returns
         -------
+        numpy.array
+            Reference sequence for matching events.
+        numpy.array
+            Test sequence for matching events.
 
         Example
         -------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
         >>> from dtw.metrics import mixed_dist
-        >>> # Alignment of angles and inter-nodes sequences with left and right free-ends:
-        >>> seq_test = np.array([[166, 348, 150, 140, 294, 204, 168, 125, 125, 145, 173, 123, 127, 279, 102, 144, 136, 146, 137, 175, 103], [42, 31, 70, 55, 0, 0, 42, 27, 31, 33, 21, 23, 1, 56, 26, 18, 17, 16, 3, 0, 8]]).T
-        >>> seq_ref = np.array([[150, 140, 138, 168, 125, 125, 145, 173, 123, 127, 99, 180, 102, 144, 136, 146, 137, 142, 136, 134], [70, 55, 0, 42, 27, 31, 33, 21, 23, 1, 28, 28, 26, 18, 17, 16, 3, 0, 8, 18]]).T
+        >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
+        >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
         >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[0.5, 0.5])
@@ -750,8 +757,8 @@ class DTW(object):
 
         """
         aligned_results = self.get_better_results(0)
-        ars = np.array([self.seqY[e] for e in aligned_results['reference']])
-        ats = np.array([self.seqX[e] for e in aligned_results['test']])
+        ars = self.get_aligned_reference_sequence()
+        ats = self.get_aligned_test_sequence()
         matching_indexes = [i for i, t in enumerate(aligned_results['type']) if t == '=' or t == '~']
         return ars[matching_indexes], ats[matching_indexes]
 
@@ -793,9 +800,9 @@ class DTW(object):
         summary["number of split events"] = len(split_indexes)
         summary["number of merge events"] = len(merge_indexes)
         summary["missed events per split"] = self.get_split_events()
-        summary["added events per merge"] = self.get_merge_events()
+        summary["added events per merge"] = self.get_added_organ_per_merge()
         summary["total number of missed events"] = sum(self.get_split_events())
-        summary["total number of added events"] = sum(self.get_merge_events())
+        summary["total number of added events"] = sum(self.get_added_organ_per_merge())
         summary["total event errors"] = summary["number chop start"] + summary["number chop end"] + summary[
             "total number of missed events"] \
                                         + summary["number tail start"] + summary["number tail end"] + summary[
@@ -955,9 +962,120 @@ class DTW(object):
         logging.debug("Backtracked path: {path}")
         return np.array(path)
 
+    def _graphic_optimal_path_flag(self):
+        plt.figure(0)
+        plt.clf()
+        # print bparray[:,0]
+        # print bparray[:,1]
+        plt.plot(self.opt_backtrack_path[:, 0], self.opt_backtrack_path[:, 1])
+        plt.ylim([0, self.nY])
+        plt.xlim([0, self.nX])
+        plt.grid()
+        plt.ion()
+        plt.show()
+        # plt.draw()
+
+        ### FAIRE DES SOUS FIGS
+        plt.figure(1)
+        plt.clf()
+        l = len(self.opt_backtrack_path)
+        prev_dist = 0.
+        locdist = []
+        for i in range(l):
+            a = self.opt_backtrack_path[i][0]
+            b = self.opt_backtrack_path[i][1]
+            locdist.append(self.cum_dist[a, b] - prev_dist)
+            prev_dist = self.cum_dist[a, b]
+        plt.hist(locdist, bins=20, range=(0, 1))
+        plt.xlim([0, 1])
+        plt.ion()
+        plt.show()
+
+    def graphic_seq_alignment(self):
+        dim = self.seqX.ndim
+
+        # Loop on the dimensions of test/ref vector space
+        for d in range(dim):
+            plt.figure(d + 2)  # 0 and 1 are already used
+            plt.clf()
+            # print bparray[:,0]
+            # print bparray[:,1]
+            if dim == 1:
+                seqX = self.seqX  # Test sequence
+                seqY = self.seqY  # Ref sequence
+            else:
+                seqX = self.seqX[:, d]  # take the dth scalar sequence of the vector-sequence
+                seqY = self.seqY[:, d]
+
+            # Find the best shift of the two sequences
+            optpathlen = len(self.opt_backtrack_path)
+            test_indexes = np.arange(len(seqX))
+            shift = 0
+            if True:  # OPTIMIZE_ALIGNMENT_DISPLAY:
+                # compute a more optimal test_index
+                minh = optpathlen
+                maxh = -optpathlen
+                # First find all the shifts that appear in the alignment from test to ref
+                for k in range(optpathlen):
+                    i = self.opt_backtrack_path[k, 0]  # test
+                    j = self.opt_backtrack_path[k, 1]  # ref
+                    delta = j - i
+                    if delta < minh:
+                        minh = delta
+                    if delta > maxh:
+                        maxh = delta
+                score_array = np.zeros(maxh - minh + 1)
+                print("-----> minh, maxh=", minh, maxh, )
+                # Second finds a shift s that would best compensate the different shifts:
+                # the aligment would become j - (i+s)
+                for s in range(minh, maxh + 1):
+                    score = 0
+                    for k in range(optpathlen):
+                        i = self.opt_backtrack_path[k, 0]
+                        j = self.opt_backtrack_path[k, 1]
+                        delta = abs(j - i - s)
+                        score += delta
+                    score_array[s - minh] = score
+                # shift = minh - index of minimal score
+                print("score array=", score_array)
+                shift = minh + np.argmin(score_array)  # take the first available shift
+                print(" shift = ", shift)
+                test_indexes = np.arange(shift, shift + len(seqX))
+            plt.plot(test_indexes, seqX, 'b^', label='test sequence')  # test sequence + shift
+            plt.plot(seqY, 'ro', label='ref sequence')  # ref sequence
+            pi, pj = -1, -1  # previous i,j
+            for k in range(optpathlen):
+                i = self.opt_backtrack_path[k, 0]
+                j = self.opt_backtrack_path[k, 1]
+                if i != pi + 1:
+                    for h in range(pi + 1, i):
+                        plt.plot([h + shift, j], [seqX[h], seqY[j]], 'g--')
+                elif j != pj + 1:
+                    for h in range(pj + 1, j):
+                        plt.plot([i + shift, h], [seqX[i], seqY[h]], 'g--')
+                plt.plot([i + shift, j], [seqX[i], seqY[j]], 'g--')
+                pi = i
+                pj = j
+            maxval = max(max(seqX), max(seqY)) * 1.2
+            plt.ylim([-1, maxval])
+            plt.xlim([-1 + shift, max(self.nX, self.nY)])
+            plt.xlabel('Rank')
+            if dim == 1:
+                plt.ylabel('Sequence Value')
+            else:
+                if self.mixed_type[d]:
+                    plt.ylabel(str(d) + ' - Angle')
+                else:
+                    plt.ylabel(str(d) + ' - Coord')
+            plt.title('Comparison of test/ref sequences')
+            plt.legend()
+            plt.grid()
+            plt.ion()
+            plt.show()
+
     def print_results(self, cum_dist_flag=True, bp_flag=False, ld_flag=False,
                       free_ends_flag=False, optimal_path_flag=True, graphic_optimal_path_flag=False,
-                      graphic_seq_alignment=False, verbose=True, **kwargs):
+                      graphic_seq_alignment=False, verbose=True):
         """Print results in terminal.
 
         Parameters
@@ -1029,117 +1147,12 @@ class DTW(object):
 
         # Print graphic optimal path
         if graphic_optimal_path_flag:
-
-            plt.figure(0)
-            plt.clf()
-            # print bparray[:,0]
-            # print bparray[:,1]
-            plt.plot(self.opt_backtrack_path[:, 0], self.opt_backtrack_path[:, 1])
-            plt.ylim([0, self.nY])
-            plt.xlim([0, self.nX])
-            plt.grid()
-            plt.ion()
-            plt.show()
-            # plt.draw()
-
-            ### FAIRE DES SOUS FIGS
-            plt.figure(1)
-            plt.clf()
-            l = len(self.opt_backtrack_path)
-            prev_dist = 0.
-            locdist = []
-            for i in range(l):
-                a = self.opt_backtrack_path[i][0]
-                b = self.opt_backtrack_path[i][1]
-                locdist.append(self.cum_dist[a, b] - prev_dist)
-                prev_dist = self.cum_dist[a, b]
-            plt.hist(locdist, bins=20, range=(0, 1))
-            plt.xlim([0, 1])
-            plt.ion()
-            plt.show()
+            self._graphic_optimal_path_flag()
 
         # Print signal alignment
         if graphic_seq_alignment:
-            dim = self.seqX.ndim
+            self.graphic_seq_alignment()
 
-            # Loop on the dimensions of test/ref vector space
-            for d in range(dim):
-                plt.figure(d + 2)  # 0 and 1 are already used
-                plt.clf()
-                # print bparray[:,0]
-                # print bparray[:,1]
-                if dim == 1:
-                    seqX = self.seqX  # Test sequence
-                    seqY = self.seqY  # Ref sequence
-                else:
-                    seqX = self.seqX[:, d]  # take the dth scalar sequence of the vector-sequence
-                    seqY = self.seqY[:, d]
-
-                # Find the best shift of the two sequences
-                optpathlen = len(self.opt_backtrack_path)
-                test_indexes = np.arange(len(seqX))
-                shift = 0
-                if True:  # OPTIMIZE_ALIGNMENT_DISPLAY:
-                    # compute a more optimal test_index
-                    minh = optpathlen
-                    maxh = -optpathlen
-                    # First find all the shifts that appear in the alignment from test to ref
-                    for k in range(optpathlen):
-                        i = self.opt_backtrack_path[k, 0]  # test
-                        j = self.opt_backtrack_path[k, 1]  # ref
-                        delta = j - i
-                        if delta < minh:
-                            minh = delta
-                        if delta > maxh:
-                            maxh = delta
-                    score_array = np.zeros(maxh - minh + 1)
-                    print("-----> minh, maxh=", minh, maxh, )
-                    # Second finds a shift s that would best compensate the different shifts:
-                    # the aligment would become j - (i+s)
-                    for s in range(minh, maxh + 1):
-                        score = 0
-                        for k in range(optpathlen):
-                            i = self.opt_backtrack_path[k, 0]
-                            j = self.opt_backtrack_path[k, 1]
-                            delta = abs(j - i - s)
-                            score += delta
-                        score_array[s - minh] = score
-                    # shift = minh - index of minimal score
-                    print("score array=", score_array)
-                    shift = minh + np.argmin(score_array)  # take the first available shift
-                    print(" shift = ", shift)
-                    test_indexes = np.arange(shift, shift + len(seqX))
-                plt.plot(test_indexes, seqX, 'b^', label='test sequence')  # test sequence + shift
-                plt.plot(seqY, 'ro', label='ref sequence')  # ref sequence
-                pi, pj = -1, -1  # previous i,j
-                for k in range(optpathlen):
-                    i = self.opt_backtrack_path[k, 0]
-                    j = self.opt_backtrack_path[k, 1]
-                    if i != pi + 1:
-                        for h in range(pi + 1, i):
-                            plt.plot([h + shift, j], [seqX[h], seqY[j]], 'g--')
-                    elif j != pj + 1:
-                        for h in range(pj + 1, j):
-                            plt.plot([i + shift, h], [seqX[i], seqY[h]], 'g--')
-                    plt.plot([i + shift, j], [seqX[i], seqY[j]], 'g--')
-                    pi = i
-                    pj = j
-                maxval = max(max(seqX), max(seqY)) * 1.2
-                plt.ylim([-1, maxval])
-                plt.xlim([-1 + shift, max(self.nX, self.nY)])
-                plt.xlabel('Rank')
-                if dim == 1:
-                    plt.ylabel('Sequence Value')
-                else:
-                    if self.mixed_type[d]:
-                        plt.ylabel(str(d) + ' - Angle')
-                    else:
-                        plt.ylabel(str(d) + ' - Coord')
-                plt.title('Comparison of test/ref sequences')
-                plt.legend()
-                plt.grid()
-                plt.ion()
-                plt.show()
         return df
 
     # These two functions add up the attributes of a sub-sequence of X (resp. of Y)
@@ -1235,7 +1248,7 @@ class DTW(object):
         .. [sakoe_chiba78] H. Sakoe and S. Chiba, "Dynamic programming algorithm optimization for spoken word recognition," in IEEE Transactions on Acoustics, Speech, and Signal Processing, vol. 26, no. 1, pp. 43-49, February 1978, doi: `10.1109/TASSP.1978.1163055 <https://doi.org/10.1109/TASSP.1978.1163055>`_
         .. [itakura75] Itakura, Fumitada. "Minimum Prediction Residual Principle Applied to Speech Recognition." IEEE Transactions on Acoustics, Speech, and Signal Processing 23 , no. 1 (1975): 67-72. `10.1109/TASSP.1975.1162641 <https://doi.org/10.1109/TASSP.1975.1162641>`_
 
-      """
+         """
         tmpcumdistindexes[0] = (i - 1, j)
         tmpcumdistindexes[1] = (i - 1, j - 1)
         tmpcumdistindexes[2] = (i - 1, j - 2)
@@ -1294,12 +1307,7 @@ class DTW(object):
         This would require score normalization by the sum of weights in the end ...
         one would also have to pass the local distance to this function to make the decision here.
 
-        References
-        ----------
-        .. [sakoe_chiba78] H. Sakoe and S. Chiba, "Dynamic programming algorithm optimization for spoken word recognition," in IEEE Transactions on Acoustics, Speech, and Signal Processing, vol. 26, no. 1, pp. 43-49, February 1978, doi: `10.1109/TASSP.1978.1163055 <https://doi.org/10.1109/TASSP.1978.1163055>`_
-        .. [itakura75] Itakura, Fumitada. "Minimum Prediction Residual Principle Applied to Speech Recognition." IEEE Transactions on Acoustics, Speech, and Signal Processing 23 , no. 1 (1975): 67-72. `10.1109/TASSP.1975.1162641 <https://doi.org/10.1109/TASSP.1975.1162641>`_
-
-      """
+        """
         tmpcumdistindexes[0] = (i - 1, j)
         tmpcumdistindexes[1] = (i - 1, j - 1)
         tmpcumdistindexes[2] = (i, j - 1)
@@ -1348,7 +1356,7 @@ class DTW(object):
         max_stretch : bool, default 3
             maximum amount of stretching allowed for signal warping.
 
-      """
+        """
         tmpcumdistindexes[0] = (i - 1, j)
         tmpcumdistindexes[1] = (i - 1, j - 1)
         tmpcumdistindexes[2] = (i, j - 1)
@@ -1624,13 +1632,6 @@ class DTW(object):
         self.opt_backtrack_path = np.flip(opt_path, 0)  # reverse the order of path to start from beginning
         optpathlength = len(self.opt_backtrack_path)
         return self.min_normalized_cost, self.opt_backtrack_path, optpathlength, self.optpath_normalized_cumdist_array, self.bp
-
-
-def _get_ndist(test_seq, ref_seq, free_ends, **kwargs) -> float:
-    """Creates and run DTW algorithm for selected free-ends."""
-    dtwcomputer = DTW(test_seq, ref_seq, free_ends=free_ends, **kwargs)
-    _ndist, _, _, _, _ = dtwcomputer.run()
-    return _ndist
 
 
 def duplicate_idx(l, idx, n):

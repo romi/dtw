@@ -23,7 +23,13 @@ from joblib import Parallel
 from joblib import delayed
 
 from dtw.dtw import DTW
-from dtw.dtw import _get_ndist
+
+
+def _get_ndist(test_seq, ref_seq, free_ends, **kwargs) -> float:
+    """Creates and run DTW algorithm for selected free-ends."""
+    dtwcomputer = DTW(test_seq, ref_seq, free_ends=free_ends, **kwargs)
+    _ndist, _, _, _, _ = dtwcomputer.run()
+    return _ndist
 
 
 def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=-1):
@@ -102,4 +108,3 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
             left_fe, right_fe = fe
 
     return (left_fe, right_fe), min_ndist
-
