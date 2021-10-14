@@ -92,7 +92,7 @@ for file in os.listdir('.'):
         os.remove(file)
 
 nb_path = '../../notebooks'
-notebooks = [nb for nb in os.listdir(nb_path) if nb.endswith('.ipynb')]
+notebooks = [nb for nb in os.listdir(nb_path) if nb.endswith('.ipynb') and nb.startswith("tutorial")]
 
 for nbf in notebooks:
     print(f'importing notebook file: {nbf}')
