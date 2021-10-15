@@ -16,13 +16,13 @@
 """
 Searching free-ends.
 """
-import logging
 
 import numpy as np
 from joblib import Parallel
 from joblib import delayed
 
 from dtw.dtw import DTW
+from dtw.tasks.logger import get_logger
 
 
 def _get_ndist(test_seq, ref_seq, free_ends, **kwargs) -> float:
@@ -32,7 +32,7 @@ def _get_ndist(test_seq, ref_seq, free_ends, **kwargs) -> float:
     return _ndist
 
 
-def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=-1):
+def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=-1, **kwargs):
     """Explore all free-ends combinations in the prescribed limits.
 
     This is a brute force method to search the optimal free-ends values.
@@ -59,8 +59,8 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
     --------
     >>> import numpy as np
     >>> from dtw.dtw import DTW
-    >>> from dtw.dtw import brute_force_free_ends_search
-    >>> from dtw.dtw import mixed_dist
+    >>> from dtw.tasks.search_free_ends import brute_force_free_ends_search
+    >>> from dtw.metrics import mixed_dist
     >>> seq_test = np.array([[123, 169, 224, 103, 131, 143, 113, 163, 148, 11, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124], [70, 1, 32, 15, 56, 42, 39, 46, 4, 29, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0]]).T
     >>> seq_ref = np.array([[123, 136, 131, 143, 113, 163, 159, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124, 152, 124, 107, 126], [70, 48, 56, 42, 39, 46, 33, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0, 13, 16, 0, 1]]).T
     >>> max_ref = np.max(seq_ref[:, 1])
@@ -75,11 +75,17 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
     >>> dtwcomputer.plot_results()
 
     """
+    logger = kwargs.get('logger', None)
+    if logger is None:
+        logger = get_logger(__name__)
+    else:
+        logger.name = __name__.split('.')[-1]
+
     assert isinstance(dtw, DTW)
 
     if max_value > 0.4:
         max_value = 0.4  # (max value for exploration of free-ends)
-        logging.warning("Automatic free-ends capped to max 40% of min length on both sides.")
+        logger.warning("Automatic free-ends capped to max 40% of min length on both sides.")
 
     # first find the limits of the tested free-ends
     Nmin = min(dtw.nX, dtw.nY)
@@ -96,6 +102,7 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
         "max_stretch": dtw.max_stretch
     }
     free_ends = [(left_fe, right_fe + 1) for left_fe in range(N) for right_fe in range(N)]
+    logger.info(f"Starting brute force search for {len(free_ends)} pairs of free-ends...")
     norm_dists = Parallel(n_jobs=n_jobs)(delayed(_get_ndist)(dtw.seqX, dtw.seqY, fe, **kwargs) for fe in free_ends)
 
     # return the free-ends for first occurrence of the min norm distance
@@ -107,4 +114,7 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
             min_ndist = ndist
             left_fe, right_fe = fe
 
-    return (left_fe, right_fe), min_ndist
+    free_ends = (left_fe, right_fe)
+    logger.info(f"Found free-ends {free_ends} at a cost of {min_ndist}.")
+
+    return free_ends, min_ndist

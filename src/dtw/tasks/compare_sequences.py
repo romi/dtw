@@ -18,10 +18,12 @@ Method for sequences comparison and alignment.
 """
 import logging
 
+from dtw import DTW
 from dtw.metrics import angular_dist
 from dtw.metrics import euclidean_dist
 from dtw.metrics import mixed_dist
 from dtw.tasks.search_free_ends import brute_force_free_ends_search
+from dtw.tasks.logger import get_logger
 
 #: List of valid values for `constraint` parameter.
 CONSTRAINTS = {"merge_split", "edit_distance", "asymmetric", "symmetric"}
@@ -109,15 +111,21 @@ def sequence_comparison(seqX, seqY, constraint=DEF_CONSTRAINT, dist_type=DEF_DIS
       - ``k >=0`` and ``l>=1``
 
     """
+    logger = kwargs.get('logger', None)
+    if logger is None:
+        logger = get_logger(__name__)
+    else:
+        logger.name = __name__.split('.')[-1]
+
     try:
         assert constraint in CONSTRAINTS
     except AssertionError:
-        print(f"Valid values for `constraint` parameter: {CONSTRAINTS}")
+        logger.info(f"Valid values for `constraint` parameter: {CONSTRAINTS}")
         raise ValueError(f"Unknown '{constraint}' value for `constraint` parameter.")
     try:
         assert dist_type in DIST_TYPES
     except AssertionError:
-        print(f"Valid values for `dist_type` parameter: {DIST_TYPES}")
+        logger.info(f"Valid values for `dist_type` parameter: {DIST_TYPES}")
         raise ValueError(f"Unknown '{dist_type}' value for `dist_type` parameter.")
 
     if dist_type == "euclidean":
@@ -129,17 +137,15 @@ def sequence_comparison(seqX, seqY, constraint=DEF_CONSTRAINT, dist_type=DEF_DIS
 
     dtwcomputer = DTW(seqX, seqY, constraints=constraint, delins_cost=delins_cost, ldist=ld,
                       mixed_type=mixed_type, mixed_spread=mixed_spread, mixed_weight=mixed_weight,
-                      beamsize=beamsize, max_stretch=max_stretch)
+                      beam_size=beamsize, max_stretch=max_stretch)
     if type(free_ends) == tuple:
         # if `free_ends` is tuple: NOT AUTOMATIC --> uses the tuple values
         dtwcomputer.free_ends = free_ends
     else:
         # if `free_ends` is NOT tuple: AUTOMATIC --> it is assumed to be int or real <= 0.4
         # and this corresponds to a percentage of sequence length for max exploration of free-ends
-        logging.info(f"Starting brute force search...")
         free_ends, norm_dist = brute_force_free_ends_search(dtwcomputer, max_value=free_ends,
-                                                            free_ends_eps=free_ends_eps)
-        logging.info(f"Found free-ends {free_ends} at a cost of {norm_dist}.")
+                                                            free_ends_eps=free_ends_eps, logger=logger)
         # finally computes the DTW for free-ends found
         dtwcomputer.free_ends = free_ends
 
