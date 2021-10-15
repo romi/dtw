@@ -27,13 +27,15 @@ setup_kwds = dict(
     packages=pkgs,
     
     package_dir={'': 'src'},
-    setup_requires=[
-        ],
-    install_requires=[
-        ],
-    tests_require=[
-        ],
+    setup_requires=[],
+    install_requires=[],
+    tests_require=[],
     entry_points={},
+    scripts=[
+        'src/dtw/bin/romi_compare_to_manual_gt.py',
+        'src/dtw/bin/align_csv_database.py'
+    ],
+
     keywords='',
     
     test_suite='nose.collector',
