@@ -23,6 +23,9 @@ from os.path import exists
 from os.path import join
 
 import numpy as np
+from plantdb.fsdb import FSDB
+from plantdb.io import read_json
+
 from dtw.tasks.compare_sequences import CONSTRAINTS
 from dtw.tasks.compare_sequences import DEF_BEAMSIZE
 from dtw.tasks.compare_sequences import DEF_CONSTRAINT
@@ -32,36 +35,13 @@ from dtw.tasks.compare_sequences import DEF_FREE_ENDS
 from dtw.tasks.compare_sequences import DEF_MAX_STRETCH
 from dtw.tasks.compare_sequences import DIST_TYPES
 from dtw.tasks.compare_sequences import sequence_comparison
+from dtw.tasks.logger import BIN_LOG_FMT
 from dtw.tasks.logger import DEFAULT_LOG_LEVEL
 from dtw.tasks.logger import get_logger
-from plantdb.fsdb import FSDB
-from plantdb.io import read_json
 
 DESCRIPTION = """Compare the sequence obtained with the ROMI reconstruction pipeline to a manual measurement using the DTW algorithm.
 
 The manual measures are assumed to be the ground-truth.
-
-Parameters
-----------
-constraint: str
-    Type of constraint to use.
-dist_type: str
-    Type of distance to use.
-free_ends: float or tuple of int
-    A float corresponds to a percentage of sequence length for max exploration of `free_ends`,
-    and in that case ``free_ends <= 0.4``.
-    A tuple of 2 integers ``(k,l)`` that specifies relaxation bounds on
-    the alignment of sequences endpoints: relaxed by ``k`` at the sequence beginning
-    and relaxed by ``l`` at the sequence ending.
-beamsize : int
-    maximum amount of distortion allowed for signal warping.
-delins_cost : tuple of float
-    Deletion and insertion costs.
-max_stretch : bool
-    ???.
-
-convert_dtw_results
-
 """
 
 
@@ -98,11 +78,13 @@ def parsing():
 
 
 def main(args):
+    logger_name = "romi_compare_to_manual_gt"
     # Get logging level from input & convert it to corresponding numeric level value
     numeric_level = getattr(logging, args.log_level.upper(), None)
     if not isinstance(numeric_level, int):
         raise ValueError(f"Invalid log level: {args.log_level}")
-    logger = get_logger('compare_to_manual_gt', join(args.db_path, args.scan, "compare_to_manual_gt.log"), numeric_level)
+    logger = get_logger(logger_name, join(args.db_path, args.scan, "compare_to_manual_gt.log"),
+                        numeric_level, BIN_LOG_FMT)
 
     lock_file = join(args.db_path, 'lock')
     if exists(lock_file):
@@ -125,6 +107,7 @@ def main(args):
     if len(args.free_ends) == 1:
         args.free_ends = args.free_ends[0]
 
+    logger.info(f"Performing sequence comparison to ground-truth for '{args.scan}'...")
     # Load the JSON file produced by task `AnglesAndInternodes`:
     json_dict = read_json(fs.files[0])
     # Get the predicted angles and inter-nodes sequences:
@@ -151,9 +134,14 @@ def main(args):
                    'free_ends_flag': False, 'optimal_path_flag': True,
                    'graphic_optimal_path_flag': False, 'graphic_seq_alignment': False}
 
-    df = sequence_comparison(seq_pred, seq_gt, constraint=args.constraint, dist_type=args.dist_type, free_ends=args.free_ends, beam_size=args.beamsize,
-                             delins_cost=args.delins_cost, max_stretch=args.max_stretch, verbose=True, **mixed_kwargs, **flag_kwargs)
-    df.to_csv(join(args.db_path, args.scan, 'dtw_result.csv'))
+    df = sequence_comparison(seq_pred, seq_gt, constraint=args.constraint, dist_type=args.dist_type,
+                             free_ends=args.free_ends, beam_size=args.beamsize, delins_cost=args.delins_cost,
+                             max_stretch=args.max_stretch, verbose=True, **mixed_kwargs, **flag_kwargs)
+
+    logger.name = logger_name
+    out_csv = join(args.db_path, args.scan, 'dtw_result.csv')
+    logger.info(f"Exporting result CSV to '{out_csv}'")
+    df.to_csv(out_csv, index=False)
 
 
 if __name__ == '__main__':
