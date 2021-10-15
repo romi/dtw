@@ -1075,7 +1075,7 @@ class DTW(object):
 
     def print_results(self, cum_dist_flag=True, bp_flag=False, ld_flag=False,
                       free_ends_flag=False, optimal_path_flag=True, graphic_optimal_path_flag=False,
-                      graphic_seq_alignment=False, verbose=True):
+                      graphic_seq_alignment=False, verbose=True, **kwargs):
         """Print results in terminal.
 
         Parameters
@@ -1096,6 +1096,20 @@ class DTW(object):
             If ``True``, generate a matplotlib figure with aligned sequences.
         verbose : bool, default True
             If ``True``, increase code verbosity.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from dtw.dtw import DTW
+        >>> from dtw.metrics import mixed_dist
+        >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
+        >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
+        >>> max_ref = np.max(seq_ref[:, 1])
+        >>> max_test = np.max(seq_test[:, 1])
+        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[1, 1], names=["angles", "inter-nodes"])
+        >>> dtwcomputer.run()
+        >>> flag_kwargs = {'cum_dist_flag': False, 'bp_flag': False, 'ld_flag': False, 'free_ends_flag': False, 'optimal_path_flag': True, 'graphic_optimal_path_flag': False, 'graphic_seq_alignment': False, 'verbose':False}
+        >>> df = dtwcomputer.print_results(**flag_kwargs)
 
         """
         import pandas as pd
