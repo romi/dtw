@@ -126,17 +126,25 @@ with open("tutorials.md", "w+") as f:
 # Add this to render plotly figures:
 html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"]
 
+# -- Intersphinx -------------------------------------------------------------
+# Configuration for intersphinx: refer to the Python standard library.
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
+                       'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+                       'numpy': ('https://numpy.org/doc/stable/', None)}
+
+# List of `intersphinx_mapping`:
+# https://gist.github.com/bskinn/0e164963428d4b51017cebdb6cda5209
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'python_docs_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_css_files = ['custom.css']
+# html_css_files = ['alabaster_custom.css']

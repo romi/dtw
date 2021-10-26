@@ -1,10 +1,10 @@
 # Command-line tool
 
-## Comparison to manual ground-truth
+## Align sequences from a CSV database
 
 ```{eval-rst}
 .. argparse::
-   :module: dtw.bin.compare_to_manual_gt
+   :filename: ../src/dtw/bin/align_csv_database.py
    :func: parsing
-   :prog: compare_to_manual_gt
+   :prog: align_csv_database.py
 ```
