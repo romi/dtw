@@ -25,7 +25,7 @@ def sequences_table(dtw: dtw.DTW):
     titles = ['test', 'reference']
     fig = make_subplots(rows=1, cols=2, shared_yaxes=True, subplot_titles=titles,
                         horizontal_spacing=0.03, specs=[[{"type": "table"}] * 2])
-    for i, (seq_name, seq) in enumerate(zip(titles, [dtw.seqX, dtw.seqY])):
+    for i, (seq_name, seq) in enumerate(zip(titles, [dtw.seq_test, dtw.seq_ref])):
         table = go.Table(header={'values': dtw.names, 'font': {'size': 10}, 'align': "center"},
                          cells={'values': seq.T, 'align': "left"})
         fig.add_trace(table, row=1, col=i + 1)
@@ -59,15 +59,15 @@ def _sequence_plot(fig, fig_idx, ref_idx, ref_val, test_idx, test_val, name, pre
 def plot_sequences(dtw: dtw.DTW):
     """Plotly scatter plot presenting reference and test sequences found in DTW object."""
     n_figs = dtw.n_dim
-    ref_indexes = np.array(range(dtw.nY))
-    test_indexes = np.array(range(dtw.nX))
+    ref_indexes = np.array(range(dtw.n_ref))
+    test_indexes = np.array(range(dtw.n_test))
 
     fig = make_subplots(rows=n_figs, cols=1, vertical_spacing=0.1, subplot_titles=dtw.names)
     for i in range(n_figs):
         if dtw.n_dim == 1:
-            fig = _sequence_plot(fig, i, ref_indexes+1, dtw.seqY, test_indexes+1, dtw.seqX, name=dtw.names)
+            fig = _sequence_plot(fig, i, ref_indexes + 1, dtw.seq_ref, test_indexes + 1, dtw.seq_test, name=dtw.names)
         else:
-            fig = _sequence_plot(fig, i, ref_indexes+1, dtw.seqY[:, i], test_indexes+1, dtw.seqX[:, i], name=dtw.names[i])
+            fig = _sequence_plot(fig, i, ref_indexes + 1, dtw.seq_ref[:, i], test_indexes + 1, dtw.seq_test[:, i], name=dtw.names[i])
 
     fig.update_xaxes(title_text="index", row=n_figs, col=1)
     fig.update_layout(height=800, title_text="DTW - Original sequences",
@@ -79,7 +79,7 @@ def plot_aligned_sequences(dtw: dtw.DTW):
     """Plotly scatter plot presenting aligned reference and test sequences found in DTW object."""
     n_figs = dtw.n_dim
 
-    ref_indexes = np.array(range(dtw.nY))
+    ref_indexes = np.array(range(dtw.n_ref))
     results = dtw.get_better_results(start_index=0)
     seq_test = results['test']
     seq_ref = results['reference']
@@ -90,12 +90,12 @@ def plot_aligned_sequences(dtw: dtw.DTW):
     fig = make_subplots(rows=n_figs, cols=1, vertical_spacing=0.1, subplot_titles=dtw.names)
     for i in range(n_figs):
         if dtw.n_dim == 1:
-            ref_val = dtw.seqY
-            test_val = [dtw.seqX[e] for e in seq_test]
+            ref_val = dtw.seq_ref
+            test_val = [dtw.seq_test[e] for e in seq_test]
             names = dtw.names
         else:
-            ref_val = dtw.seqY[:, i]
-            test_val = [dtw.seqX[e, i] for e in seq_test]
+            ref_val = dtw.seq_ref[:, i]
+            test_val = [dtw.seq_test[e, i] for e in seq_test]
             names = dtw.names[i]
         fig = _sequence_plot(fig, i, ref_indexes+1, ref_val, seq_ref+1, test_val, names, pred_types)
 

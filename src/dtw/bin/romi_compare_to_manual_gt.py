@@ -46,33 +46,31 @@ The manual measures are assumed to be the ground-truth.
 
 
 def parsing():
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('db_path', type=str,
-                        help="path to a ROMI local database managed by `FSDB`.")
+                        help="Path to a ROMI local database managed by `FSDB`.")
     parser.add_argument('scan', type=str,
-                        help="name of the plant/scan to analyse.")
+                        help="Name of the plant or scan to analyse.")
 
     dtw_opt = parser.add_argument_group('DTW algorithm arguments')
-    dtw_opt.add_argument('-c', '--constraint', type=str, default=DEF_CONSTRAINT,
-                         choices=CONSTRAINTS,
-                         help=f"type of constraint to use, '{DEF_CONSTRAINT}' by default.")
-    dtw_opt.add_argument('-d', '--dist_type', type=str, default=DEF_DIST_TYPE,
-                         choices=DIST_TYPES,
-                         help=f"type of distance to use, '{DEF_DIST_TYPE}' by default.")
-    dtw_opt.add_argument('-f', '--free_ends', type=float, nargs='+', default=DEF_FREE_ENDS,
-                         help=f"Free ends values to use, '{DEF_FREE_ENDS}' by default.")
-    dtw_opt.add_argument('-b', '--beamsize', type=int, default=DEF_BEAMSIZE,
-                         help=f"Beam size values to use, '{DEF_BEAMSIZE}' by default.")
-    dtw_opt.add_argument('-i', '--delins_cost', type=int, nargs=2, default=DEF_DELINS_COST,
-                         help=f"Beam size values to use, '{DEF_DELINS_COST}' by default.")
-    dtw_opt.add_argument('-s', '--max_stretch', type=int, default=DEF_MAX_STRETCH,
-                         help=f"Beam size values to use, '{DEF_MAX_STRETCH}' by default.")
+    dtw_opt.add_argument('--constraint', type=str, default=DEF_CONSTRAINT, choices=CONSTRAINTS,
+                         help=f"Type of constraint to use, '{DEF_CONSTRAINT}' by default.")
+    dtw_opt.add_argument('--dist_type', type=str, default=DEF_DIST_TYPE, choices=DIST_TYPES,
+                         help=f"Type of distance to use, '{DEF_DIST_TYPE}' by default.")
+    dtw_opt.add_argument('--free_ends', type=float, nargs='+', default=DEF_FREE_ENDS,
+                         help=f"Free ends values to use, specify the relaxation bounds, '{DEF_FREE_ENDS}' by default.")
+    dtw_opt.add_argument('--beam_size', type=int, default=DEF_BEAMSIZE,
+                         help=f"Maximum amount of distortion allowed for signal warping, '{DEF_BEAMSIZE}' by default.")
+    dtw_opt.add_argument('--delins_cost', type=float, nargs=2, default=DEF_DELINS_COST,
+                         help=f"Cost of deletion and insertion to use, '{DEF_DELINS_COST}' by default.")
+    dtw_opt.add_argument('--max_stretch', type=int, default=DEF_MAX_STRETCH,
+                         help=f"Maximum amount of stretching allowed for signal warping, '{DEF_MAX_STRETCH}' by default.")
 
     log_opt = parser.add_argument_group('logging arguments')
     log_opt.add_argument('--log_level', type=str, default=DEFAULT_LOG_LEVEL.lower(),
                          choices=['info', 'warning', 'error', 'critical', 'debug'],
-                         help=f"logging level to use, '{DEFAULT_LOG_LEVEL.lower()}' by default.")
+                         help=f"Logging level to use, '{DEFAULT_LOG_LEVEL.lower()}' by default.")
 
     return parser
 
@@ -135,8 +133,8 @@ def main(args):
                    'graphic_optimal_path_flag': False, 'graphic_seq_alignment': False}
 
     df = sequence_comparison(seq_pred, seq_gt, constraint=args.constraint, dist_type=args.dist_type,
-                             free_ends=args.free_ends, beam_size=args.beamsize, delins_cost=args.delins_cost,
-                             max_stretch=args.max_stretch, verbose=True, **mixed_kwargs, **flag_kwargs)
+                             free_ends=args.free_ends, delins_cost=args.delins_cost, max_stretch=args.max_stretch,
+                             beam_size=args.beamsize, verbose=True, **mixed_kwargs, **flag_kwargs)
 
     logger.name = logger_name
     out_csv = join(args.db_path, args.scan, 'dtw_result.csv')

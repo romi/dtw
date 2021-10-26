@@ -28,14 +28,14 @@ and new dynamic time warping based techniques such as merge_split.
 
 ** Call:
 # create a class instance of dtw to compute the distance between two sequences
-dtwcomputer = dtw(seqX, seqY)
+dtwcomputer = dtw(seq_test, seq_ref)
 # run the algorithm with specific options
 ndist, optpath, length, ndistarray, backpointers = dtwcomputer.run(l_dist = ld, free_ends = fe, beam_size = bs)
 # print the results (a number of flags can be turned on/off to display various aspects of the results)
 dtwcomputer.print_results(cumdistflag, bpflag, freeendsflag, optimalpathflag)
 
 ** args:
-- seqX, seqY: two arrays (lists or np.arrays of scalars or of vectors with identical dimension)
+- seq_test, seq_ref: two arrays (lists or np.arrays of scalars or of vectors with identical dimension)
 
 ** Optional args:
 - Different algorithms are available and can be selected by the following flags:
@@ -73,127 +73,133 @@ class DTW(object):
 
     Attributes
     ----------
-    seqX : numpy.ndarray
-        First Nxd array of *elements* to compare.
-    seqY : numpy.ndarray
-        Second array of *elements* to compare.
-        constraint_type : {"edit_distance", "asymmetric, "symmetric", "merge_split"}, optional
-    nX : int
-        Number of elements in first sequence.
-    nY : int
-        Number of elements in second sequence.
-    bp : numpy.ndarray
-        Array of back-pointers.
-    delins_cost : tuple of float, default (1., 1.)
+    seq_test : numpy.ndarray
+        First array of *elements* to compare. If an array, should be of shape ``(N_test, n_dim)``.
+    seq_ref : numpy.ndarray
+        Second array of *elements* to compare, act as reference. If an array, should be of shape ``(N_ref, n_dim)``.
+    n_dim : int
+        Size of each element, similar to the number of dimensions of the sequence arrays.
+    n_test : int
+        Number of elements in the *test* sequence.
+    n_ref : int
+        Number of elements in the *reference* sequence.
+    delins_cost : 2-tuple of floats
         Deletion and insertion costs.
-    cum_dist :
-
-    editop :
-
-    cum_dist_boundaryX :
-
-    cum_dist_boundaryY :
-
-    l_dist : function, default euclidean_dist
+    free_ends : 2-tuple of int
+        A tuple of 2 integers ``(k,l)`` that specifies relaxation bounds on the alignment of sequences endpoints:
+        relaxed by ``k`` at the sequence beginning and relaxed by ``l`` at the sequence ending.
+    max_stretch : bool
+        Maximum amount of stretching allowed for signal warping.
+    beam_size : int
+        Maximum amount of distortion allowed for signal warping.
+    constraints : {"edit_distance", "asymmetric, "symmetric", "merge_split"}
+        Type of constraint to use.
+    ldist_f : function
         The function to compute the local distance used to compare values of both sequences.
-        Typically `euclidean_dist()`,  `angular_dist()` or `mixed_dist()`.
-    free_ends : (int, int), optional
-        A tuple of 2 integers ``(k,l)`` that specifies relaxation bounds on
-        the alignment of sequences endpoints: relaxed by ``k`` at the sequence beginning
-        and relaxed by ``l`` at the sequence ending.
-    beam_size : int, optional
-        maximum amount of distortion allowed for signal warping.
-    constraints : {"edit_distance", "asymmetric, "symmetric", "merge_split"}, optional
-        Type of constraint to use to edit local distance.
-    mixed_type : list(bool), optional
-        A boolean vector, of size ``dim``, indicating whether the k^th component should be treated
+    names : list
+        Names of the sequences, _i.e._ what they represent. This is used for summaries and graphical representations.
+    mixed_type : list of bool
+        A boolean vector, of size ``n_dim``, indicating whether the k^th component should be treated
         as an angle (``True``) or a regular scalar value (``False``).
-    mixed_spread : list(float), optional
-        A vector of positive scalars, of size ``dim``, used to normalize the distance values computed
+    mixed_spread : list of float
+        A vector of positive scalars, of size ``n_dim``, used to normalize the distance values computed
         for each component with their typical spread.
-    mixed_weight : list(float), optional
-        A vector of positive weights, of size ``dim``.
-        Does not necessarily sum to 1, but normalized if not.
-    optpath_array :
-
-    optpathlength_array :
-
-    optpath_normalized_cumdist_array :
-
-    min_normalized_cost :
-
-    non_mormalized_optcost :
-
-    opt_index :
-
-    opt_backtrackpath :
-
+    mixed_weight : list of float
+        A vector of positive weights, of size ``n_dim``. Does not necessarily sum to 1, but normalized if not.
+    bp : numpy.ndarray
+        Array of back-pointers, of shape ``(n_test, n_ref)``.
+    editop : numpy.ndarray
+        ???, of shape ``(n_test, n_ref)``.
+    l_dist : numpy.ndarray
+        Local distance array, of shape ``(n_test, n_ref)``.
+    cum_dist : numpy.ndarray
+        Cumulative distance array, of shape ``(n_test, n_ref)``.
+    cum_dist_boundary_test : numpy.ndarray
+        ???, of shape ``(n_test,)``.
+    cum_dist_boundary_ref : numpy.ndarray
+        ???, of shape ``(n_test,)``.
+    optpath_array : numpy.ndarray
+        optimal path of the relaxed ending region, of shape ``(l, l)``.
+    optpathlength_array : numpy.ndarray
+        length optimal path of the relaxed ending region, of shape ``(l, l)``.
+    optpath_normalized_cumdist_array : numpy.ndarray
+        cumulative distance of optimal path of the relaxed ending region, of shape ``(l, l)``.
+    min_normalized_cost : float
+        the minimum normalized cost.
+    non_mormalized_optcost : float
+        ???
+    opt_index : len-2 list
+        ???
+    opt_backtrackpath : int
+        ???
 
     """
 
-    def __init__(self, seqX, seqY, constraints="symmetric", ldist=euclidean_dist,
+    def __init__(self, seq_test, seq_ref, constraints="symmetric", ldist=euclidean_dist,
                  mixed_type=[], mixed_spread=[], mixed_weight=[], free_ends=(0, 1),
                  beam_size=-1, max_stretch=3, delins_cost=(1.0, 1.0), **kwargs):
         """Constructor.
 
         Parameters
         ----------
-        seqX : list or numpy.ndarray
-            First ``N_x x n_dim`` array of *elements* to compare.
-        seqY : list or numpy.ndarray
-            Second ``N_y x n_dim`` array of *elements* to compare, act as reference.
-        constraints : {"edit_distance", "asymmetric, "symmetric", "merge_split"}, default "merge_split"
-            Type of constraint to use.
-        delins_cost : tuple of float, default (1., 1.)
-            Deletion and insertion costs.
-        free_ends : (int, int), optional
-            A tuple of 2 integers ``(k,l)`` that specifies relaxation bounds on
-            the alignment of sequences endpoints: relaxed by ``k`` at the sequence beginning
-            and relaxed by ``l`` at the sequence ending.
-        ldist : function, default euclidean_dist
+        seq_test : list or numpy.ndarray
+            First array of *elements* to compare. If an array, should be of shape ``(N_test, n_dim)``.
+        seq_ref : list or numpy.ndarray
+            Second array of *elements* to compare, act as reference. If an array, should be of shape ``(N_ref, n_dim)``.
+        constraints : {"edit_distance", "asymmetric, "symmetric", "merge_split"}, optional
+            Type of constraint to use, default is "merge_split".
+        delins_cost : tuple of float, optional
+            Deletion and insertion costs, default to ``(1., 1.)``.
+        free_ends : 2-tuple of int, optional
+            A tuple of 2 integers ``(k,l)`` that specifies relaxation bounds on the alignment of sequences endpoints:
+            relaxed by ``k`` at the sequence beginning and relaxed by ``l`` at the sequence ending.
+        ldist : function, optional
             The function to compute the local distance used to compare values of both sequences.
-            Typically `euclidean_dist()`,  `angular_dist()` or `mixed_dist()`.
+            Typically `euclidean_dist()` (default), `angular_dist()` or `mixed_dist()`.
         mixed_type : list of bool, optional
             A boolean vector, of size ``n_dim``, indicating whether the k^th component should be treated
             as an angle (``True``) or a regular scalar value (``False``).
         mixed_spread : list of float, optional
-            A vector of positive scalars, of size ``dim``, used to normalize the distance values computed
+            A vector of positive scalars, of size ``n_dim``, used to normalize the distance values computed
             for each component with their typical spread.
         mixed_weight : list of float, optional
-            A vector of positive weights, of size ``n_dim``.
-            Does not necessarily sum to 1, but normalized if not.
-        beam_size : int, default -1
-            maximum amount of distortion allowed for signal warping.
-        max_stretch : bool, default 3
-            maximum amount of stretching allowed for signal warping.
+            A vector of positive weights, of size ``n_dim``. Does not necessarily sum to 1, but normalized if not.
+        beam_size : int, optional
+            maximum amount of distortion allowed for signal warping, default ``-1``.
+        max_stretch : bool, optional
+            maximum amount of stretching allowed for signal warping, default ``3``.
 
         Other Parameters
         ----------------
         names : list
-            Names of the sequences, _i.e._ what they represent.
-            This is used for summaries and graphical representations.
+            Names of the sequences, _i.e._ what they represent. This is used for summaries and graphical representations.
+
+        See Also
+        --------
+        dtw.metrics.euclidean_dist, dtw.metrics.angular_dist, dtw.metrics.mixed_dist
 
         Notes
         -----
-        An *element* can be a scalar (``d=1``) or a vector.
+        An *element* can be a scalar (``n_dim=1``) or a vector.
 
         Example
         -------
         >>> from dtw.dtw import DTW
         >>> test_seq = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]
         >>> ref_seq = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
-        >>> dtwcomputer = DTW(test_seq, ref_seq)
+        >>> dtwcomputer = DTW(test_seq,ref_seq)
         >>> ndist, path, length, ndistarray, backpointers = dtwcomputer.run()
         >>> dtwcomputer.get_results()
         >>> dtwcomputer.get_better_results()
 
         """
         # Initialize empty attributes
-        self.n_dim = None
+        self.bp = None
+        self.editop = None
         self.l_dist = None
         self.cum_dist = None
-        self.cum_dist_boundaryX = None
-        self.cum_dist_boundaryY = None
+        self.cum_dist_boundary_test = None
+        self.cum_dist_boundary_ref = None
         self.optpath_array = None
         self.optpathlength_array = None
         self.optpath_normalized_cumdist_array = None
@@ -202,13 +208,13 @@ class DTW(object):
         self.opt_index = None
         self.opt_backtrack_path = None
 
-        # seqX and seqY are expected to be two numpy.arrays of elements of identical dim
+        # `seq_test` and `seq_ref` are expected to be two numpy.arrays of elements of identical dim
         # an element can be a scalar or a vector
-        self.seqX = np.array(seqX)
-        self.seqY = np.array(seqY)
+        self.seq_test = np.array(seq_test)
+        self.seq_ref = np.array(seq_ref)
         self.n_dim = self._check_sequences()  # verify sequences requirements
-        self.nX = len(seqX)
-        self.nY = len(seqY)
+        self.n_test = len(seq_test)
+        self.n_ref = len(seq_ref)
         self.delins_cost = delins_cost
         self._free_ends = None
         self.free_ends = free_ends
@@ -238,13 +244,13 @@ class DTW(object):
     def _check_sequences(self):
         """Hidden method called upon instance initialization to test requirements are met by provided sequences."""
         try:
-            _, rn_dim = self.seqX.shape
+            _, rn_dim = self.seq_test.shape
         except ValueError:
-            rn_dim = 1
+            rn_dim = 1  # assume its a list
         try:
-            _, tn_dim = self.seqY.shape
+            _, tn_dim = self.seq_ref.shape
         except ValueError:
-            tn_dim = 1
+            tn_dim = 1  # assume its a list
         # Check we have the same number of dimensions in both sequences:
         try:
             assert tn_dim == rn_dim
@@ -253,32 +259,40 @@ class DTW(object):
         return rn_dim
 
     def initdtw(self):
-        # initiates the arrays of backpointers, localdist and cum_dist
+        # initiates the arrays of back-pointers, local and cumulative distance
         assert (len(self.free_ends) == 2)
-        a = self.free_ends[0]
-        b = self.free_ends[1]
-        assert (a + b < self.nX and a + b < self.nY)
+        a = self.free_ends[0]  # size of the relaxed starting region
+        b = self.free_ends[1]  # size of the relaxed ending region
+        assert (a + b < self.n_test and a + b < self.n_ref)
 
-        # initialization of backpointer array
-        self.bp = np.empty((self.nX, self.nY), dtype=object)
-        # initialization of cummulated distance array
-        self.cum_dist = np.full((self.nX, self.nY), np.Infinity)
-
+        # initialization of back-pointer array
+        self.bp = np.empty((self.n_test, self.n_ref), dtype=object)
+        # initialization of cumulated distance array
+        self.cum_dist = np.full((self.n_test, self.n_ref), np.Infinity)
         # edit op
-        self.editop = np.full((self.nX, self.nY), "-")
+        self.editop = np.full((self.n_test, self.n_ref), "-")
 
         # border array for boundary conditions on cum_dist array
-        self.cum_dist_boundaryX = np.full(self.nX, np.Infinity)
-        if a != 0: self.cum_dist_boundaryX[:a] = 0.0
-        self.cum_dist_boundaryY = np.full(self.nY, np.Infinity)
-        if a != 0: self.cum_dist_boundaryY[:a] = 0.0
+        self.cum_dist_boundary_test = np.full(self.n_test, np.Infinity)
+        if a != 0: self.cum_dist_boundary_test[:a] = 0.0
+        self.cum_dist_boundary_ref = np.full(self.n_ref, np.Infinity)
+        if a != 0: self.cum_dist_boundary_ref[:a] = 0.0
 
         # initialization and computation of the matrix of local distances
-        self.l_dist = np.full((self.nX, self.nY), np.Infinity)
+        self.l_dist = np.full((self.n_test, self.n_ref), np.Infinity)
 
-        for i in range(self.nX):
-            for j in range(self.nY):
-                self.l_dist[i, j] = euclidean_dist(self.seqX[i], self.seqY[j])
+        for i in range(self.n_test):
+            for j in range(self.n_ref):
+                self.l_dist[i, j] = euclidean_dist(self.seq_test[i], self.seq_ref[j])
+
+        # reset some attributes
+        self.optpath_array = None
+        self.optpathlength_array = None
+        self.optpath_normalized_cumdist_array = None
+        self.min_normalized_cost = None
+        self.non_mormalized_optcost = None
+        self.opt_index = None
+        self.opt_backtrack_path = None
 
     def find_path(self, path, editoparray, verbose=True):
         # print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
@@ -319,7 +333,7 @@ class DTW(object):
         >>> from dtw.dtw import DTW
         >>> test_seq = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]
         >>> ref_seq = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
-        >>> dtwcomputer = DTW(test_seq, ref_seq)
+        >>> dtwcomputer = DTW(test_seq,ref_seq)
         >>> dtwcomputer.free_ends  # Get the default free-end values
         (0, 1)
 
@@ -337,14 +351,14 @@ class DTW(object):
 
         Notes
         -----
-        This reset the cumulative distance boundaries (``self.cumdistboundaryX`` & ``self.cumdistboundaryY``) as they depend on the left free-end.
+        Changing the free-ends values reset several attributes trought ``initdtw()``.
 
         Example
         -------
         >>> from dtw.dtw import DTW
         >>> test_seq = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]
         >>> ref_seq = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
-        >>> dtwcomputer = DTW(test_seq, ref_seq)
+        >>> dtwcomputer = DTW(test_seq,ref_seq)
         >>> dtwcomputer.free_ends  # Get the default free-end values
         (0, 1)
         >>> dtwcomputer.free_ends = (3, 4)  # Set new free-end values
@@ -359,7 +373,7 @@ class DTW(object):
         a = values[0]
         b = values[1]
         try:
-            assert (a + b < self.nX and a + b < self.nY)
+            assert (a + b < self.n_test and a + b < self.n_ref)
         except AssertionError:
             raise ValueError(f"The sum of both `free_ends` values should be inferior to the length of each sequence!")
 
@@ -381,8 +395,8 @@ class DTW(object):
         dict
             the result dictionary with aligned sequences, event types and associated local costs.
 
-        Note
-        ----
+        Notes
+        -----
         You have to call the ``run()`` method first!
 
         Details of 'type' list symbols for 'merge_split' constraints:
@@ -406,7 +420,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[1, 1], names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_results()
 
@@ -437,7 +451,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[0.5, 0.5], names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_results()
         >>> dtwcomputer.get_better_results()
@@ -447,7 +461,7 @@ class DTW(object):
         >>> seq_ref = np.array([[123, 136, 131, 143, 113, 163, 159, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124, 152, 124, 107, 126], [70, 48, 56, 42, 39, 46, 33, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0, 13, 16, 0, 1]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[0.5, 0.5], names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "inter-nodes"])
         >>> dtwcomputer.free_ends = (0, 5)
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_results()
@@ -553,12 +567,12 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[0.5, 0.5], names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.plot_results()
 
         """
-        ref_indexes = np.array(range(self.nY))
+        ref_indexes = np.array(range(self.n_ref))
         results = self.get_better_results(start_index=0)
         seq_test = results['test']
         seq_ref = results['reference']
@@ -569,13 +583,13 @@ class DTW(object):
             figsize = (10, 5 * self.n_dim)
         fig, axs = plt.subplots(ncols=1, nrows=self.n_dim, figsize=figsize, constrained_layout=True)
         if self.n_dim == 1:
-            ref_val = self.seqY
-            test_val = [self.seqX[e] for e in seq_test]
+            ref_val = self.seq_ref
+            test_val = [self.seq_test[e] for e in seq_test]
             self._plot_results(axs, ref_indexes + 1, ref_val, seq_ref + 1, test_val, pred_types, self.names[0])
         else:
             for i in range(self.n_dim):
-                ref_val = self.seqY[:, i]
-                test_val = [self.seqX[e, i] for e in seq_test]
+                ref_val = self.seq_ref[:, i]
+                test_val = [self.seq_test[e, i] for e in seq_test]
                 self._plot_results(axs[i], ref_indexes + 1, ref_val, seq_ref + 1, test_val, pred_types, self.names[i])
         plt.suptitle(f"DTW - {self.constraints.replace('_', ' ')} alignment")
 
@@ -631,7 +645,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[1, 1], names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.plot_results()
         >>> dtwcomputer.get_split_events()
@@ -662,7 +676,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[1, 1], names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.plot_results()
         >>> dtwcomputer.get_added_organ_per_merge(indexed=True)
@@ -686,7 +700,7 @@ class DTW(object):
 
         Returns
         -------
-        numpy.array
+        numpy.ndarray
             Aligned reference sequence.
 
         Example
@@ -698,20 +712,20 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[1, 1], names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_aligned_reference_sequence()
 
         """
         aligned_results = self.get_better_results(0)
-        return np.array([self.seqY[e] for e in aligned_results['reference']])
+        return np.array([self.seq_ref[e] for e in aligned_results['reference']])
 
     def get_aligned_test_sequence(self):
         """Return the aligned test sequence.
 
         Returns
         -------
-        numpy.array
+        numpy.ndarray
             Aligned test sequence.
 
         Example
@@ -723,22 +737,22 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[1, 1], names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_aligned_test_sequence()
 
         """
         aligned_results = self.get_better_results(0)
-        return np.array([self.seqX[e] for e in aligned_results['test']])
+        return np.array([self.seq_test[e] for e in aligned_results['test']])
 
     def get_matching_sequences(self):
         """Return the sequences only when matching (no split or merge).
 
         Returns
         -------
-        numpy.array
+        numpy.ndarray
             Reference sequence for matching events.
-        numpy.array
+        numpy.ndarray
             Test sequence for matching events.
 
         Example
@@ -750,7 +764,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[0.5, 0.5])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5])
         >>> dtwcomputer.free_ends = (2, 4)
         >>> dtwcomputer.run()
         >>> matched_ref, matched_test = dtwcomputer.get_matching_sequences()
@@ -775,7 +789,7 @@ class DTW(object):
         >>> seq_ref = np.array([[150, 140, 138, 168, 125, 125, 145, 173, 123, 127, 99, 180, 102, 144, 136, 146, 137, 142, 136, 134], [70, 55, 0, 42, 27, 31, 33, 21, 23, 1, 28, 28, 26, 18, 17, 16, 3, 0, 8, 18]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[0.5, 0.5], names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "inter-nodes"])
         >>> dtwcomputer.free_ends = (2, 4)
         >>> dtwcomputer.run()
         >>> dtwcomputer.summarize()
@@ -786,13 +800,13 @@ class DTW(object):
         merge_indexes = np.where(results['type'] == 'm')[0]
         split_indexes = np.where(results['type'] == 's')[0]
         chop_start = min(aligned_results['reference']) - 1 if min(aligned_results['reference']) > 1 else 0
-        chop_end = self.nY - max(aligned_results['reference']) if max(aligned_results['reference']) > self.nY else 0
+        chop_end = self.n_ref - max(aligned_results['reference']) if max(aligned_results['reference']) > self.n_ref else 0
         tail_start = min(aligned_results['test']) - 1 if min(aligned_results['test']) > 1 else 0
-        tail_end = self.nX - max(aligned_results['test']) if max(aligned_results['test']) > self.nX else 0
+        tail_end = self.n_test - max(aligned_results['test']) if max(aligned_results['test']) > self.n_test else 0
 
         summary = {}
-        summary["reference sequence length"] = self.nY
-        summary["test sequence length"] = self.nX
+        summary["reference sequence length"] = self.n_ref
+        summary["test sequence length"] = self.n_test
         summary["number chop start"] = chop_start
         summary["number chop end"] = chop_end
         summary["number tail start"] = tail_start
@@ -840,27 +854,27 @@ class DTW(object):
             if labl == 'm':
                 if i != pi + 1:
                     for h in range(pi + 1, i):
-                        if self.seqX.ndim == 1:
-                            print("%3d" % self.seqX[h], end=' ')
+                        if self.seq_test.ndim == 1:
+                            print("%3d" % self.seq_test[h], end=' ')
                         else:
-                            print(self.seqX[h], end=' ')
-                if self.seqX.ndim == 1:
-                    print("%3d" % self.seqX[i], end=' ')
+                            print(self.seq_test[h], end=' ')
+                if self.seq_test.ndim == 1:
+                    print("%3d" % self.seq_test[i], end=' ')
                 else:
-                    print(self.seqX[i], end=' ')
+                    print(self.seq_test[i], end=' ')
             elif labl == 's':
                 if j != pj + 1:
                     for h in range(pj + 1, j):
                         print(" - ", end=' ')
-                if self.seqX.ndim == 1:
-                    print("%3d" % self.seqX[i], end=' ')
+                if self.seq_test.ndim == 1:
+                    print("%3d" % self.seq_test[i], end=' ')
                 else:
-                    print(self.seqX[i], end=' ')
+                    print(self.seq_test[i], end=' ')
             elif labl == "m" or labl == "s" or labl == "i" or labl == "~" or labl == "=":
-                if len(np.shape(self.seqX)) == 1:  # for scalar values
-                    print("%3d" % self.seqX[i], end=' ')
+                if len(np.shape(self.seq_test)) == 1:  # for scalar values
+                    print("%3d" % self.seq_test[i], end=' ')
                 else:
-                    print(self.seqX[i], end=' ')  # for vectorial values
+                    print(self.seq_test[i], end=' ')  # for vectorial values
             elif labl == "d" or labl == "s":
                 print(" - ", end='s')
             pi = i
@@ -877,26 +891,26 @@ class DTW(object):
                 if i != pi + 1:
                     for h in range(pi + 1, i):
                         print(" - ", end=' ')
-                if self.seqY.ndim == 1:
-                    print("%3d" % self.seqY[j], end=' ')
+                if self.seq_ref.ndim == 1:
+                    print("%3d" % self.seq_ref[j], end=' ')
                 else:
-                    print(self.seqY[j], end=' ')
+                    print(self.seq_ref[j], end=' ')
             elif labl == 's':
                 if j != pj + 1:
                     for h in range(pj + 1, j):
-                        if self.seqY.ndim == 1:
-                            print("%3d" % self.seqY[h], end=' ')
+                        if self.seq_ref.ndim == 1:
+                            print("%3d" % self.seq_ref[h], end=' ')
                         else:
-                            print(self.seqY[h], end=' ')
-                if self.seqY.ndim == 1:
-                    print("%3d" % self.seqY[j], end=' ')
+                            print(self.seq_ref[h], end=' ')
+                if self.seq_ref.ndim == 1:
+                    print("%3d" % self.seq_ref[j], end=' ')
                 else:
-                    print(self.seqY[j], end=' ')
+                    print(self.seq_ref[j], end=' ')
             elif labl == "m" or labl == "s" or labl == "d" or labl == "~" or labl == "=":
-                if len(np.shape(self.seqY)) == 1:
-                    print("%3d" % self.seqY[j], end=' ')
+                if len(np.shape(self.seq_ref)) == 1:
+                    print("%3d" % self.seq_ref[j], end=' ')
                 else:
-                    print(self.seqY[j], end=' ')
+                    print(self.seq_ref[j], end=' ')
             elif labl == "i" or labl == "m":
                 print(" - ", end=' ')
             pi = i
@@ -968,8 +982,8 @@ class DTW(object):
         # print bparray[:,0]
         # print bparray[:,1]
         plt.plot(self.opt_backtrack_path[:, 0], self.opt_backtrack_path[:, 1])
-        plt.ylim([0, self.nY])
-        plt.xlim([0, self.nX])
+        plt.ylim([0, self.n_ref])
+        plt.xlim([0, self.n_test])
         plt.grid()
         plt.ion()
         plt.show()
@@ -992,7 +1006,7 @@ class DTW(object):
         plt.show()
 
     def graphic_seq_alignment(self):
-        dim = self.seqX.ndim
+        dim = self.seq_test.ndim
 
         # Loop on the dimensions of test/ref vector space
         for d in range(dim):
@@ -1001,11 +1015,11 @@ class DTW(object):
             # print bparray[:,0]
             # print bparray[:,1]
             if dim == 1:
-                seqX = self.seqX  # Test sequence
-                seqY = self.seqY  # Ref sequence
+                seqX = self.seq_test  # Test sequence
+                seqY = self.seq_ref  # Ref sequence
             else:
-                seqX = self.seqX[:, d]  # take the dth scalar sequence of the vector-sequence
-                seqY = self.seqY[:, d]
+                seqX = self.seq_test[:, d]  # take the dth scalar sequence of the vector-sequence
+                seqY = self.seq_ref[:, d]
 
             # Find the best shift of the two sequences
             optpathlen = len(self.opt_backtrack_path)
@@ -1027,7 +1041,7 @@ class DTW(object):
                 score_array = np.zeros(maxh - minh + 1)
                 print("-----> minh, maxh=", minh, maxh, )
                 # Second finds a shift s that would best compensate the different shifts:
-                # the aligment would become j - (i+s)
+                # the alignment would become j - (i+s)
                 for s in range(minh, maxh + 1):
                     score = 0
                     for k in range(optpathlen):
@@ -1058,7 +1072,7 @@ class DTW(object):
                 pj = j
             maxval = max(max(seqX), max(seqY)) * 1.2
             plt.ylim([-1, maxval])
-            plt.xlim([-1 + shift, max(self.nX, self.nY)])
+            plt.xlim([-1 + shift, max(self.n_test, self.n_ref)])
             plt.xlabel('Rank')
             if dim == 1:
                 plt.ylabel('Sequence Value')
@@ -1073,29 +1087,30 @@ class DTW(object):
             plt.ion()
             plt.show()
 
-    def print_results(self, cum_dist_flag=True, bp_flag=False, ld_flag=False,
-                      free_ends_flag=False, optimal_path_flag=True, graphic_optimal_path_flag=False,
-                      graphic_seq_alignment=False, verbose=True, **kwargs):
+    def print_results(self, cum_dist_flag=True, bp_flag=False, ld_flag=False, free_ends_flag=False,
+                      optimal_path_flag=True, graphic_optimal_path_flag=False, graphic_seq_alignment=False,
+                      verbose=True, **kwargs):
         """Print results in terminal.
 
         Parameters
         ----------
-        cum_dist_flag : bool, default True
-            If ``True``, print the array of global distances.
-        bp_flag : bool, default False
-            If ``True``, print the back-pointers array.
-        ld_flag : bool, default False
-            If ``True``, print the local distance array.
-        free_ends_flag : bool, default False
-            If ``True``, print the sub-arrays of normalized distances on relaxed ending region and of optimal path lengths on relaxed ending region.
-        optimal_path_flag : bool, default True
-            If ``True``, print the optimal path.
-        graphic_optimal_path_flag : bool, default True
-            If ``True``, ?then?.
-        graphic_seq_alignment : bool, default True
-            If ``True``, generate a matplotlib figure with aligned sequences.
-        verbose : bool, default True
-            If ``True``, increase code verbosity.
+        cum_dist_flag : bool, optional
+            If ``True`` (default), print the array of global distances.
+        bp_flag : bool, optional
+            If ``True`` (default is ``False``), print the back-pointers array.
+        ld_flag : bool, optional
+            If ``True`` (default is ``False``), print the local distance array.
+        free_ends_flag : bool, optional
+            If ``True`` (default is ``False``), print the sub-arrays of normalized distances on relaxed ending region and of
+            optimal path lengths on relaxed ending region.
+        optimal_path_flag : bool, optional
+            If ``True`` (default), print the optimal path.
+        graphic_optimal_path_flag : bool, optional
+            If ``True`` (default), generate a matplotlib figure with ???.
+        graphic_seq_alignment : bool, optional
+            If ``True`` (default), generate a matplotlib figure with aligned sequences.
+        verbose : bool, optional
+            If ``True`` (default), increase code verbosity.
 
         Examples
         --------
@@ -1106,7 +1121,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist, mixed_type=[True, False], mixed_spread=[1, max(max_ref, max_test)], mixed_weight=[1, 1], names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
         >>> flag_kwargs = {'cum_dist_flag': False, 'bp_flag': False, 'ld_flag': False, 'free_ends_flag': False, 'optimal_path_flag': True, 'graphic_optimal_path_flag': False, 'graphic_seq_alignment': False, 'verbose':False}
         >>> df = dtwcomputer.print_results(**flag_kwargs)
@@ -1116,8 +1131,8 @@ class DTW(object):
         np.set_printoptions(precision=3)
         if verbose:
             print(f"{' INFOS ':*^80}")
-            print(f"Sequence X length: {self.nX}")
-            print(f"Sequence Y length: {self.nY}")
+            print(f"Test sequence length: {self.n_test}")
+            print(f"ference sequence length: {self.n_ref}")
             print(f"Type of constraints: {self.constraints}")
             print(f"Beam size: ", (self.beam_size if self.beam_size != -1 else "None"))
             print(f"Free endings: {self.free_ends}")
@@ -1152,9 +1167,9 @@ class DTW(object):
             print("Local dist array = \n", self.l_dist)
 
         # Print back-pointer array
-        bparray = np.empty((self.nX, self.nY), dtype=object)
-        for i in range(self.nX):
-            for j in range(self.nY):
+        bparray = np.empty((self.n_test, self.n_ref), dtype=object)
+        for i in range(self.n_test):
+            for j in range(self.n_ref):
                 bparray[i, j] = (self.bp[i, j][0], self.bp[i, j][1])
         if bp_flag and verbose:
             print("Back-pointers array = \n", print_matrix_bp(bparray))
@@ -1174,64 +1189,79 @@ class DTW(object):
     # - ipair is a pair of integers (i1,i2)
     # Preconditions:
     # rmq: if i1 == i2, then norm(v_i1, v_i2 is returned)
-    def ldistcumX(self, ipair, j, ldist):
-        """Add up the attributes of a sub-sequence of X.
+    # FIXME: NOT true! https://gitlab.inria.fr/cgodin-dev/dtw/-/blob/master/src/dtw/dtw.py#L486
+    def ldist_cum_test_seq(self, ipair, j, ldist):
+        """Local cumulative distance for test sub-sequence.
+
+        Sum the attributes of the test sub-sequence (from ``i[0]`` to ``i[1]``).
+        Then compare them to the attribute at index `j` in reference sequence.
 
         Parameters
         ----------
         ipair : (int, int)
-            Pair of ???.
+            Pair of indexes in test sequence.
         j : int
-            Index in sequence Y ???.
-        ldist : function, default euclidean_dist
+            Index in reference sequence.
+        ldist : function, optional
             The function to compute the local distance used to compare values of both sequences.
-            Typically `euclidean_dist()`,  `angular_dist()` or `mixed_dist()`.
+            Typically `euclidean_dist()` (default),  `angular_dist()` or `mixed_dist()`.
 
         Returns
         -------
         float
-            ???.
+            Distance ???.
+
+        See Also
+        --------
+        dtw.metrics.euclidean_dist, dtw.metrics.angular_dist, dtw.metrics.mixed_dist
 
         Notes
         -----
-        If ``i1 == i2``, then ``norm(v_i1, v_i2)`` is returned.
+        If ``ipair[0] == ipair[1]``, then ``norm(v_i1, v_i2)`` is returned.
 
         """
         i1, i2 = ipair
-        vi = self.seqX[i2]
-        v2 = self.seqY[j]
+        vi = self.seq_test[i2]
+        v2 = self.seq_ref[j]
         for i in range(i1, i2):
-            vi = vi + self.seqX[i]
+            vi = vi + self.seq_test[i]
         return ldist(vi, v2, is_angular=self.mixed_type, spread=self.mixed_spread, weight=self.mixed_weight)
 
-    def ldistcumY(self, i, jpair, ldist):
-        """Add up the attributes of a sub-sequence of Y.
+    def ldist_cum_ref_seq(self, i, jpair, ldist):
+        """Local cumulative distance for reference sub-sequence.
+
+        Sum the attributes of the reference sub-sequence (from ``jpair[0]`` to ``jpair[1]``).
+        Then compare them to the attribute at index `i` in test sequence.
 
         Parameters
         ----------
         i : int
-            Index in sequence X ???.
+            Index in test sequence.
         jpair : (int, int)
-            Pair of ???.
-        ldist : function, default euclidean_dist
+            Pair of indexes in reference sequence.
+        ldist : function, optional
             The function to compute the local distance used to compare values of both sequences.
-            Typically `euclidean_dist()`, `angular_dist()` or `mixed_dist()`.
+            Typically `euclidean_dist()` (default), `angular_dist()` or `mixed_dist()`.
 
         Returns
         -------
         float
-            ???.
+            Distance ???.
+
+        See Also
+        --------
+        dtw.metrics.euclidean_dist, dtw.metrics.angular_dist, dtw.metrics.mixed_dist
 
         Notes
         -----
-        If ``i1 == i2``, then ``norm(v_i1, v_i2)`` is returned.
+        If ``jpair[0] == jpair[1]``, then ``norm(v_i1, v_i2)`` is returned.
 
         """
         j1, j2 = jpair
-        v1 = self.seqX[i]
-        vj = self.seqY[j2]
+        v1 = self.seq_test[i]
+        vj = self.seq_ref[j2]
         for j in range(j1, j2):
-            vj = vj + self.seqY[j]
+            vj = vj + self.seq_ref[j]
         return ldist(v1, vj, is_angular=self.mixed_type, spread=self.mixed_spread, weight=self.mixed_weight)
 
     def asymmetric_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, max_stretch):
@@ -1267,22 +1297,22 @@ class DTW(object):
         tmpcumdistindexes[1] = (i - 1, j - 1)
         tmpcumdistindexes[2] = (i - 1, j - 2)
         if i == 0:
-            tmpcumdist[0] = self.cum_dist_boundaryY[j]
+            tmpcumdist[0] = self.cum_dist_boundary_ref[j]
             tmpcumdist[1] = 0.0
             tmpcumdist[2] = np.Infinity
             if j > 0:
-                tmpcumdist[1] = self.cum_dist_boundaryY[j - 1]
+                tmpcumdist[1] = self.cum_dist_boundary_ref[j - 1]
                 tmpcumdist[2] = 0.0
             if j > 1:
-                tmpcumdist[2] = self.cum_dist_boundaryY[j - 2]
+                tmpcumdist[2] = self.cum_dist_boundary_ref[j - 2]
             # logging.debug(tmpcumdist)
             # logging.debug(np.argmin(tmpcumdist))
         else:
             tmpcumdist[0] = self.cum_dist[i - 1, j]
-            tmpcumdist[1] = self.cum_dist_boundaryX[i - 1]
+            tmpcumdist[1] = self.cum_dist_boundary_test[i - 1]
             if j > 0:
                 tmpcumdist[1] = self.cum_dist[i - 1, j - 1]
-                tmpcumdist[2] = self.cum_dist_boundaryX[i - 1]
+                tmpcumdist[2] = self.cum_dist_boundary_test[i - 1]
             if j > 1:
                 tmpcumdist[2] = self.cum_dist[i - 1, j - 2]
             # decision on local optimal path:
@@ -1326,16 +1356,16 @@ class DTW(object):
         tmpcumdistindexes[1] = (i - 1, j - 1)
         tmpcumdistindexes[2] = (i, j - 1)
         if i == 0:
-            tmpcumdist[0] = self.cum_dist_boundaryY[j]
+            tmpcumdist[0] = self.cum_dist_boundary_ref[j]
             tmpcumdist[1] = 0.0
-            tmpcumdist[2] = self.cum_dist_boundaryX[i]
+            tmpcumdist[2] = self.cum_dist_boundary_test[i]
             if j > 0:
-                tmpcumdist[1] = self.cum_dist_boundaryY[j - 1]
+                tmpcumdist[1] = self.cum_dist_boundary_ref[j - 1]
                 tmpcumdist[2] = self.cum_dist[i, j - 1]
         else:
             tmpcumdist[0] = self.cum_dist[i - 1, j]
-            tmpcumdist[1] = self.cum_dist_boundaryX[i - 1]
-            tmpcumdist[2] = self.cum_dist_boundaryX[i]
+            tmpcumdist[1] = self.cum_dist_boundary_test[i - 1]
+            tmpcumdist[2] = self.cum_dist_boundary_test[i]
             if j > 0:
                 tmpcumdist[1] = self.cum_dist[i - 1, j - 1]
                 tmpcumdist[2] = self.cum_dist[i, j - 1]
@@ -1375,16 +1405,16 @@ class DTW(object):
         tmpcumdistindexes[1] = (i - 1, j - 1)
         tmpcumdistindexes[2] = (i, j - 1)
         if i == 0:
-            tmpcumdist[0] = self.cum_dist_boundaryY[j]
+            tmpcumdist[0] = self.cum_dist_boundary_ref[j]
             tmpcumdist[1] = 0.0
-            tmpcumdist[2] = self.cum_dist_boundaryX[i]
+            tmpcumdist[2] = self.cum_dist_boundary_test[i]
             if j > 0:
-                tmpcumdist[1] = self.cum_dist_boundaryY[j - 1]
+                tmpcumdist[1] = self.cum_dist_boundary_ref[j - 1]
                 tmpcumdist[2] = self.cum_dist[i, j - 1]
         else:
             tmpcumdist[0] = self.cum_dist[i - 1, j]
-            tmpcumdist[1] = self.cum_dist_boundaryX[i - 1]
-            tmpcumdist[2] = self.cum_dist_boundaryX[i]
+            tmpcumdist[1] = self.cum_dist_boundary_test[i - 1]
+            tmpcumdist[2] = self.cum_dist_boundary_test[i]
             if j > 0:
                 tmpcumdist[1] = self.cum_dist[i - 1, j - 1]
                 tmpcumdist[2] = self.cum_dist[i, j - 1]
@@ -1421,10 +1451,10 @@ class DTW(object):
 
         """
         if i == 0 and j == 0:
-            d = self.ldistcumX((0, 0), 0, ldist)  # equivalent to ldist(seqi[0],seqj[0])
-            tmpcumdist[0] = self.cum_dist_boundaryY[j] + d
+            d = self.ldist_cum_test_seq((0, 0), 0, ldist)  # equivalent to ldist(seqi[0],seqj[0])
+            tmpcumdist[0] = self.cum_dist_boundary_ref[j] + d
             tmpcumdist[1] = d
-            tmpcumdist[2] = self.cum_dist_boundaryX[i] + d
+            tmpcumdist[2] = self.cum_dist_boundary_test[i] + d
             tmpcumdistindexes[0] = (i - 1, j)
             tmpcumdistindexes[1] = (i - 1, j - 1)
             tmpcumdistindexes[2] = (i, j - 1)
@@ -1440,24 +1470,24 @@ class DTW(object):
             if ii < 0:  # Horizontal initialization
                 Ki = max_stretch + ii  # update memory so that min index to test is at least 0
                 if j == 0:
-                    tmpcumdist[0] = self.ldistcumX((0, i), j, ldist)
+                    tmpcumdist[0] = self.ldist_cum_test_seq((0, i), j, ldist)
                     tmpcumdistindexes[0] = (-1, -1)
                 else:
-                    tmpcumdist[0] = self.cum_dist_boundaryY[j - 1] + self.ldistcumX((0, i), j, ldist)
+                    tmpcumdist[0] = self.cum_dist_boundary_ref[j - 1] + self.ldist_cum_test_seq((0, i), j, ldist)
                     tmpcumdistindexes[0] = (-1, j - 1)
 
             if jj < 0:  # Vertical initialization
                 Kj = max_stretch + jj  # update memory so that min index to test is at least 0
                 if i == 0:
-                    tmpcumdist[2] = self.ldistcumY(i, (0, j), ldist)
+                    tmpcumdist[2] = self.ldist_cum_ref_seq(i, (0, j), ldist)
                     tmpcumdistindexes[2] = (-1, -1)
                 else:
-                    tmpcumdist[2] = self.cum_dist_boundaryX[i - 1] + self.ldistcumY(i, (0, j), ldist)
+                    tmpcumdist[2] = self.cum_dist_boundary_test[i - 1] + self.ldist_cum_ref_seq(i, (0, j), ldist)
                     tmpcumdistindexes[2] = (i - 1, -1)
             # first horizontal
             for k in range(Ki):
                 if k == 0: continue  # (diagonal case as j-k-1 = j-1)
-                cumD0 = self.cum_dist[i - k - 1, j - 1] + self.ldistcumX((i - k, i), j, ldist)
+                cumD0 = self.cum_dist[i - k - 1, j - 1] + self.ldist_cum_test_seq((i - k, i), j, ldist)
                 if cumD0 < tmpcumdist[0]:
                     tmpcumdist[0] = cumD0
                     tmpcumdistindexes[0] = (i - k - 1, j - 1)
@@ -1465,26 +1495,26 @@ class DTW(object):
             # Second vertical
             for k in range(Kj):
                 if k == 0: continue  # (diagonal case as j-k-1 = j-1)
-                cumD2 = self.cum_dist[i - 1, j - k - 1] + self.ldistcumY(i, (j - k, j), ldist)
+                cumD2 = self.cum_dist[i - 1, j - k - 1] + self.ldist_cum_ref_seq(i, (j - k, j), ldist)
                 if cumD2 < tmpcumdist[2]:
                     tmpcumdist[2] = cumD2
                     tmpcumdistindexes[2] = (i - 1, j - k - 1)
 
             # Eventually, diagonal case:
             if i == 0:  # we already made sure that then j!=0
-                tmpcumdist[1] = self.cum_dist_boundaryY[j - 1] + self.ldistcumY(0, (j, j),
-                                                                                ldist)  # equivalent to l_dist(seqi[0],seqj[0])
+                tmpcumdist[1] = self.cum_dist_boundary_ref[j - 1] + self.ldist_cum_ref_seq(0, (j, j),
+                                                                                           ldist)  # equivalent to l_dist(seqi[0],seqj[0])
             elif j == 0:  # we already made sure that then i!=0
-                tmpcumdist[1] = self.cum_dist_boundaryX[i - 1] + self.ldistcumX((i, i), 0,
-                                                                                ldist)  # equivalent to l_dist(seqi[0],seqj[0])
+                tmpcumdist[1] = self.cum_dist_boundary_test[i - 1] + self.ldist_cum_test_seq((i, i), 0,
+                                                                                             ldist)  # equivalent to l_dist(seqi[0],seqj[0])
             else:
-                tmpcumdist[1] = self.cum_dist[i - 1, j - 1] + self.ldistcumX((i, i), j,
-                                                                             ldist)  # equivalent to l_dist(seqi[0],seqj[0])
+                tmpcumdist[1] = self.cum_dist[i - 1, j - 1] + self.ldist_cum_test_seq((i, i), j,
+                                                                                      ldist)  # equivalent to l_dist(seqi[0],seqj[0])
             tmpcumdistindexes[1] = (i - 1, j - 1)
         return tmpcumdist, tmpcumdistindexes
 
     def run(self):
-        """Run the DTW algorithm on both sequences.
+        """Run the DTW algorithm.
 
         Returns
         -------
@@ -1501,15 +1531,10 @@ class DTW(object):
 
         Notes
         -----
-        For the `free_ends`, we must have:
+        For the `free_ends` as ``(k, l)``, we must have:
 
-          - ``k+l < min(nt,nr)``
-          - ``k >=0`` and ``l>=1``
-
-        See Also
-        --------
-        euclidean_dist
-        angular_dist
+          - ``k + l < min(N_test, N_ref)``
+          - ``k >= 0`` and ``l >= 1``
 
         Example
         -------
@@ -1540,16 +1565,16 @@ class DTW(object):
             apply_constraints = self.symmetric_constraints  # default is symmetric
 
         # main dtw algorithm
-        for i in range(self.nX):
-            for j in range(self.nY):
+        for i in range(self.n_test):
+            for j in range(self.n_ref):
                 # take into account the beam size (only make computation in case indexes are not too distorted)
                 if self.beam_size == -1 or np.abs(i - j) <= self.beam_size:
                     # temporary cumulated values (here 3) to make the local optimization choice
                     tmpcumdist = np.full(3, np.Infinity)
                     # temporary back-pointers
                     tmpcumdistindexes = np.full((3, 2), -1)
-                    v1 = self.seqX[i]
-                    v2 = self.seqY[j]
+                    v1 = self.seq_test[i]
+                    v2 = self.seq_ref[j]
                     ld = self.ldist_f(v1, v2, is_angular=self.mixed_type, spread=self.mixed_spread,
                                       weight=self.mixed_weight)
                     # Todo: Check whether path cumcost should be compared in a normalized or non-normalized way
@@ -1620,8 +1645,8 @@ class DTW(object):
         self.opt_index = (0, 0)
         for k in range(b):
             for l in range(b):
-                logging.debug(f"Back-tracking indexes: {self.nX - k - 1, self.nY - l - 1}")
-                self.optpath_array[k, l] = self.backtrack_path(self.nX - k - 1, self.nY - l - 1)
+                logging.debug(f"Back-tracking indexes: {self.n_test - k - 1, self.n_ref - l - 1}")
+                self.optpath_array[k, l] = self.backtrack_path(self.n_test - k - 1, self.n_ref - l - 1)
                 logging.debug(f"Back-tracking path: {self.optpath_array[k, l]}")
                 pathlen = len(self.optpath_array[k, l])
                 logging.debug(f"Path length: {pathlen}")
@@ -1629,12 +1654,12 @@ class DTW(object):
                 logging.debug(f"Back-tracked path length: {len(self.optpath_array[k, l])}")
                 self.optpathlength_array[k, l] = pathlen  # due to the local constraint used here
                 logging.debug(f"Cumulative distances: {self.cum_dist}")
-                normalized_cost = self.cum_dist[self.nX - k - 1, self.nY - l - 1] / float(pathlen)
+                normalized_cost = self.cum_dist[self.n_test - k - 1, self.n_ref - l - 1] / float(pathlen)
                 self.optpath_normalized_cumdist_array[k, l] = normalized_cost
                 logging.debug(f"Normalized score: {normalized_cost}")
                 if normalized_cost < self.min_normalized_cost:
                     self.min_normalized_cost = normalized_cost
-                    index = (self.nX - k - 1, self.nY - l - 1)
+                    index = (self.n_test - k - 1, self.n_ref - l - 1)
                     logging.debug(f"Saved optimal index: {index}")
                     self.non_mormalized_optcost = self.cum_dist[index[0], index[1]]
                     self.opt_index = index
@@ -1642,7 +1667,7 @@ class DTW(object):
         # 4. Optimal solution
         k, l = self.opt_index[0], self.opt_index[1]
         logging.debug(f"Optimal solution: {k, l}")
-        opt_path = self.optpath_array[self.nX - k - 1, self.nY - l - 1]  # retrieve optimal path (listed backward)
+        opt_path = self.optpath_array[self.n_test - k - 1, self.n_ref - l - 1]  # retrieve optimal path (listed backward)
         self.opt_backtrack_path = np.flip(opt_path, 0)  # reverse the order of path to start from beginning
         optpathlength = len(self.opt_backtrack_path)
         return self.min_normalized_cost, self.opt_backtrack_path, optpathlength, self.optpath_normalized_cumdist_array, self.bp

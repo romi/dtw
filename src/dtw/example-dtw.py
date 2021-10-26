@@ -103,8 +103,8 @@ def runtest(test, cum_dist_flag=True, bp_flag=False, ld_flag=False, free_ends_fl
     else:  # Default
         mw = []
 
-    dtwcomputer = DTW(test.seq1, test.seq2, ldist=ld, constraints=ct, delins_cost=dc,
-                      mixed_type=mt, mixed_spread=ms, mixed_weight=mw, free_ends=fe, beam_size=bs)
+    dtwcomputer = DTW(test.seq1, test.seq2, constraints=ct, ldist=ld, mixed_type=mt, mixed_spread=ms, mixed_weight=mw,
+                      free_ends=fe, beam_size=bs, delins_cost=dc)
 
     ndist, path, length, ndistarray, backpointers = dtwcomputer.run()
 

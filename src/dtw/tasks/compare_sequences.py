@@ -16,14 +16,13 @@
 """
 Method for sequences comparison and alignment.
 """
-import logging
 
 from dtw import DTW
 from dtw.metrics import angular_dist
 from dtw.metrics import euclidean_dist
 from dtw.metrics import mixed_dist
-from dtw.tasks.search_free_ends import brute_force_free_ends_search
 from dtw.tasks.logger import get_logger
+from dtw.tasks.search_free_ends import brute_force_free_ends_search
 
 #: List of valid values for `constraint` parameter.
 CONSTRAINTS = {"merge_split", "edit_distance", "asymmetric", "symmetric"}
@@ -44,8 +43,8 @@ DEF_MAX_STRETCH = 3
 
 
 # Call this function from outside to launch the comparison of two sequences
-def sequence_comparison(seqX, seqY, constraint=DEF_CONSTRAINT, dist_type=DEF_DIST_TYPE,
-                        free_ends=DEF_FREE_ENDS, free_ends_eps=1e-4, beamsize=DEF_BEAMSIZE,
+def sequence_comparison(seq_test, seq_ref, constraint=DEF_CONSTRAINT, dist_type=DEF_DIST_TYPE,
+                        free_ends=DEF_FREE_ENDS, free_ends_eps=1e-4, beam_size=DEF_BEAMSIZE,
                         delins_cost=DEF_DELINS_COST, max_stretch=DEF_MAX_STRETCH,
                         mixed_type=None, mixed_spread=None, mixed_weight=None, **kwargs):
     """Run the DTW comparison between two angles & inter-nodes sequences.
@@ -54,61 +53,60 @@ def sequence_comparison(seqX, seqY, constraint=DEF_CONSTRAINT, dist_type=DEF_DIS
 
     Parameters
     ----------
-    seqX, seqY : numpy.ndarray
-        Arrays of angles & inter-nodes to compare.
-    constraint : {"merge_split", "edit_distance", "asymmetric", "symmetric"}, default "merge_split"
-        Type of constraint to use.
-    dist_type : {"euclidean", "angular", "mixed"}, default "euclidean"
-        Type of distance to use.
-    free_ends : float or tuple of int, default (0, 1)
-        A float corresponds to a percentage of sequence length for max exploration of `free_ends`,
+    seq_test, seq_ref : numpy.ndarray
+        Arrays of angles & inter-nodes to compare, respectively of shape ``(N_test, 2)`` and ``(N_ref, 2)``.
+    constraint : {"merge_split", "edit_distance", "asymmetric", "symmetric"}, optional
+        Type of constraint to use, default "merge_split".
+    dist_type : {"euclidean", "angular", "mixed"}, optional
+        Type of distance to use, default "euclidean".
+    free_ends : float or tuple of int, optional
+        A tuple of 2 integers ``(k, l)`` that specifies relaxation bounds on the alignment of sequences endpoints:
+        relaxed by ``k`` at the sequence beginning and relaxed by ``l`` at the sequence ending, default ``(0, 1)``.
+        A float corresponds to a percentage of sequence length for max exploration of `free_ends` on both sides,
         and in that case ``free_ends <= 0.4``.
-        A tuple of 2 integers ``(k,l)`` that specifies relaxation bounds on
-        the alignment of sequences endpoints: relaxed by ``k`` at the sequence beginning
-        and relaxed by ``l`` at the sequence ending.
-    free_ends_eps : float, default 1e-4
-        ???.
-    beamsize : int, default -1
-        maximum amount of distortion allowed for signal warping.
-    delins_cost : tuple of float, default (1., 1.)
-        Deletion and insertion costs.
-    max_stretch : bool, default 3
-        ???.
+    free_ends_eps : float, optional
+        ???, default ``1e-4``.
+    beam_size : int, optional
+        Maximum amount of distortion allowed for signal warping, default ``-1``.
+    delins_cost : tuple of float, optional
+        Deletion and insertion costs, default ``(1., 1.)``.
+    max_stretch : bool, optional
+        Maximum amount of stretching allowed for signal warping, default ``3``.
     mixed_type : list(bool), optional
-        A boolean vector, of size ``dim``, indicating whether the k^th component should be treated
+        A boolean vector, of size ``2``, indicating whether the k^th component should be treated
         as an angle (``True``) or a regular scalar value (``False``).
     mixed_spread : list(float), optional
-        A vector of positive scalars, of size ``dim``, used to normalize the distance values computed
+        A vector of positive scalars, of size ``2``, used to normalize the distance values computed
         for each component with their typical spread.
     mixed_weight : list(float), optional
-        A vector of positive weights, of size ``dim``.
-        Does not necessarily sum to 1, but normalized if not.
+        A vector of positive weights, of size ``2``. Does not necessarily sum to 1, but normalized if not.
 
     Other Parameters
     ----------------
-    cum_dist_flag : bool, default True
-        If ``True``, print the array of global distances.
-    bp_flag : bool, default False
-        If ``True``, print the back-pointers array.
-    ld_flag : bool, default False
-        If ``True``, print the local distance array.
-    free_ends_flag : bool, default False
-        If ``True``, print the sub-arrays of normalized distances on relaxed ending region and of optimal path lengths on relaxed ending region.
-    optimal_path_flag : bool, default True
-        If ``True``, print the optimal path.
-    graphic_optimal_path_flag : bool, default True
-        If ``True``, ?then?.
-    graphic_seq_alignment : bool, default True
-        If ``True``, generate a matplotlib figure with aligned sequences.
-    verbose : bool, default True
-        If ``True``, increase code verbosity.
+    cum_dist_flag : bool
+        If ``True`` (default), print the array of global distances.
+    bp_flag : bool
+        If ``True`` (default is ``False``), print the back-pointers array.
+    ld_flag : bool
+        If ``True`` (default is ``False``), print the local distance array.
+    free_ends_flag : bool
+        If ``True`` (default is ``False``), print the sub-arrays of normalized distances on relaxed ending region and of
+        optimal path lengths on relaxed ending region.
+    optimal_path_flag : bool
+        If ``True`` (default), print the optimal path.
+    graphic_optimal_path_flag : bool
+        If ``True`` (default), generate a matplotlib figure with ???.
+    graphic_seq_alignment : bool
+        If ``True`` (default), generate a matplotlib figure with aligned sequences.
+    verbose : bool
+        If ``True`` (default), increase code verbosity.
 
     Notes
     -----
-    For the `free_ends`, we must have:
+    For the `free_ends` as a 2-tuple of integers ``(k, l)``, we must have:
 
-      - ``k+l < min(nt,nr)``
-      - ``k >=0`` and ``l>=1``
+      - ``k + l < min(N_test, N_ref)``
+      - ``k >= 0`` and ``l >= 1``
 
     """
     logger = kwargs.get('logger', None)
@@ -135,9 +133,8 @@ def sequence_comparison(seqX, seqY, constraint=DEF_CONSTRAINT, dist_type=DEF_DIS
     else:  # mixed normalized distance
         ld = mixed_dist
 
-    dtwcomputer = DTW(seqX, seqY, constraints=constraint, delins_cost=delins_cost, ldist=ld,
-                      mixed_type=mixed_type, mixed_spread=mixed_spread, mixed_weight=mixed_weight,
-                      beam_size=beamsize, max_stretch=max_stretch)
+    dtwcomputer = DTW(seq_test, seq_ref, constraints=constraint, ldist=ld, mixed_type=mixed_type, mixed_spread=mixed_spread,
+                      mixed_weight=mixed_weight, beam_size=beam_size, max_stretch=max_stretch, delins_cost=delins_cost)
     if type(free_ends) == tuple:
         # if `free_ends` is tuple: NOT AUTOMATIC --> uses the tuple values
         dtwcomputer.free_ends = free_ends

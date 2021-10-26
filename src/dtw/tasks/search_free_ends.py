@@ -88,7 +88,7 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
         logger.warning("Automatic free-ends capped to max 40% of min length on both sides.")
 
     # first find the limits of the tested free-ends
-    Nmin = min(dtw.nX, dtw.nY)
+    Nmin = min(dtw.n_test, dtw.n_ref)
     N = int(max_value * Nmin)
 
     kwargs = {
@@ -103,7 +103,7 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
     }
     free_ends = [(left_fe, right_fe + 1) for left_fe in range(N) for right_fe in range(N)]
     logger.info(f"Starting brute force search for {len(free_ends)} pairs of free-ends...")
-    norm_dists = Parallel(n_jobs=n_jobs)(delayed(_get_ndist)(dtw.seqX, dtw.seqY, fe, **kwargs) for fe in free_ends)
+    norm_dists = Parallel(n_jobs=n_jobs)(delayed(_get_ndist)(dtw.seq_test, dtw.seq_ref, fe, **kwargs) for fe in free_ends)
 
     # return the free-ends for first occurrence of the min norm distance
     min_ndist = np.Infinity

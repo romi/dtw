@@ -39,38 +39,38 @@ DESCRIPTION = """Compare the angles and inter-nodes sequences from two CSV files
 
 See the CSV files in `data-analysis/DB_eval_v1` for examples of expected file structure.
 
-Example:
-cd data-analysis/DB_eval_v1
-align_csv_database.py groundtruth.csv predicted_v0.4.csv eval_v0.4 --free_ends 0.4
+example:
+$ cd data-analysis/DB_eval_v1
+$ align_csv_database.py groundtruth.csv predicted_v0.4.csv eval_v0.4 --free_ends 0.4
 """
 
 
 def parsing():
-    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('ref_csv', type=str,
-                        help="path to the CSV containing the reference sequences.")
+                        help="Path to the CSV containing the reference sequences.")
     parser.add_argument('test_csv', type=str,
-                        help="path to the CSV containing the modified sequences.")
+                        help="Path to the CSV containing the modified sequences.")
     parser.add_argument('xp_id', type=str,
                         help="Name of the experiment,used as prefix for the output CSV.")
 
     dtw_opt = parser.add_argument_group('DTW algorithm arguments')
-    dtw_opt.add_argument('-c', '--constraint', type=str, default=DEF_CONSTRAINT, choices=CONSTRAINTS,
-                         help=f"type of constraint to use, '{DEF_CONSTRAINT}' by default.")
-    dtw_opt.add_argument('-f', '--free_ends', type=float, nargs='+', default=DEF_FREE_ENDS,
-                         help=f"Free ends values to use, '{DEF_FREE_ENDS}' by default.")
-    dtw_opt.add_argument('-b', '--beam_size', type=int, default=DEF_BEAMSIZE,
-                         help=f"Beam size values to use, '{DEF_BEAMSIZE}' by default.")
-    dtw_opt.add_argument('-i', '--delins_cost', type=int, nargs=2, default=DEF_DELINS_COST,
-                         help=f"Beam size values to use, '{DEF_DELINS_COST}' by default.")
-    dtw_opt.add_argument('-s', '--max_stretch', type=int, default=DEF_MAX_STRETCH,
-                         help=f"Beam size values to use, '{DEF_MAX_STRETCH}' by default.")
+    dtw_opt.add_argument('--constraint', type=str, default=DEF_CONSTRAINT, choices=CONSTRAINTS,
+                         help=f"Type of constraint to use, '{DEF_CONSTRAINT}' by default.")
+    dtw_opt.add_argument('--free_ends', type=float, nargs='+', default=DEF_FREE_ENDS,
+                         help=f"Free ends values to use, specify the relaxation bounds, '{DEF_FREE_ENDS}' by default.")
+    dtw_opt.add_argument('--beam_size', type=int, default=DEF_BEAMSIZE,
+                         help=f"Maximum amount of distortion allowed for signal warping, '{DEF_BEAMSIZE}' by default.")
+    dtw_opt.add_argument('--delins_cost', type=float, nargs=2, default=DEF_DELINS_COST,
+                         help=f"Cost of deletion and insertion to use, '{DEF_DELINS_COST}' by default.")
+    dtw_opt.add_argument('--max_stretch', type=int, default=DEF_MAX_STRETCH,
+                         help=f"Maximum amount of stretching allowed for signal warping, '{DEF_MAX_STRETCH}' by default.")
 
     log_opt = parser.add_argument_group('logging arguments')
     log_opt.add_argument('--log_level', type=str, default=DEFAULT_LOG_LEVEL.lower(),
                          choices=['info', 'warning', 'error', 'critical', 'debug'],
-                         help=f"logging level to use, '{DEFAULT_LOG_LEVEL.lower()}' by default.")
+                         help=f"Logging level to use, '{DEFAULT_LOG_LEVEL.lower()}' by default.")
 
     return parser
 
@@ -122,8 +122,9 @@ def main(args):
                         'mixed_spread': [1, max(max_ref, max_test)]}
 
         df_result = sequence_comparison(seq_test, seq_ref, constraint=args.constraint, dist_type="mixed",
-                                        free_ends=args.free_ends, beam_size=args.beam_size, delins_cost=args.delins_cost,
-                                        max_stretch=args.max_stretch, logger=logger, **mixed_kwargs, **flag_kwargs)
+                                        free_ends=args.free_ends, delins_cost=args.delins_cost,
+                                        max_stretch=args.max_stretch, beam_size=args.beam_size, logger=logger,
+                                        **mixed_kwargs, **flag_kwargs)
 
         # Add a column containing name:
         df_result.insert(loc=0, column='PlantID', value=[plant_id] * len(df_result.index))
