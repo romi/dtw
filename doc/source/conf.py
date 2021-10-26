@@ -93,7 +93,7 @@ for file in os.listdir('.'):
         os.remove(file)
 
 nb_path = '../../notebooks'
-notebooks = [nb for nb in os.listdir(nb_path) if nb.endswith('.ipynb') and nb.startswith("tutorial")]
+notebooks = [nb for nb in os.listdir(nb_path) if nb.endswith('.ipynb') and (nb.startswith("tutorial-") or nb.startswith("example-"))]
 
 for nbf in notebooks:
     print(f'importing notebook file: {nbf}')
@@ -105,21 +105,34 @@ tuto_header = """
 % Update "fixed" table of contents on the left quick browse panel
 ```{eval-rst}
 .. toctree::
-  :maxdepth: 2
+   :maxdepth: 2
+   :hidden:
 
 """
 
 with open("tutorials.md", "w+") as f:
     f.write("# Tutorials\n")
-    # f.write(tuto_header)
-    # for i in notebooks:
-    #     f.write(f"   tutorials/{i}" + "\n")
-    # f.write("```" + "\n")
+    f.write(tuto_header)
+    for i in notebooks:
+        f.write(f"   tutorials/{i}" + "\n")
+    f.write("```" + "\n")
     f.write("\n")
     f.write("Here is a list of tutorials built from the available notebooks:")
     f.write("\n")
     for i in notebooks:
+        if not i.startswith('tutorial-'):
+            continue
         ref = i.replace("tutorial-", "")
+        ref = ref.replace(".ipynb", "")
+        ref = ref.replace('_', ' ')
+        f.write(f" - [{ref.capitalize()}](tutorials/{i})" + "\n")
+    f.write("\n")
+    f.write("Here is a list of examples built from the available notebooks:")
+    f.write("\n")
+    for i in notebooks:
+        if not i.startswith('example-'):
+            continue
+        ref = i.replace("example-", "")
         ref = ref.replace(".ipynb", "")
         ref = ref.replace('_', ' ')
         f.write(f" - [{ref.capitalize()}](tutorials/{i})" + "\n")

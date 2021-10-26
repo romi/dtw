@@ -10,19 +10,6 @@ DTW techniques are based in particular on basic DTW algorithm described in :
 And new dynamic time warping based techniques such as "merge split".
 
 
-% Table of contents
-```{eval-rst}
-.. toctree::
-  :maxdepth: 2
-  :hidden:
-
-  install.md
-  tutorials.md
-  reference.md
-  credits.md
-  citing.md
-```
-
 ## Organisation
 
 **Lead developer:**
@@ -33,8 +20,10 @@ And new dynamic time warping based techniques such as "merge split".
 : Jonathan Legrand
 
 **Active research teams:**
-:    - Inria team [Mosaic](https://team.inria.fr/mosaic/), RDP-ENS Lyon, UMR5667
-:    - [Hormonal Signalling and Development](http://www.ens-lyon.fr/RDP/spip.php?rubrique20) team, RDP-ENS Lyon, UMR5667
+:    - Inria team [Mosaic](https://team.inria.fr/mosaic/), Laboratoire Reproduction et Développement des Plantes, Univ Lyon, ENS de
+Lyon, UCB Lyon 1, CNRS, INRAE, INRIA, F-69342, Lyon, France.
+:    - [Hormonal Signalling and Development](https://www.ens-lyon.fr/RDP/?lang=en) team, Laboratoire Reproduction et Développement des Plantes, Univ Lyon, ENS de
+Lyon, UCB Lyon 1, CNRS, INRAE, INRIA, F-69342, Lyon, France.
 
 **Written in:**
 : Python3
@@ -43,4 +32,20 @@ And new dynamic time warping based techniques such as "merge split".
 : Linux, MacOSX
 
 **Licence:**
-: Inria licence, no commercial use.
+: CeCILL v2.1 [license](http://www.cecill.info/licences/Licence_CeCILL_V2.1-en.html), no commercial use.
+
+
+## Table of contents
+
+% Table of contents
+```{eval-rst}
+.. toctree::
+  :maxdepth: 1
+
+  install.md
+  tutorials.md
+  reference.md
+  credits.md
+  citing.md
+  developers.md
+```
