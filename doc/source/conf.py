@@ -33,12 +33,10 @@ extensions = [
     # 'myst_parser',  # MyST markdown parser (can be activated by 'myst_nb')
     'myst_nb',  # MyST jupyter notebooks parser
     'sphinx.ext.autodoc',  # Include documentation from docstrings
-    'sphinx.ext.doctest',  # Test snippets in the documentation
     'sphinx.ext.intersphinx',  # Link to other projects’ documentation
     'sphinx.ext.napoleon',  # Support for NumPy and Google style docstrings
     'sphinx.ext.todo',  # Support for todo items
-    'sphinx.ext.viewcode',  # Add links to highlighted source code
-    'sphinxarg.ext',  # To include tables describing command-line arguments for executable scripts
+    'sphinxarg.ext',  # To document command-line scripts
 ]
 
 # Optional MyST syntax:
