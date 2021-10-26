@@ -21,38 +21,11 @@ distance or split-merge constraints.
 
 DTW techniques are based in particular on basic DTW algorithm described in :
 
-Sakoe, H., & Chiba, S. (1978) Dynamic programming algorithm optimization for spoken
-word recognition. IEEE Transactions on Acoustic, Speech, and Signal Processing, ASSP-26(1),43-49.
+  - H. Sakoe and S. Chiba, *Dynamic programming algorithm optimization for spoken word recognition*, in **IEEE Transactions on Acoustics, Speech, and Signal Processing**, 1978, vol. 26, no. 1, pp. 43-49, doi: `10.1109/TASSP.1978.1163055 <https://doi.org/10.1109/TASSP.1978.1163055>`_
+  - F. Itakura, *Minimum prediction residual principle applied to speech recognition*, in **IEEE Transactions on Acoustics, Speech, and Signal Processing**, 1975, vol. 23 , no. 1, pp. 67-72, doi: `10.1109/TASSP.1975.1162641 <https://doi.org/10.1109/TASSP.1975.1162641>`_
 
-and new dynamic time warping based techniques such as merge_split.
+and new dynamic time warping based techniques such as "merge split".
 
-** Call:
-# create a class instance of dtw to compute the distance between two sequences
-dtwcomputer = dtw(seq_test, seq_ref)
-# run the algorithm with specific options
-ndist, optpath, length, ndistarray, backpointers = dtwcomputer.run(l_dist = ld, free_ends = fe, beam_size = bs)
-# print the results (a number of flags can be turned on/off to display various aspects of the results)
-dtwcomputer.print_results(cumdistflag, bpflag, freeendsflag, optimalpathflag)
-
-** args:
-- seq_test, seq_ref: two arrays (lists or np.arrays of scalars or of vectors with identical dimension)
-
-** Optional args:
-- Different algorithms are available and can be selected by the following flags:
-symmetric, asymmetric, edit_distance, merge_split
-- l_dist (func(val,val)-->positive float)= local distance used for pointwise comparison
-- free_ends  ((int,int)): should be greater than (0,1). Elements are respectively
-            relaxations at beginning and end of the sequences (identical for both sequences)
-- beam_size  (int): maximum amount of distortion allowed for signal warping
-
-Returned values:
-- ndist: optimal computed distance between the two sequences
-- optpath: optimal path recovered
-- length: length of the optimal path
-- ndistarray: numpy array of normalized distances
-- backpointers: numpy array of back-pointers
-
-tests: see the file `example-dtw.py` for this
 """
 
 import logging
@@ -1289,8 +1262,8 @@ class DTW(object):
 
         References
         ----------
-        .. [sakoe_chiba78] H. Sakoe and S. Chiba, "Dynamic programming algorithm optimization for spoken word recognition," in IEEE Transactions on Acoustics, Speech, and Signal Processing, vol. 26, no. 1, pp. 43-49, February 1978, doi: `10.1109/TASSP.1978.1163055 <https://doi.org/10.1109/TASSP.1978.1163055>`_
-        .. [itakura75] Itakura, Fumitada. "Minimum Prediction Residual Principle Applied to Speech Recognition." IEEE Transactions on Acoustics, Speech, and Signal Processing 23 , no. 1 (1975): 67-72. `10.1109/TASSP.1975.1162641 <https://doi.org/10.1109/TASSP.1975.1162641>`_
+        .. [sakoe_chiba78] H. Sakoe and S. Chiba, *Dynamic programming algorithm optimization for spoken word recognition*, in **IEEE Transactions on Acoustics, Speech, and Signal Processing**, 1978, vol. 26, no. 1, pp. 43-49, doi: `10.1109/TASSP.1978.1163055 <https://doi.org/10.1109/TASSP.1978.1163055>`_
+        .. [itakura75] F. Itakura, *Minimum Prediction Residual Principle Applied to Speech Recognition*, in **IEEE Transactions on Acoustics, Speech, and Signal Processing**, 1975, vol. 23 , no. 1, pp. 67-72, doi: `10.1109/TASSP.1975.1162641 <https://doi.org/10.1109/TASSP.1975.1162641>`_
 
          """
         tmpcumdistindexes[0] = (i - 1, j)
