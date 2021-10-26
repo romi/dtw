@@ -50,6 +50,9 @@ myst_enable_extensions = [
     "deflist"
 ]
 
+# sphinx.ext.autodoc settings:
+autoclass_content = 'init'
+
 # sphinx.ext.todo settings:
 todo_include_todos = True
 

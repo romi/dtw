@@ -107,7 +107,7 @@ class DTW(object):
 
     def __init__(self, seq_test, seq_ref, constraints="symmetric", ldist=euclidean_dist, free_ends=(0, 1), beam_size=-1,
                  max_stretch=3, delins_cost=(1.0, 1.0), **kwargs):
-        """Constructor.
+        """Dynamic Time Warping.
 
         Parameters
         ----------
