@@ -14,27 +14,26 @@
 # ------------------------------------------------------------------------------
 
 """
-Generic dynamic time warping algorithms
+Generic dynamic time warping algorithms.
 
-Implementation of a generic DTW algorithm with symmetric asymmetric or classical edit
-distance or split-merge constraints.
+Implementation of a generic DTW algorithm with symmetric asymmetric or classical edit distance or split-merge constraints.
 
-DTW techniques are based in particular on basic DTW algorithm described in :
+DTW techniques are based in particular on basic DTW algorithm described in:
 
-  - H. Sakoe and S. Chiba, *Dynamic programming algorithm optimization for spoken word recognition*, in **IEEE Transactions on Acoustics, Speech, and Signal Processing**, 1978, vol. 26, no. 1, pp. 43-49, doi: `10.1109/TASSP.1978.1163055 <https://doi.org/10.1109/TASSP.1978.1163055>`_
-  - F. Itakura, *Minimum prediction residual principle applied to speech recognition*, in **IEEE Transactions on Acoustics, Speech, and Signal Processing**, 1975, vol. 23 , no. 1, pp. 67-72, doi: `10.1109/TASSP.1975.1162641 <https://doi.org/10.1109/TASSP.1975.1162641>`_
+- H. Sakoe and S. Chiba, *Dynamic programming algorithm optimization for spoken word recognition*, in **IEEE Transactions on Acoustics, Speech, and Signal Processing**, 1978, vol. 26, no. 1, pp. 43-49, doi: `10.1109/TASSP.1978.1163055 <https://doi.org/10.1109/TASSP.1978.1163055>`_
+- F. Itakura, *Minimum prediction residual principle applied to speech recognition*, in **IEEE Transactions on Acoustics, Speech, and Signal Processing**, 1975, vol. 23 , no. 1, pp. 67-72, doi: `10.1109/TASSP.1975.1162641 <https://doi.org/10.1109/TASSP.1975.1162641>`_
 
 and new dynamic time warping based techniques such as "merge split".
 
 """
 
-import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-FORMATTER = "%(asctime)s - %(name)s - %(lineno)d - %(levelname)s - %(message)s"
-logging.basicConfig(format=FORMATTER, level=logging.INFO)
+from dtw.tasks.logger import get_logger
+
+logger = get_logger('DTW')
 
 from dtw.metrics import euclidean_dist
 from dtw.tools import print_matrix_bp
@@ -210,9 +209,9 @@ class DTW(object):
             if len(names) == self.n_dim:
                 self.names = names
             else:
-                logging.warning("Not the same number of names and sequence dimensions, using default names!")
+                logger.warning("Not the same number of names and sequence dimensions, using default names!")
         else:
-            logging.debug("No name given to sequence dimensions, using default names.")
+            logger.debug("No name given to sequence dimensions, using default names.")
 
     def _check_sequences(self):
         """Hidden method called upon instance initialization to test requirements are met by provided sequences."""
@@ -447,74 +446,74 @@ class DTW(object):
         event_costs = np.array(event_costs)
         merge_indexes = np.where(event_types == 'm')[0]
         split_indexes = np.where(event_types == 's')[0]
-        logging.info(f"Found {len(merge_indexes)} merge & {len(split_indexes)} split events!")
-        logging.debug(f"List of merge indexes: {merge_indexes}")
-        logging.debug(f"List of split indexes: {split_indexes}")
+        logger.info(f"Found {len(merge_indexes)} merge & {len(split_indexes)} split events!")
+        logger.debug(f"List of merge indexes: {merge_indexes}")
+        logger.debug(f"List of split indexes: {split_indexes}")
 
-        logging.debug(f"Updating MERGE events...")
+        logger.debug(f"Updating MERGE events...")
         idx_test, idx_ref = list(idx_test), list(idx_ref)
         for i, merge_idx in enumerate(merge_indexes):
-            logging.debug(f"Test sequence indexes: {idx_test}")
-            logging.debug(f"Reference sequence indexes: {idx_ref}")
+            logger.debug(f"Test sequence indexes: {idx_test}")
+            logger.debug(f"Reference sequence indexes: {idx_ref}")
             # Find how much rows are missing in the 'test sequence' with this merge:
             if merge_idx == 0:
                 added_test = idx_test[merge_idx] - 1
             else:
                 added_test = idx_test[merge_idx] - idx_test[merge_idx - 1] - 1
-            logging.debug(f"Missing {added_test} rows in the test sequence for merge index {merge_idx}")
+            logger.debug(f"Missing {added_test} rows in the test sequence for merge index {merge_idx}")
             # Duplicate missing rows in both sequences
             idx_test = duplicate_idx(idx_test, merge_idx, added_test)
             idx_ref = duplicate_idx(idx_ref, merge_idx, added_test)
             event_types = duplicate_idx(event_types, merge_idx, added_test)
             event_costs = duplicate_idx(event_costs, merge_idx, added_test)
-            logging.debug(f"Post-duplication test sequence indexes: {idx_test}")
-            logging.debug(f"Post-duplication reference sequence indexes: {idx_ref}")
+            logger.debug(f"Post-duplication test sequence indexes: {idx_test}")
+            logger.debug(f"Post-duplication reference sequence indexes: {idx_ref}")
             # Relabel duplicated test:
             idx_test = np.array(idx_test)
             idx_test[np.where(idx_test == idx_test[merge_idx])[0]] = list(
                 range(idx_test[merge_idx] - added_test, idx_test[merge_idx] + 1))
             idx_test = list(idx_test)
-            logging.debug(f"Updated test sequence indexes: {idx_test}")
-            logging.debug(f"Updated reference sequence indexes: {idx_ref}")
+            logger.debug(f"Updated test sequence indexes: {idx_test}")
+            logger.debug(f"Updated reference sequence indexes: {idx_ref}")
             # Rewrite intervals
             # Shift `merge_indexes`:
             merge_indexes[i + 1:] += added_test
-            logging.debug(f"Updated merge index: {merge_indexes}")
+            logger.debug(f"Updated merge index: {merge_indexes}")
 
-        logging.debug(f"Updating SPLIT events...")
+        logger.debug(f"Updating SPLIT events...")
         split_indexes = np.where(np.array(event_types) == 's')[0]
-        logging.debug(f"New split indexes after updating merge events: {split_indexes}")
+        logger.debug(f"New split indexes after updating merge events: {split_indexes}")
         idx_test, idx_ref = list(idx_test), list(idx_ref)
         for i, split_idx in enumerate(split_indexes):
-            logging.debug(f"Test sequence indexes {idx_test}")
-            logging.debug(f"Reference sequence indexes {idx_ref}")
+            logger.debug(f"Test sequence indexes {idx_test}")
+            logger.debug(f"Reference sequence indexes {idx_ref}")
             # Find how much rows are missing in the 'reference sequence' with this split:
             if split_idx == 0:
                 miss_ref = idx_ref[split_idx] - 1
             else:
                 miss_ref = idx_ref[split_idx] - idx_ref[split_idx - 1] - 1
-            logging.debug(f"Missing {miss_ref} rows in the reference sequence for merge index {split_idx}")
+            logger.debug(f"Missing {miss_ref} rows in the reference sequence for merge index {split_idx}")
             # Duplicate missing rows in both sequences
             idx_test = duplicate_idx(idx_test, split_idx, miss_ref)
             idx_ref = duplicate_idx(idx_ref, split_idx, miss_ref)
             event_types = duplicate_idx(event_types, split_idx, miss_ref)
             event_costs = duplicate_idx(event_costs, split_idx, miss_ref)
-            logging.debug(f"Post-duplication test sequence indexes {idx_test}")
-            logging.debug(f"Post-duplication reference sequence indexes {idx_ref}")
+            logger.debug(f"Post-duplication test sequence indexes {idx_test}")
+            logger.debug(f"Post-duplication reference sequence indexes {idx_ref}")
             # Relabel duplicated reference:
             idx_ref = np.array(idx_ref)
-            logging.debug(idx_ref[np.where(idx_ref == idx_ref[split_idx])[0]])
-            logging.debug((idx_ref[split_idx] - miss_ref, idx_ref[split_idx] + 1))
+            logger.debug(idx_ref[np.where(idx_ref == idx_ref[split_idx])[0]])
+            logger.debug((idx_ref[split_idx] - miss_ref, idx_ref[split_idx] + 1))
 
             idx_ref[np.where(idx_ref == idx_ref[split_idx])[0]] = list(
                 range(idx_ref[split_idx] - miss_ref, idx_ref[split_idx] + 1))
             idx_ref = list(idx_ref)
-            logging.debug(f"Updated test sequence indexes {idx_test}")
-            logging.debug(f"Updated reference sequence indexes {idx_ref}")
+            logger.debug(f"Updated test sequence indexes {idx_test}")
+            logger.debug(f"Updated reference sequence indexes {idx_ref}")
             # Rewrite intervals
             # Shift `split_indexes`:
             split_indexes[i + 1:] += miss_ref
-            logging.debug(f"Updated split index {split_indexes}")
+            logger.debug(f"Updated split index {split_indexes}")
 
         # Change ids to match start index:
         idx_test = np.array(idx_test) + start_index
@@ -944,9 +943,9 @@ class DTW(object):
             j = self.bp[tmp_i, tmp_j][1]
             if i != -1 and j != -1:
                 path.append((i, j))
-            # logging.debug(i,j)
+            logger.debug(i,j)
 
-        logging.debug("Backtracked path: {path}")
+        logger.debug("Backtracked path: {path}")
         return np.array(path)
 
     def _graphic_optimal_path_flag(self):
@@ -1278,8 +1277,8 @@ class DTW(object):
                 tmpcumdist[2] = 0.0
             if j > 1:
                 tmpcumdist[2] = self.cum_dist_boundary_ref[j - 2]
-            # logging.debug(tmpcumdist)
-            # logging.debug(np.argmin(tmpcumdist))
+            logger.debug(tmpcumdist)
+            logger.debug(np.argmin(tmpcumdist))
         else:
             tmpcumdist[0] = self.cum_dist[i - 1, j]
             tmpcumdist[1] = self.cum_dist_boundary_test[i - 1]
@@ -1289,7 +1288,7 @@ class DTW(object):
             if j > 1:
                 tmpcumdist[2] = self.cum_dist[i - 1, j - 2]
             # decision on local optimal path:
-            # logging.debug(tmpcumdist)
+            logger.debug(tmpcumdist)
         if i > 0 and self.bp[i - 1, j][1] == j:  # to forbid horizontal move twice in a raw
             tmpcumdist[0] = np.Infinity
         return tmpcumdist, tmpcumdistindexes
@@ -1534,7 +1533,7 @@ class DTW(object):
         elif self.constraints == "symmetric":
             apply_constraints = self.symmetric_constraints  # default is symmetric
         else:
-            logging.warning(f"Unknown constraint '{self.constraints}', using `symmetric` by default!")
+            logger.warning(f"Unknown constraint '{self.constraints}', using `symmetric` by default!")
             apply_constraints = self.symmetric_constraints  # default is symmetric
 
         # main dtw algorithm
@@ -1618,28 +1617,28 @@ class DTW(object):
         self.opt_index = (0, 0)
         for k in range(b):
             for l in range(b):
-                logging.debug(f"Back-tracking indexes: {self.n_test - k - 1, self.n_ref - l - 1}")
+                logger.debug(f"Back-tracking indexes: {self.n_test - k - 1, self.n_ref - l - 1}")
                 self.optpath_array[k, l] = self.backtrack_path(self.n_test - k - 1, self.n_ref - l - 1)
-                logging.debug(f"Back-tracking path: {self.optpath_array[k, l]}")
+                logger.debug(f"Back-tracking path: {self.optpath_array[k, l]}")
                 pathlen = len(self.optpath_array[k, l])
-                logging.debug(f"Path length: {pathlen}")
-                logging.debug(f"Back-tracked path: {self.optpath_array[k, l]}")
-                logging.debug(f"Back-tracked path length: {len(self.optpath_array[k, l])}")
+                logger.debug(f"Path length: {pathlen}")
+                logger.debug(f"Back-tracked path: {self.optpath_array[k, l]}")
+                logger.debug(f"Back-tracked path length: {len(self.optpath_array[k, l])}")
                 self.optpathlength_array[k, l] = pathlen  # due to the local constraint used here
-                logging.debug(f"Cumulative distances: {self.cum_dist}")
+                logger.debug(f"Cumulative distances: {self.cum_dist}")
                 normalized_cost = self.cum_dist[self.n_test - k - 1, self.n_ref - l - 1] / float(pathlen)
                 self.optpath_normalized_cumdist_array[k, l] = normalized_cost
-                logging.debug(f"Normalized score: {normalized_cost}")
+                logger.debug(f"Normalized score: {normalized_cost}")
                 if normalized_cost < self.min_normalized_cost:
                     self.min_normalized_cost = normalized_cost
                     index = (self.n_test - k - 1, self.n_ref - l - 1)
-                    logging.debug(f"Saved optimal index: {index}")
+                    logger.debug(f"Saved optimal index: {index}")
                     self.non_mormalized_optcost = self.cum_dist[index[0], index[1]]
                     self.opt_index = index
 
         # 4. Optimal solution
         k, l = self.opt_index[0], self.opt_index[1]
-        logging.debug(f"Optimal solution: {k, l}")
+        logger.debug(f"Optimal solution: {k, l}")
         opt_path = self.optpath_array[self.n_test - k - 1, self.n_ref - l - 1]  # retrieve optimal path (listed backward)
         self.opt_backtrack_path = np.flip(opt_path, 0)  # reverse the order of path to start from beginning
         optpathlength = len(self.opt_backtrack_path)
