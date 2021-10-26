@@ -27,7 +27,6 @@ and new dynamic time warping based techniques such as "merge split".
 
 """
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -39,7 +38,6 @@ from dtw.metrics import euclidean_dist
 from dtw.tools import print_matrix_bp
 
 
-# Main DTW class: to build DTW computer objects on a pair of sequences
 class DTW(object):
     """Dynamic Time Warping.
 
@@ -107,9 +105,8 @@ class DTW(object):
 
     """
 
-    def __init__(self, seq_test, seq_ref, constraints="symmetric", ldist=euclidean_dist,
-                 mixed_type=[], mixed_spread=[], mixed_weight=[], free_ends=(0, 1),
-                 beam_size=-1, max_stretch=3, delins_cost=(1.0, 1.0), **kwargs):
+    def __init__(self, seq_test, seq_ref, constraints="symmetric", ldist=euclidean_dist, free_ends=(0, 1), beam_size=-1,
+                 max_stretch=3, delins_cost=(1.0, 1.0), **kwargs):
         """Constructor.
 
         Parameters
@@ -128,14 +125,6 @@ class DTW(object):
         ldist : function, optional
             The function to compute the local distance used to compare values of both sequences.
             Typically `euclidean_dist()` (default), `angular_dist()` or `mixed_dist()`.
-        mixed_type : list of bool, optional
-            A boolean vector, of size ``n_dim``, indicating whether the k^th component should be treated
-            as an angle (``True``) or a regular scalar value (``False``).
-        mixed_spread : list of float, optional
-            A vector of positive scalars, of size ``n_dim``, used to normalize the distance values computed
-            for each component with their typical spread.
-        mixed_weight : list of float, optional
-            A vector of positive weights, of size ``n_dim``. Does not necessarily sum to 1, but normalized if not.
         beam_size : int, optional
             maximum amount of distortion allowed for signal warping, default ``-1``.
         max_stretch : bool, optional
@@ -145,6 +134,14 @@ class DTW(object):
         ----------------
         names : list
             Names of the sequences, _i.e._ what they represent. This is used for summaries and graphical representations.
+        mixed_type : list of bool, optional
+            A boolean vector, of size ``n_dim``, indicating whether the k^th component should be treated
+            as an angle (``True``) or a regular scalar value (``False``).
+        mixed_spread : list of float, optional
+            A vector of positive scalars, of size ``n_dim``, used to normalize the distance values computed
+            for each component with their typical spread.
+        mixed_weight : list of float, optional
+            A vector of positive weights, of size ``n_dim``. Does not necessarily sum to 1, but normalized if not.
 
         See Also
         --------
@@ -196,9 +193,9 @@ class DTW(object):
         self.ldist_f = ldist
 
         # for mixed_mode
-        self.mixed_type = mixed_type
-        self.mixed_spread = mixed_spread
-        self.mixed_weight = mixed_weight
+        self.mixed_type = kwargs.get('mixed_type', [])
+        self.mixed_spread = kwargs.get('mixed_spread', [])
+        self.mixed_weight = kwargs.get('mixed_weight', [])
 
         # Defines sequence names and use
         self.names = [f'sequence_{i}' for i in range(self.n_dim)]
@@ -772,7 +769,8 @@ class DTW(object):
         merge_indexes = np.where(results['type'] == 'm')[0]
         split_indexes = np.where(results['type'] == 's')[0]
         chop_start = min(aligned_results['reference']) - 1 if min(aligned_results['reference']) > 1 else 0
-        chop_end = self.n_ref - max(aligned_results['reference']) if max(aligned_results['reference']) > self.n_ref else 0
+        chop_end = self.n_ref - max(aligned_results['reference']) if max(
+            aligned_results['reference']) > self.n_ref else 0
         tail_start = min(aligned_results['test']) - 1 if min(aligned_results['test']) > 1 else 0
         tail_end = self.n_test - max(aligned_results['test']) if max(aligned_results['test']) > self.n_test else 0
 
@@ -943,7 +941,7 @@ class DTW(object):
             j = self.bp[tmp_i, tmp_j][1]
             if i != -1 and j != -1:
                 path.append((i, j))
-            logger.debug(i,j)
+            logger.debug(i, j)
 
         logger.debug("Backtracked path: {path}")
         return np.array(path)
@@ -1639,7 +1637,8 @@ class DTW(object):
         # 4. Optimal solution
         k, l = self.opt_index[0], self.opt_index[1]
         logger.debug(f"Optimal solution: {k, l}")
-        opt_path = self.optpath_array[self.n_test - k - 1, self.n_ref - l - 1]  # retrieve optimal path (listed backward)
+        opt_path = self.optpath_array[
+            self.n_test - k - 1, self.n_ref - l - 1]  # retrieve optimal path (listed backward)
         self.opt_backtrack_path = np.flip(opt_path, 0)  # reverse the order of path to start from beginning
         optpathlength = len(self.opt_backtrack_path)
         return self.min_normalized_cost, self.opt_backtrack_path, optpathlength, self.optpath_normalized_cumdist_array, self.bp
