@@ -29,6 +29,7 @@ from dtw.tasks.compare_sequences import DEF_BEAMSIZE
 from dtw.tasks.compare_sequences import DEF_CONSTRAINT
 from dtw.tasks.compare_sequences import DEF_DELINS_COST
 from dtw.tasks.compare_sequences import DEF_FREE_ENDS
+from dtw.tasks.compare_sequences import DEF_FREE_ENDS_EPS
 from dtw.tasks.compare_sequences import DEF_MAX_STRETCH
 from dtw.tasks.compare_sequences import sequence_comparison
 from dtw.tasks.logger import BIN_LOG_FMT
@@ -59,13 +60,19 @@ def parsing():
     dtw_opt.add_argument('--constraint', type=str, default=DEF_CONSTRAINT, choices=CONSTRAINTS,
                          help=f"Type of constraint to use, '{DEF_CONSTRAINT}' by default.")
     dtw_opt.add_argument('--free_ends', type=float, nargs='+', default=DEF_FREE_ENDS,
-                         help=f"Free ends values to use, specify the relaxation bounds, '{DEF_FREE_ENDS}' by default.")
+                         help=f"Free ends values to use, specify the relaxation bounds, '{DEF_FREE_ENDS}' by default."+\
+                              f"If a single float, it correspond to a percentage of sequence length for max exploration of free-ends."+\
+                              f"Else, should be a length-2 list of integers specifying the relaxation bounds.")
+    dtw_opt.add_argument('--free_ends_eps', type=float, default=DEF_FREE_ENDS_EPS,
+                         help=f"Percentage of sequence length for max exploration of free-ends, '{DEF_FREE_ENDS_EPS}' by default.")
     dtw_opt.add_argument('--beam_size', type=int, default=DEF_BEAMSIZE,
                          help=f"Maximum amount of distortion allowed for signal warping, '{DEF_BEAMSIZE}' by default.")
     dtw_opt.add_argument('--delins_cost', type=float, nargs=2, default=DEF_DELINS_COST,
                          help=f"Cost of deletion and insertion to use, '{DEF_DELINS_COST}' by default.")
     dtw_opt.add_argument('--max_stretch', type=int, default=DEF_MAX_STRETCH,
                          help=f"Maximum amount of stretching allowed for signal warping, '{DEF_MAX_STRETCH}' by default.")
+    dtw_opt.add_argument('--mixed_weight', type=float, nargs=2, default=[0.5, 0.5],
+                         help=f"Angles & inter-nodes weights for mixed models, '{[0.5, 0.5]}' by default.")
 
     log_opt = parser.add_argument_group('logging arguments')
     log_opt.add_argument('--log_level', type=str, default=DEFAULT_LOG_LEVEL.lower(),
@@ -118,7 +125,7 @@ def main(args):
         max_test = np.max(seq_test[:, 1])
         # Update the keyword arguments to use with this type of distance
         mixed_kwargs = {'mixed_type': [True, False],
-                        'mixed_weight': [0.5, 0.5],
+                        'mixed_weight': args.mixed_weight,
                         'mixed_spread': [1, max(max_ref, max_test)]}
 
         df_result = sequence_comparison(seq_test, seq_ref, constraint=args.constraint, dist_type="mixed",

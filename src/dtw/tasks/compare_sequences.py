@@ -34,6 +34,8 @@ DIST_TYPES = {"euclidean", "angular", "mixed"}
 DEF_DIST_TYPE = 'euclidean'
 #: Default value for `free_ends` parameter.
 DEF_FREE_ENDS = (0, 1)
+#: Default value for `free_ends_eps` parameter.
+DEF_FREE_ENDS_EPS = 1e-4
 #: Default value for `beam_size` parameter.
 DEF_BEAMSIZE = -1
 #: Default value for `delins_cost` parameter.
@@ -44,7 +46,7 @@ DEF_MAX_STRETCH = 3
 
 # Call this function from outside to launch the comparison of two sequences
 def sequence_comparison(seq_test, seq_ref, constraint=DEF_CONSTRAINT, dist_type=DEF_DIST_TYPE,
-                        free_ends=DEF_FREE_ENDS, free_ends_eps=1e-4, beam_size=DEF_BEAMSIZE,
+                        free_ends=DEF_FREE_ENDS, free_ends_eps=DEF_FREE_ENDS_EPS, beam_size=DEF_BEAMSIZE,
                         delins_cost=DEF_DELINS_COST, max_stretch=DEF_MAX_STRETCH,
                         mixed_type=None, mixed_spread=None, mixed_weight=None, **kwargs):
     """Run the DTW comparison between two angles & inter-nodes sequences.
@@ -65,7 +67,8 @@ def sequence_comparison(seq_test, seq_ref, constraint=DEF_CONSTRAINT, dist_type=
         A float corresponds to a percentage of sequence length for max exploration of `free_ends` on both sides,
         and in that case ``free_ends <= 0.4``.
     free_ends_eps : float, optional
-        ???, default ``1e-4``.
+        Minimum difference to previous minimum normalized cost to consider tested free-ends as the new best combination.
+        Default is ``1e-4``.
     beam_size : int, optional
         Maximum amount of distortion allowed for signal warping, default ``-1``.
     delins_cost : tuple of float, optional
