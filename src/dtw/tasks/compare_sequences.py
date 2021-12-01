@@ -84,32 +84,27 @@ def sequence_comparison(seq_test, seq_ref, constraint=DEF_CONSTRAINT, dist_type=
     mixed_weight : list(float), optional
         A vector of positive weights, of size ``2``. Does not necessarily sum to 1, but normalized if not.
 
-    Other Parameters
-    ----------------
-    cum_dist_flag : bool
-        If ``True`` (default), print the array of global distances.
-    bp_flag : bool
-        If ``True`` (default is ``False``), print the back-pointers array.
-    ld_flag : bool
-        If ``True`` (default is ``False``), print the local distance array.
-    free_ends_flag : bool
-        If ``True`` (default is ``False``), print the sub-arrays of normalized distances on relaxed ending region and of
-        optimal path lengths on relaxed ending region.
-    optimal_path_flag : bool
-        If ``True`` (default), print the optimal path.
-    graphic_optimal_path_flag : bool
-        If ``True`` (default), generate a matplotlib figure with ???.
-    graphic_seq_alignment : bool
-        If ``True`` (default), generate a matplotlib figure with aligned sequences.
-    verbose : bool
-        If ``True`` (default), increase code verbosity.
-
     Notes
     -----
     For the `free_ends` as a 2-tuple of integers ``(k, l)``, we must have:
 
       - ``k + l < min(N_test, N_ref)``
       - ``k >= 0`` and ``l >= 1``
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from dtw.tasks.compare_sequences import sequence_comparison
+    >>> seq_test = np.array([[123, 169, 224, 103, 131, 143, 113, 163, 148, 11, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124], [70, 1, 32, 15, 56, 42, 39, 46, 4, 29, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0]]).T
+    >>> seq_ref = np.array([[123, 136, 131, 143, 113, 163, 159, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124, 152, 124, 107, 126], [70, 48, 56, 42, 39, 46, 33, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0, 13, 16, 0, 1]]).T
+    >>> # Get the max value for inter-nodes, used by `mixed_spread`
+    >>> max_ref = np.max(seq_ref[:, 1])
+    >>> max_test = np.max(seq_test[:, 1])
+    >>> # Update the keyword arguments to use with this type of distance
+    >>> mixed_kwargs = {'mixed_type': [True, False], 'mixed_weight': [0.5, 0.5], 'mixed_spread': [1, max(max_ref, max_test)]}
+    >>> dtwcomputer = sequence_comparison(seq_test, seq_ref, dist_type='mixed', **mixed_kwargs)
+    >>> df = dtwcomputer.print_results()
+    >>> print(df)
 
     """
     logger = kwargs.get('logger', None)
@@ -151,4 +146,4 @@ def sequence_comparison(seq_test, seq_ref, constraint=DEF_CONSTRAINT, dist_type=
 
     _ = dtwcomputer.run()
 
-    return dtwcomputer.print_results(**kwargs)
+    return dtwcomputer

@@ -132,9 +132,10 @@ def main(args):
                    'free_ends_flag': False, 'optimal_path_flag': True,
                    'graphic_optimal_path_flag': False, 'graphic_seq_alignment': False}
 
-    df = sequence_comparison(seq_pred, seq_gt, constraint=args.constraint, dist_type=args.dist_type,
+    dtwcomputer = sequence_comparison(seq_pred, seq_gt, constraint=args.constraint, dist_type=args.dist_type,
                              free_ends=args.free_ends, delins_cost=args.delins_cost, max_stretch=args.max_stretch,
-                             beam_size=args.beamsize, verbose=True, **mixed_kwargs, **flag_kwargs)
+                             beam_size=args.beamsize, verbose=True, **mixed_kwargs)
+    df = dtwcomputer.print_results(**flag_kwargs)
 
     logger.name = logger_name
     out_csv = join(args.db_path, args.scan, 'dtw_result.csv')

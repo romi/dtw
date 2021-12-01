@@ -106,10 +106,14 @@ def main(db_directory, testname='v0.4'):
             print(dashline)
             print(f"{filestg:*^80}")
 
-        df_result = sequence_comparison(vecseq_pred, vecseq_gt, constraint='merge_split', dist_type='mixed', free_ends=0.3, free_ends_eps=1e-3, beamsize=-1,
-                                        delins_cost=(1., 1.), mixed_type=[True, False], mixed_spread=[1, max(max_gt, max_pred)], mixed_weight=[0.5, 0.5],
-                                        cumdistflag=False, bpflag=False, ldflag=False, freeendsflag=False, optimalpathflag=True, graphicoptimalpathflag=False,
-                                        graphicseqalignment=False, verbose=VERBOSE)
+        dtwcomputer = sequence_comparison(vecseq_pred, vecseq_gt, constraint='merge_split', dist_type='mixed',
+                                          free_ends=0.3, free_ends_eps=1e-3, beamsize=-1,
+                                          delins_cost=(1., 1.), mixed_type=[True, False],
+                                          mixed_spread=[1, max(max_gt, max_pred)], mixed_weight=[0.5, 0.5],
+                                          cumdistflag=False, bpflag=False, ldflag=False, freeendsflag=False,
+                                          optimalpathflag=True, graphicoptimalpathflag=False,
+                                          graphicseqalignment=False, verbose=VERBOSE)
+        df_result = dtwcomputer.print_results()
 
         # Add a column containing name
         # df_result['PlantID'] = [plant_id] * len(df_result.index)

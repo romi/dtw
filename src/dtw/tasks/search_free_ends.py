@@ -65,7 +65,7 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
     >>> seq_ref = np.array([[123, 136, 131, 143, 113, 163, 159, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124, 152, 124, 107, 126], [70, 48, 56, 42, 39, 46, 33, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0, 13, 16, 0, 1]]).T
     >>> max_ref = np.max(seq_ref[:, 1])
     >>> max_test = np.max(seq_test[:, 1])
-    >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5])
+    >>> dtwcomputer = DTW(seq_test, seq_ref, constraints='merge_split', ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5])
     >>> free_ends, norm_dist = brute_force_free_ends_search(dtwcomputer)
     >>> print(free_ends)
     >>> dtwcomputer.free_ends = free_ends

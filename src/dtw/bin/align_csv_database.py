@@ -17,6 +17,7 @@
 # ------------------------------------------------------------------------------
 
 import argparse
+import json
 import logging
 from os.path import join
 from os.path import split
@@ -56,15 +57,15 @@ def parsing():
     parser.add_argument('xp_id', type=str,
                         help="Name of the experiment,used as prefix for the output CSV.")
 
-    dtw_opt = parser.add_argument_group('DTW algorithm arguments')
+    dtw_opt = parser.add_argument_group('algorithm arguments')
     dtw_opt.add_argument('--constraint', type=str, default=DEF_CONSTRAINT, choices=CONSTRAINTS,
                          help=f"Type of constraint to use, '{DEF_CONSTRAINT}' by default.")
     dtw_opt.add_argument('--free_ends', type=float, nargs='+', default=DEF_FREE_ENDS,
-                         help=f"Free ends values to use, specify the relaxation bounds, '{DEF_FREE_ENDS}' by default."+\
-                              f"If a single float, it correspond to a percentage of sequence length for max exploration of free-ends."+\
+                         help=f"Free ends values to use, specify the relaxation bounds, '{DEF_FREE_ENDS}' by default. " + \
+                              f"If a float, it correspond to a percentage of sequence length for max exploration of free-ends. " + \
                               f"Else, should be a length-2 list of integers specifying the relaxation bounds.")
     dtw_opt.add_argument('--free_ends_eps', type=float, default=DEF_FREE_ENDS_EPS,
-                         help=f"Percentage of sequence length for max exploration of free-ends, '{DEF_FREE_ENDS_EPS}' by default.")
+                         help=f"Minimum difference to previous minimum normalized cost to consider tested free-ends as the new best combination, '{DEF_FREE_ENDS_EPS}' by default.")
     dtw_opt.add_argument('--beam_size', type=int, default=DEF_BEAMSIZE,
                          help=f"Maximum amount of distortion allowed for signal warping, '{DEF_BEAMSIZE}' by default.")
     dtw_opt.add_argument('--delins_cost', type=float, nargs=2, default=DEF_DELINS_COST,
@@ -111,6 +112,7 @@ def main(args):
         args.free_ends = args.free_ends[0]
 
     df = pd.DataFrame()  # returned pandas DataFrame will all alignment results
+    json_dict = {}
     for plant_id in common_pids:
         logger.name = logger_name
         logger.info(f"Performing sequence comparison for '{plant_id}'...")
@@ -128,10 +130,17 @@ def main(args):
                         'mixed_weight': args.mixed_weight,
                         'mixed_spread': [1, max(max_ref, max_test)]}
 
-        df_result = sequence_comparison(seq_test, seq_ref, constraint=args.constraint, dist_type="mixed",
-                                        free_ends=args.free_ends, delins_cost=args.delins_cost,
-                                        max_stretch=args.max_stretch, beam_size=args.beam_size, logger=logger,
-                                        **mixed_kwargs, **flag_kwargs)
+        dtwcomputer = sequence_comparison(seq_test, seq_ref, constraint=args.constraint, dist_type="mixed",
+                                          free_ends=args.free_ends, free_ends_eps=args.free_ends_eps,
+                                          delins_cost=args.delins_cost, max_stretch=args.max_stretch,
+                                          beam_size=args.beam_size, logger=logger, **mixed_kwargs)
+        df_result = dtwcomputer.print_results(**flag_kwargs)
+        json_dict[plant_id] = {
+            'free_ends': args.free_ends,
+            'free_ends_eps': args.free_ends_eps,
+            'mixed_weight': args.mixed_weight,
+            'min_normalized_cost': dtwcomputer.min_normalized_cost
+        }
 
         # Add a column containing name:
         df_result.insert(loc=0, column='PlantID', value=[plant_id] * len(df_result.index))
@@ -146,6 +155,9 @@ def main(args):
     logger.info(f"Exporting result CSV to '{out_csv}'")
     df.to_csv(out_csv, index=False)
 
+    out_json = join(ref_path, f'{args.xp_id}_result.json')
+    with open(out_json, "w") as f:
+        json.dump(json_dict, f, indent=4)
 
 if __name__ == '__main__':
     parser = parsing()
