@@ -3,15 +3,12 @@
 
 from setuptools import setup, find_packages
 
-
 short_descr = "Dynamic time warping algorithm(s)"
 readme = open('README.md').read()
 history = open('HISTORY.rst').read()
 
 # find packages
 pkgs = find_packages('src')
-
-
 
 setup_kwds = dict(
     name='dtw',
@@ -21,11 +18,9 @@ setup_kwds = dict(
     author="Christophe Godin",
     author_email="christophe.godin@inria.fr",
     url='https://gitlab.inria.fr/mosaic/work-in-progress/dtw',
-    license='cecill-c',
+    license='GPL-3.0-or-later',
     zip_safe=False,
-
     packages=pkgs,
-    
     package_dir={'': 'src'},
     setup_requires=[],
     install_requires=[],
@@ -35,11 +30,9 @@ setup_kwds = dict(
         'src/dtw/bin/romi_compare_to_manual_gt.py',
         'src/dtw/bin/align_csv_database.py'
     ],
-
     keywords='',
-    
     test_suite='nose.collector',
-    )
+)
 # #}
 # change setup_kwds below before the next pkglts tag
 
