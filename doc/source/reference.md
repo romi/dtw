@@ -12,5 +12,6 @@ This is the reference guide for DTW.
    reference/autodoc_cli.md
    reference/autodoc_metrics.md
    reference/autodoc_tools.md
+   reference/autodoc_util.md
 
 ```
