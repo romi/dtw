@@ -147,13 +147,17 @@ with open("tutorials.md", "w+") as f:
 # -- Plotly configuration ----------------------------------------------
 # Add this to render plotly figures:
 # html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"]  # Does not work!
-nbsphinx_prolog = r"""
-.. raw:: html
 
-   <script src=‘http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js’></script>
-   <script>require=requirejs;</script>
-   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-"""
+html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js",
+                 "https://cdn.plot.ly/plotly-latest.min.js"]
+
+# nbsphinx_prolog = r"""
+# .. raw:: html
+#
+#    <script src="http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+#    <script>require=requirejs;</script>
+#    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+# """
 
 
 # -- Intersphinx -------------------------------------------------------------
