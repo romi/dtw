@@ -10,6 +10,7 @@ dependencies:
   - notebook
   - plotly
   - sphinx  # documentation: generates documentation with `make html`
+  - sphinx_rtd_theme  # documentation: 'Read The Doc' theme
   - myst-parser  # documentation: use markdown instead of reStructuredText with sphinx
   - myst-nb  # documentation: include jupyter-notebooks
   - sphinx-argparse  # documentation: argparse automatic documentation

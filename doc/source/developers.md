@@ -30,14 +30,24 @@ They will be automatically copied to `doc/tutorials/` and referenced.
 
 ### Clean-up before commits
 To automatically clean the notebooks from their output (to avoid unnecessary commit of useless changes), we add a pre-commit action.
-From the `dtw` root directory, add the notebook clean-up action:
-```bash
-echo "#!/bin/sh" > .git/hooks/pre-commit
-echo "jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace notebooks/*.ipynb" >> .git/hooks/pre-commit
+From the `dtw` root directory, add the notebook clean-up action to a `pre-commit` file in git hooks:
+```shell
+touch .git/hooks/pre-commit
+```
+Then copy/paste these lines in the newly created `` file:
+```shell
+#!/bin/sh
+git diff --cached --name-status | grep .ipynb | awk '$1 != "D" { print $2 }' | while rea>
+    echo "Processing $file"
+    jupyter-nbconvert --ClearOutputPreprocessor.enabled=True --inplace $file
+    git add $file
+done
 ```
 :::{warning}
-The first line will erase any existing `pre-commit` file!
-Only execute the second one if you already specified some actions!
+To work, these lines obviously require `jupyter-nbconvert` to be installed!
+:::
+:::{information}
+These lines will look for staged notebooks and clean them before staging them again!
 :::
 
 
@@ -48,9 +58,10 @@ We use [Sphinx](https://www.sphinx-doc.org/en/master/index.html), and [MyST](htt
 To write the **docstrings** we follow the [NumPy conventions](https://numpydoc.readthedocs.io/en/latest/format.html).
 
 ### Local build
-Once you have installed the [developer dependencies](#developer-dependencies), from the `doc/` directory, you can build the documentation with:
+Once you have installed the [developer dependencies](#developer-dependencies), from the root directory, you can 
+build  the documentation with:
 ```bash
-make html
+sphinx-build -b html doc/source/ doc/build/html
 ```
 
 :::{note}

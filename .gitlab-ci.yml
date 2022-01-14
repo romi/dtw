@@ -42,8 +42,8 @@ gitlab_pages:
     - conda activate dtw
     - python -m pip install .
     # Build the documentation:
-    - cd doc
-    - make html
+#    - make html
+    - sphinx-build -b html doc/source/ doc/build/html
     # Publish it:
     - mv build/html ../../public
   artifacts:
