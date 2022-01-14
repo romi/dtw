@@ -31,7 +31,7 @@ anaconda_upload:
   only:
     - master
 
-gitlab_pages:
+pages:
   stage: deploy
   script:
 #    - conda update --all
@@ -42,7 +42,6 @@ gitlab_pages:
     - conda activate dtw
     - python -m pip install .
     # Build the documentation:
-#    - make html
     - sphinx-build -b html doc/source/ public/
   artifacts:
     paths:
