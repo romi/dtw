@@ -43,9 +43,7 @@ gitlab_pages:
     - python -m pip install .
     # Build the documentation:
 #    - make html
-    - sphinx-build -b html doc/source/ doc/build/html
-    # Publish it:
-    - mv doc/build/html ../public
+    - sphinx-build -b html doc/source/ public/
   artifacts:
     paths:
       - public
