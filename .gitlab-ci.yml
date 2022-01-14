@@ -4,7 +4,9 @@ conda_build:
   stage: build
   script:
 #    - conda update --all
+    # Install conda build requirements in the base environment:
     - conda install conda-build conda-verify git
+    # Build the package and export it in a `conda-bld` folder:
     - mkdir conda-bld
     - conda build . --output-folder conda-bld/
   artifacts:
@@ -13,13 +15,16 @@ conda_build:
   only:
     - master
 
-anaconda:
+anaconda_upload:
   stage: deploy
   script:
 #    - conda update --all
     - conda install conda-build conda-verify anaconda-client
+    # Convert linux package for OSX-64:
     - conda convert -p osx-64 conda-bld/linux-64/dtw* --output-dir conda-bld/
+    # Convert linux package for WIN-64:
     - conda convert -p win-64 conda-bld/linux-64/dtw* --output-dir conda-bld/
+    # Upload all conda packages:
     - anaconda --token=$ANACONDA_TOKEN --verbose upload conda-bld/linux-64/dtw* --user romi-eu --force
     - anaconda --token=$ANACONDA_TOKEN --verbose upload conda-bld/osx-64/dtw* --user romi-eu --force
     - anaconda --token=$ANACONDA_TOKEN --verbose upload conda-bld/win-64/dtw* --user romi-eu --force
@@ -30,11 +35,13 @@ gitlab_pages:
   stage: deploy
   script:
 #    - conda update --all
+    # Install DTW in a conda environment with development dependencies:
     - conda env create --file conda/env/dtw_dev.yaml
     - conda init bash
     - source ~/.bashrc
     - conda activate dtw
-    - pip install .
+    - python -m pip install .
+    # Build the documentation:
     - cd doc
     - make html
     # Publish it:
@@ -42,3 +49,17 @@ gitlab_pages:
   artifacts:
     paths:
       - public
+
+unitary_tests:
+  stage: test
+  script:
+#    - conda update --all
+    # Install DTW in a conda environment with development dependencies:
+    - conda env create --file conda/env/dtw_dev.yaml
+    - conda init bash
+    - source ~/.bashrc
+    - conda activate dtw
+    - python -m pip install .
+    - conda install nose2
+    # Run unitary tests with nose2:
+    - /opt/conda/envs/dtw/bin/nose2 test/test_dtw.py
