@@ -92,12 +92,16 @@ for file in os.listdir('.'):
     if '.ipynb' in file:
         os.remove(file)
 
-nb_path = '../../notebooks'
+nb_path = '../../notebooks'  # path is relative to this file location!
 notebooks = [nb for nb in os.listdir(nb_path) if nb.endswith('.ipynb') and (nb.startswith("tutorial-") or nb.startswith("example-"))]
 
+try:
+    os.mkdir('tutorials')
+except:
+    pass
 for nbf in notebooks:
     print(f'importing notebook file: {nbf}')
-    os.system(f'cp {nb_path}/{nbf} tutorials/{nbf}')
+    os.system(f'cp {nb_path}/{nbf} tutorials/{nbf}')  # path is relative to this file location!
 
 
 # -- Create tutorial page ----------------------------------------------------
