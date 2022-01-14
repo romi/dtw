@@ -46,7 +46,7 @@ done
 :::{warning}
 To work, these lines obviously require `jupyter-nbconvert` to be installed!
 :::
-:::{information}
+:::{info}
 These lines will look for staged notebooks and clean them before staging them again!
 :::
 

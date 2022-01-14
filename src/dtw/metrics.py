@@ -81,7 +81,7 @@ def mixed_dist(v1, v2, **kwargs):
     Other Parameters
     ----------------
     is_angular : list(bool)
-        A boolean vector, of size ``dim``, indicating whether the k^th component should be treated
+        A boolean vector, of size ``dim``, indicating whether the :math:`k^{th}` component should be treated
         as an angle (``True``) or a regular scalar value (``False``).
     spread : list(float)
         A vector of positive scalars, of size ``dim``, used to normalize the distance values computed
@@ -100,9 +100,14 @@ def mixed_dist(v1, v2, **kwargs):
     The resulting distance is:
 
     .. math::
-        D(v_1,v_2) = \sqrt{\sum_{k} \text{weight} \[k\] * d{_k}^2(v_1[k],v_2[k])/ \text{spread}[k]^2)}
 
-    where :math:`d\_k` is a distance that depends on ``type[k]``.
+        D(v_1,v_2) = \sqrt{\sum_{k} w_{k} * d_{k}^2(v_1[k],v_2[k])/ s_k^2)}
+
+    where:
+
+      * :math:`d_{k}` is a *distance* that depends on ``type[k]``
+      * :math:`w_{k}` is the :math:`k^{th}` *weight*
+      * :math:`s_{k}` the :math:`k^{th}` *spread*.
 
     """
     is_angular = kwargs.get('is_angular', None)

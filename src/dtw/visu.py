@@ -31,7 +31,7 @@ def sequences_table(dtw: dtw.DTW):
         fig.add_trace(table, row=1, col=i + 1)
 
     fig.update_layout(title_text="DTW - Original sequences")
-    fig.show()
+    return fig
 
 
 def _sequence_plot(fig, fig_idx, ref_idx, ref_val, test_idx, test_val, name, pred_type=None):
@@ -72,7 +72,7 @@ def plot_sequences(dtw: dtw.DTW):
     fig.update_xaxes(title_text="index", row=n_figs, col=1)
     fig.update_layout(height=800, title_text="DTW - Original sequences",
                       hovermode="x unified", legend_title="Legend")
-    fig.show()
+    return fig
 
 
 def plot_aligned_sequences(dtw: dtw.DTW):
@@ -102,4 +102,4 @@ def plot_aligned_sequences(dtw: dtw.DTW):
     fig.update_xaxes(title_text="index of reference sequence", row=n_figs, col=1)
     fig.update_layout(height=800, title_text="DTW - Aligned sequences",
                       hovermode="x unified", legend_title="Legend")
-    fig.show()
+    return fig
