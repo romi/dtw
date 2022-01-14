@@ -30,13 +30,15 @@ release = '0.0.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    # 'myst_parser',  # MyST markdown parser (can be activated by 'myst_nb')
+    # 'myst_parser',  # MyST Markdown parser (can be activated by 'myst_nb')
     'myst_nb',  # MyST jupyter notebooks parser
     'sphinx.ext.autodoc',  # Include documentation from docstrings
     'sphinx.ext.intersphinx',  # Link to other projects’ documentation
     'sphinx.ext.napoleon',  # Support for NumPy and Google style docstrings
     'sphinx.ext.todo',  # Support for todo items
     'sphinxarg.ext',  # To document command-line scripts
+    'sphinx_copybutton',  # Enable a copy button in each code-block
+
 ]
 
 # Optional MyST syntax:
