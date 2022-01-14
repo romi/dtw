@@ -143,23 +143,6 @@ with open("tutorials.md", "w+") as f:
         ref = ref.replace('_', ' ')
         f.write(f" - [{ref.capitalize()}](tutorials/{i})" + "\n")
 
-
-# -- Plotly configuration ----------------------------------------------
-# Add this to render plotly figures:
-# html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"]  # Does not work!
-
-html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js",
-                 "https://cdn.plot.ly/plotly-latest.min.js"]
-
-# nbsphinx_prolog = r"""
-# .. raw:: html
-#
-#    <script src="http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
-#    <script>require=requirejs;</script>
-#    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-# """
-
-
 # -- Intersphinx -------------------------------------------------------------
 # Configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
@@ -182,3 +165,32 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 # html_css_files = ['alabaster_custom.css']
+
+
+# -- Plotly configuration ----------------------------------------------
+# Add this to render plotly figures:
+# html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"]  # Does not work!
+
+html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js",
+                 "https://cdn.plot.ly/plotly-latest.min.js"]
+
+# nbsphinx_prolog = r"""
+# .. raw:: html
+#
+#    <script src="http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+#    <script>require=requirejs;</script>
+#    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+# """
+
+if html_theme == 'sphinx_rtd_theme':
+    # Next lines should be specific to RTD theme
+    ## SOURCE: https://github.com/spatialaudio/nbsphinx/issues/572#issuecomment-853389268
+    mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+    mathjax2_config = {
+        'tex2jax': {
+            'inlineMath': [['$', '$'], ['\\(', '\\)']],
+            'processEscapes': True,
+            'ignoreClass': 'document',
+            'processClass': 'math|output_area',
+        }
+    }
