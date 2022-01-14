@@ -135,11 +135,19 @@ def main(args):
                                           delins_cost=args.delins_cost, max_stretch=args.max_stretch,
                                           beam_size=args.beam_size, logger=logger, **mixed_kwargs)
         df_result = dtwcomputer.print_results(**flag_kwargs)
+
+        # Take care of weirds, but realistic cases:
+        if not isinstance(plant_id, str):
+            if isinstance(plant_id, np.integer):
+                plant_id = int(plant_id)
+            if isinstance(plant_id, np.float):
+                plant_id = float(plant_id)
+
         json_dict[plant_id] = {
-            'free_ends': args.free_ends,
+            'free_ends': tuple(map(int, args.free_ends)),
             'free_ends_eps': args.free_ends_eps,
-            'mixed_weight': args.mixed_weight,
-            'min_normalized_cost': dtwcomputer.min_normalized_cost
+            'mixed_weight': tuple(map(float, args.mixed_weight)),
+            'min_normalized_cost': float(dtwcomputer.min_normalized_cost)
         }
 
         # Add a column containing name:
