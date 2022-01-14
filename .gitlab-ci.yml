@@ -33,7 +33,7 @@ gitlab_pages:
     - conda env create --file conda/env/dtw_dev.yaml
     - conda init bash
     - source ~/.bashrc
-    - conda activate dtw_dev
+    - conda activate dtw
     - pip install .
     - cd doc
     - make html
