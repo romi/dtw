@@ -54,12 +54,12 @@ unitary_tests:
   stage: test
   script:
 #    - conda update --all
-    # Install DTW in a conda environment with development dependencies:
-    - conda env create --file conda/env/dtw_dev.yaml
+    # Install DTW in a conda environment with dependencies:
+    - conda env create --file conda/env/dtw.yaml
     - conda init bash
     - source ~/.bashrc
     - conda activate dtw
     - python -m pip install .
-    - conda install nose2
+    - conda install -c conda-forge nose2
     # Run unitary tests with nose2:
     - /opt/conda/envs/dtw/bin/nose2 test/test_dtw.py
