@@ -30,7 +30,7 @@ And new dynamic time warping based techniques such as "merge split".
 : Linux, MacOSX
 
 **Licence:**
-: CeCILL v2.1 [license](http://www.cecill.info/licences/Licence_CeCILL_V2.1-en.html), no commercial use.
+: GPL-3.0-or-later, see [license](https://opensource.org/licenses/GPL-3.0).
 
 
 ## Table of contents
