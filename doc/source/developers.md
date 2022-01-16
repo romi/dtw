@@ -75,6 +75,11 @@ This will:
 
 You will then obtain a `build/` directory (under `doc/`) with an `index.html` file to open with your browser!
 
+Or run it with:
+```shell
+python -m http.server --directory doc/build/html/
+```
+And click or copy/paste the link (should be http://0.0.0.0:8000/)
 
 ## Publish a clone to ROMI GitHub
 

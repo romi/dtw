@@ -143,6 +143,11 @@ with open("tutorials.md", "w+") as f:
         ref = ref.replace('_', ' ')
         f.write(f" - [{ref.capitalize()}](tutorials/{i})" + "\n")
 
+
+# Define if myst_nb will run the notebooks:
+# https://myst-nb.readthedocs.io/en/latest/use/execute.html#
+jupyter_execute_notebooks = "force"  # 'auto', 'off', 'force', 'cache'
+
 # -- Intersphinx -------------------------------------------------------------
 # Configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
@@ -153,44 +158,23 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
 # https://gist.github.com/bskinn/0e164963428d4b51017cebdb6cda5209
 
 # -- Options for HTML output -------------------------------------------------
-
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'alabaster'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-# html_css_files = ['alabaster_custom.css']
+if html_theme == 'alabaster':
+    html_css_files = ['alabaster_custom.css']
 
 
 # -- Plotly configuration ----------------------------------------------
 # Add this to render plotly figures:
-html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"]  # Does not work!
+html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js",
+                 "https://cdn.plot.ly/plotly-2.8.3.min.js"]  # Does not work!
 
-# html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js",
-#                  "https://cdn.plot.ly/plotly-latest.min.js"]
 
-# nbsphinx_prolog = r"""
-# .. raw:: html
-#
-#    <script src="http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
-#    <script>require=requirejs;</script>
-#    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-# """
-
-if html_theme == 'sphinx_rtd_theme':
-    # Next lines should be specific to RTD theme
-    ## SOURCE: https://github.com/spatialaudio/nbsphinx/issues/572#issuecomment-853389268
-    mathjax_path = 'https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
-    mathjax2_config = {
-        'tex2jax': {
-            'inlineMath': [['$', '$'], ['\\(', '\\)']],
-            'processEscapes': True,
-            'ignoreClass': 'document',
-            'processClass': 'math|output_area',
-        }
-    }

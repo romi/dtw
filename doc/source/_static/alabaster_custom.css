@@ -1,11 +1,14 @@
 div.document {
     width: auto;
-    margin: 30px 50px 0 50px;
+    margin: 30px 150px 0 150px;
 }
 
 div.body {
     min-width: 680px;
     max-width: fit-content;
+}
+div.bodywrapper {
+    margin: 0 0 0 260px;
 }
 
 dl.py {
