@@ -173,7 +173,8 @@ if html_theme == 'alabaster':
 
 
 # -- Plotly configuration ----------------------------------------------
-# Add this to render plotly figures:
+# Enable plotly figure in the docs
+# https://myst-nb.readthedocs.io/en/latest/examples/interactive.html#plotly
 html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js",
                  "https://cdn.plot.ly/plotly-2.8.3.min.js"]  # Does not work!
 
