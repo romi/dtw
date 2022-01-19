@@ -1,0 +1,16 @@
+name: dtw
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - matplotlib
+  - numpy
+  - pandas
+  - joblib
+  - notebook
+  - plotly
+  - sphinx  # documentation: generates documentation with `make html`
+  - myst-parser  # documentation: use markdown instead of reStructuredText with sphinx
+  - myst-nb  # documentation: include jupyter-notebooks
+  - sphinx-argparse  # documentation: argparse automatic documentation
+  - sphinx-copybutton  # documentation: add copy button to code blocks

@@ -1,38 +1,50 @@
 # Dynamic time warping algorithm(s)
 
-## Installing the module
-Setup the right conda env:
+Official documentation can be found here: 
+https://cgodin-dev.gitlabpages.inria.fr/dtw
+
+## Installing the module from sources
+
+### Clone the sources
+Start by cloning the sources with:
 ```bash
-conda activate my_env
+git clone https://gitlab.inria.fr/cgodin-dev/dtw.git
 ```
 
-Then,
+### Conda environment creation (optional)
+If you don't have an existing conda environment, create one (named `dtw`) with:
 ```bash
-my_env> python setup.py develop
+conda env create -f conda/env/dtw.yaml
 ```
-or
+You can find the official instructions on how to manually create an environment [here](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-with-commands).
+
+### Install DTW library
+Start by activating your (`dtw`) environment with:
 ```bash
-ipython> run setup.py develop
+conda activate dtw
 ```
-
-Note: 'develop' is used here to use the code that is being developed rather than a python package.
-
-## Running the code
-To run an example file go in data-analysis dir and launch ipython. Then,
+Then install the package in develop mode with `pip`,
 ```bash
-ipython> run arabido-test.py
+(dtw)> python -m pip install -e .
 ```
 
-## Editing the code and testing
-If one modifies the code (example by modifying the dtw.py file), one should reinstall the modified files in python to take modifications into account.
+Note: `-e` is used here to install the code in "develop mode", this way you do not have to re_install the package every time you makes modifications to he sources.
 
-This is done using:
+
+## Testing the code
+To run an example file, go in `data-analysis` directory and launch `ipython`.
 ```bash
-my_env> python setup.py install
+cd data-analysis
+ipython
 ```
-Create an `env.yaml` file to set conda dependencies.
 
-## Publish master branch to GitHub
+Then you can run the `arabido-test.py` test file with:
+```bash
+ipython> %run arabido-test.py
+```
+
+
+## Publish master branch to ROMI GitHub
 
 ### The first time:
 0. Create a GitHub empty repo
@@ -41,3 +53,37 @@ Create an `env.yaml` file to set conda dependencies.
 
 ### To update GitHub master from Inria GitLab
 3. Push your modifications to GitHub (from the repository root): `git push romi master`
+
+
+## Conda packaging
+
+### Requirement
+Install `conda-build`, in the `base` environment, to be able to build conda packages:
+```bash
+conda deactivate
+conda install conda-build
+```
+
+> :warning: For macOS, follow these [instructions](https://docs.conda.io/projects/conda-build/en/latest/resources/compiler-tools.html#macos-sdk) to install the required `macOS 10.9 SDK`.
+
+
+### Build a conda package
+Using the given recipes in `dtw/conda/recipe`, it is easy to build the conda package:
+```bash
+cd dtw/conda/recipe
+conda build .
+```
+> :warning: This should be done from the `base` environment!
+
+
+### Conda useful commands
+
+#### Purge built packages:
+```bash
+conda build purge
+```
+
+#### Clean cache & unused packages:
+```bash
+conda clean --all
+```

@@ -1,0 +1,24 @@
+div.document {
+    width: auto;
+    margin: 30px 150px 0 150px;
+}
+
+div.body {
+    min-width: 680px;
+    max-width: fit-content;
+}
+div.bodywrapper {
+    margin: 0 0 0 260px;
+}
+
+dl.py {
+    padding: 10px 0 10px 0
+}
+
+p.rubric {
+    margin: 15px 0 7px 0
+}
+
+pre{
+    padding: 3px 0 3px 0
+}
