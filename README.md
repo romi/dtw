@@ -1,5 +1,7 @@
 # Dynamic time warping algorithm(s)
 
+Official documentation can be found here: 
+https://cgodin-dev.gitlabpages.inria.fr/dtw
 
 ## Installing the module from sources
 
