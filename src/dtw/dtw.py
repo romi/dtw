@@ -517,7 +517,7 @@ class DTW(object):
         idx_ref = np.array(idx_ref) + start_index
         return {'test': idx_test, 'reference': idx_ref, 'type': np.array(event_types), 'cost': np.array(event_costs)}
 
-    def plot_results(self, figname="", figsize=None):
+    def plot_results(self, figname="", figsize=None, valrange=None):
         """Generates a figure showing sequence(s) alignment and event types.
 
         Parameters
@@ -526,6 +526,8 @@ class DTW(object):
             If specified, save the figure uder this file name and path.
         figsize : 2-tuple of floats, optional
             Figure dimension (width, height) in inches.
+        valrange : list
+            list of 2-tuples specifying min and max range of value for each sequence
 
         Examples
         --------
@@ -538,7 +540,7 @@ class DTW(object):
         >>> max_test = np.max(seq_test[:, 1])
         >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
-        >>> dtwcomputer.plot_results()
+        >>> dtwcomputer.plot_results(valrange=[(0, 360), None])
 
         """
         ref_indexes = np.array(range(self.n_ref))
@@ -548,18 +550,37 @@ class DTW(object):
         pred_types = results['type']
         pred_types[np.where(pred_types == '=')] = ''
 
+        print(valrange)
+        if valrange is not None:
+            try:
+                assert len(valrange) == self.n_dim
+            except AssertionError:
+                logger.warning(f"Not enough dimensions in the list of `valrange`!")
+                valrange = None
+        if valrange is not None:
+            try:
+                assert all([vr is None or len(vr) == 2 for vr in valrange])
+            except AssertionError:
+                logger.warning(f"Parameter `valrange` should be a list of 2-tuples or None values!")
+                valrange = None
+
+        if valrange is None:
+            valrange = [None] * self.n_dim
+
         if figsize is None:
             figsize = (10, 5 * self.n_dim)
         fig, axs = plt.subplots(ncols=1, nrows=self.n_dim, figsize=figsize, constrained_layout=True)
         if self.n_dim == 1:
             ref_val = self.seq_ref
             test_val = [self.seq_test[e] for e in seq_test]
-            self._plot_results(axs, ref_indexes + 1, ref_val, seq_ref + 1, test_val, pred_types, self.names[0])
+            self._plot_results(axs, ref_indexes + 1, ref_val, seq_ref + 1, test_val, pred_types, self.names[0],
+                               valrange[0])
         else:
             for i in range(self.n_dim):
                 ref_val = self.seq_ref[:, i]
                 test_val = [self.seq_test[e, i] for e in seq_test]
-                self._plot_results(axs[i], ref_indexes + 1, ref_val, seq_ref + 1, test_val, pred_types, self.names[i])
+                self._plot_results(axs[i], ref_indexes + 1, ref_val, seq_ref + 1, test_val, pred_types, self.names[i],
+                                   valrange[i])
         plt.suptitle(f"DTW - {self.constraints.replace('_', ' ')} alignment")
 
         if figname != "":
@@ -568,7 +589,7 @@ class DTW(object):
             plt.show()
 
     @staticmethod
-    def _plot_results(ax, ref_x, ref_y, test_x, test_y, pred_types, name):
+    def _plot_results(ax, ref_x, ref_y, test_x, test_y, pred_types, name, y_range=None):
         """Display the result of the alignment.
 
         Parameters
@@ -599,6 +620,9 @@ class DTW(object):
         ax.set_title(f"{name.upper()}")
         ax.set_xlabel('index of reference sequence')
         ax.set_ylabel(name)
+        if y_range is not None and (isinstance(y_range, (list, tuple))):
+            mini, maxi = y_range
+            ax.set_ylim(mini, maxi)
         ax.grid(True, which='major', axis='both', linestyle='dotted')
         ax.legend()
 
