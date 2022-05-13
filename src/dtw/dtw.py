@@ -159,7 +159,7 @@ class DTW(object):
         >>> dtwcomputer = DTW(test_seq,ref_seq)
         >>> ndist, path, length, ndistarray, backpointers = dtwcomputer.run()
         >>> dtwcomputer.get_results()
-        >>> dtwcomputer.get_better_results()
+        >>> dtwcomputer.get_verbose_results()
 
         """
         # Initialize empty attributes
@@ -396,7 +396,7 @@ class DTW(object):
         """
         return self.find_path(self.opt_backtrack_path, self.editop, verbose)
 
-    def get_better_results(self, start_index=1):
+    def get_verbose_results(self, start_index=1):
         """
 
         Parameters
@@ -423,7 +423,7 @@ class DTW(object):
         >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "inter-nodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_results()
-        >>> dtwcomputer.get_better_results()
+        >>> dtwcomputer.get_verbose_results()
 
         >>> # Example #2 - Alignment of angles and inter-nodes sequences with right free-ends:
         >>> seq_test = np.array([[123, 169, 224, 103, 131, 143, 113, 163, 148, 11, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124], [70, 1, 32, 15, 56, 42, 39, 46, 4, 29, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0]]).T
@@ -434,7 +434,7 @@ class DTW(object):
         >>> dtwcomputer.free_ends = (0, 5)
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_results()
-        >>> dtwcomputer.get_better_results()
+        >>> dtwcomputer.get_verbose_results()
         >>> dtwcomputer.plot_results()
 
         """
@@ -544,7 +544,7 @@ class DTW(object):
 
         """
         ref_indexes = np.array(range(self.n_ref))
-        results = self.get_better_results(start_index=0)
+        results = self.get_verbose_results(start_index=0)
         seq_test = results['test']
         seq_ref = results['reference']
         pred_types = results['type']
@@ -710,7 +710,7 @@ class DTW(object):
         >>> dtwcomputer.get_aligned_reference_sequence()
 
         """
-        aligned_results = self.get_better_results(0)
+        aligned_results = self.get_verbose_results(0)
         return np.array([self.seq_ref[e] for e in aligned_results['reference']])
 
     def get_aligned_test_sequence(self):
@@ -735,7 +735,7 @@ class DTW(object):
         >>> dtwcomputer.get_aligned_test_sequence()
 
         """
-        aligned_results = self.get_better_results(0)
+        aligned_results = self.get_verbose_results(0)
         return np.array([self.seq_test[e] for e in aligned_results['test']])
 
     def get_matching_sequences(self):
@@ -763,7 +763,7 @@ class DTW(object):
         >>> matched_ref, matched_test = dtwcomputer.get_matching_sequences()
 
         """
-        aligned_results = self.get_better_results(0)
+        aligned_results = self.get_verbose_results(0)
         ars = self.get_aligned_reference_sequence()
         ats = self.get_aligned_test_sequence()
         matching_indexes = [i for i, t in enumerate(aligned_results['type']) if t == '=' or t == '~']
@@ -789,7 +789,7 @@ class DTW(object):
 
          """
         results = self.get_results()
-        aligned_results = self.get_better_results(0)
+        aligned_results = self.get_verbose_results(0)
         merge_indexes = np.where(results['type'] == 'm')[0]
         split_indexes = np.where(results['type'] == 's')[0]
         chop_start = min(aligned_results['reference']) - 1 if min(aligned_results['reference']) > 1 else 0
