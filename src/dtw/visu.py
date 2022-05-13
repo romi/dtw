@@ -80,7 +80,7 @@ def plot_aligned_sequences(dtw: dtw.DTW):
     n_figs = dtw.n_dim
 
     ref_indexes = np.array(range(dtw.n_ref))
-    results = dtw.get_better_results(start_index=0)
+    results = dtw.get_verbose_results(start_index=0)
     seq_test = results['test']
     seq_ref = results['reference']
     pred_types = results['type']

@@ -71,7 +71,7 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
     >>> dtwcomputer.free_ends = free_ends
     >>> ndist, path, length, ndistarray, backpointers = dtwcomputer.run()
     >>> dtwcomputer.get_results()
-    >>> dtwcomputer.get_better_results()
+    >>> dtwcomputer.get_verbose_results()
     >>> dtwcomputer.plot_results()
 
     """
