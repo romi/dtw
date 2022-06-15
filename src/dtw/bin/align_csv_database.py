@@ -24,7 +24,6 @@ from os.path import split
 
 import numpy as np
 import pandas as pd
-
 from dtw.tasks.compare_sequences import CONSTRAINTS
 from dtw.tasks.compare_sequences import DEF_BEAMSIZE
 from dtw.tasks.compare_sequences import DEF_CONSTRAINT
@@ -110,6 +109,10 @@ def main(args):
 
     if len(args.free_ends) == 1:
         args.free_ends = args.free_ends[0]
+    else:
+        args.free_ends = tuple(map(int, args.free_ends))
+
+    args.mixed_weight = tuple(map(float, args.mixed_weight))
 
     df = pd.DataFrame()  # returned pandas DataFrame will all alignment results
     json_dict = {}
@@ -144,9 +147,9 @@ def main(args):
                 plant_id = float(plant_id)
 
         json_dict[plant_id] = {
-            'free_ends': tuple(map(int, args.free_ends)),
+            'free_ends': args.free_ends,
             'free_ends_eps': args.free_ends_eps,
-            'mixed_weight': tuple(map(float, args.mixed_weight)),
+            'mixed_weight': args.mixed_weight,
             'min_normalized_cost': float(dtwcomputer.min_normalized_cost)
         }
 
@@ -166,6 +169,7 @@ def main(args):
     out_json = join(ref_path, f'{args.xp_id}_result.json')
     with open(out_json, "w") as f:
         json.dump(json_dict, f, indent=4)
+
 
 if __name__ == '__main__':
     parser = parsing()
