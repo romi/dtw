@@ -2,6 +2,9 @@ image: continuumio/miniconda3
 
 conda_build:
   stage: build
+  tags:
+    - ci.inria.fr
+    - medium
   script:
 #    - conda update --all
     # Install conda build requirements in the base environment:
@@ -17,6 +20,9 @@ conda_build:
 
 anaconda_upload:
   stage: deploy
+  tags:
+    - ci.inria.fr
+    - medium
   script:
 #    - conda update --all
     - conda install conda-build conda-verify anaconda-client
@@ -33,6 +39,9 @@ anaconda_upload:
 
 pages:
   stage: deploy
+  tags:
+    - ci.inria.fr
+    - medium
   script:
 #    - conda update --all
     # Install DTW in a conda environment with development dependencies:
@@ -49,6 +58,9 @@ pages:
 
 unitary_tests:
   stage: test
+  tags:
+    - ci.inria.fr
+    - medium
   script:
 #    - conda update --all
     # Install DTW in a conda environment with dependencies:
