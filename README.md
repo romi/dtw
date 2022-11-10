@@ -25,10 +25,22 @@ conda activate dtw
 ```
 Then install the package in develop mode with `pip`,
 ```bash
-(dtw)> python -m pip install -e .
+python -m pip install -e .
 ```
 
 Note: `-e` is used here to install the code in "develop mode", this way you do not have to re_install the package every time you makes modifications to he sources.
+
+### Optional dependency
+To use the `romi_compare_to_manual_gt.py` script you will need to install the `plantdb` library from the ROMI project.
+
+You can do so with:
+```shell
+conda activate dtw
+git clone https://github.com/romi/plantdb.git
+cd plantdb
+python -m pip install -r requirements.txt
+python -m pip install -e .
+```
 
 
 ## Testing the code
@@ -39,8 +51,8 @@ ipython
 ```
 
 Then you can run the `arabido-test.py` test file with:
-```bash
-ipython> %run arabido-test.py
+```python
+%run arabido-test.py
 ```
 
 
