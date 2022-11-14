@@ -18,6 +18,7 @@
 
 import argparse
 import logging
+from math import degrees
 from os import remove
 from os.path import exists
 from os.path import join
@@ -45,32 +46,40 @@ The manual measures are assumed to be the ground-truth.
 """
 
 
+DEFAULT_FIG_FMT = 'png'
+
 def parsing():
     parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('db_path', type=str,
-                        help="Path to a ROMI local database managed by `FSDB`.")
+                        help="path to a ROMI local database managed by `FSDB`.")
     parser.add_argument('scan', type=str,
-                        help="Name of the plant or scan to analyse.")
+                        help="name of the plant or scan to analyse.")
 
     dtw_opt = parser.add_argument_group('DTW algorithm arguments')
     dtw_opt.add_argument('--constraint', type=str, default=DEF_CONSTRAINT, choices=CONSTRAINTS,
-                         help=f"Type of constraint to use, '{DEF_CONSTRAINT}' by default.")
+                         help=f"type of constraint to use, '{DEF_CONSTRAINT}' by default.")
     dtw_opt.add_argument('--dist_type', type=str, default=DEF_DIST_TYPE, choices=DIST_TYPES,
-                         help=f"Type of distance to use, '{DEF_DIST_TYPE}' by default.")
+                         help=f"type of distance to use, '{DEF_DIST_TYPE}' by default.")
     dtw_opt.add_argument('--free_ends', type=float, nargs='+', default=DEF_FREE_ENDS,
-                         help=f"Free ends values to use, specify the relaxation bounds, '{DEF_FREE_ENDS}' by default.")
+                         help=f"free ends values to use, specify the relaxation bounds, '{DEF_FREE_ENDS}' by default.")
     dtw_opt.add_argument('--beam_size', type=int, default=DEF_BEAMSIZE,
-                         help=f"Maximum amount of distortion allowed for signal warping, '{DEF_BEAMSIZE}' by default.")
+                         help=f"maximum amount of distortion allowed for signal warping, '{DEF_BEAMSIZE}' by default.")
     dtw_opt.add_argument('--delins_cost', type=float, nargs=2, default=DEF_DELINS_COST,
-                         help=f"Cost of deletion and insertion to use, '{DEF_DELINS_COST}' by default.")
+                         help=f"cost of deletion and insertion to use, '{DEF_DELINS_COST}' by default.")
     dtw_opt.add_argument('--max_stretch', type=int, default=DEF_MAX_STRETCH,
-                         help=f"Maximum amount of stretching allowed for signal warping, '{DEF_MAX_STRETCH}' by default.")
+                         help=f"maximum amount of stretching allowed for signal warping, '{DEF_MAX_STRETCH}' by default.")
+
+    fig_opt = parser.add_argument_group('figure arguments')
+    fig_opt.add_argument('--to_degrees', action="store_true",
+                         help=f"use it to convert angles in degrees.")
+    fig_opt.add_argument('--figure_format', type=str, default=DEFAULT_FIG_FMT, choices=['png', 'jpeg', "svg", 'eps'],
+                         help=f"set the file format of the alignment figure, '{DEFAULT_FIG_FMT}' by default.")
 
     log_opt = parser.add_argument_group('logging arguments')
     log_opt.add_argument('--log_level', type=str, default=DEFAULT_LOG_LEVEL.lower(),
                          choices=['info', 'warning', 'error', 'critical', 'debug'],
-                         help=f"Logging level to use, '{DEFAULT_LOG_LEVEL.lower()}' by default.")
+                         help=f"logging level to use, '{DEFAULT_LOG_LEVEL.lower()}' by default.")
 
     return parser
 
@@ -109,11 +118,17 @@ def main(args):
     # Load the JSON file produced by task `AnglesAndInternodes`:
     json_dict = read_json(fs.files[0])
     # Get the predicted angles and inter-nodes sequences:
-    pred_angles = json_dict['angles']
     pred_internodes = json_dict['internodes']
+    pred_angles = json_dict['angles']
+    if args.to_degrees:
+        pred_angles = [degrees(angle) for angle in pred_angles]
+
     # Get the ground-truth angles and inter-nodes sequences:
-    gt_angles = scan.get_measures('angles')
     gt_internodes = scan.get_measures('internodes')
+    gt_angles = scan.get_measures('angles')
+    if args.to_degrees:
+        gt_angles = [degrees(angle) for angle in gt_angles]
+
     # Create ground-truth & predicted angles and inter-nodes arrays
     seq_pred = np.array([pred_angles, pred_internodes]).T
     seq_gt = np.array([gt_angles, gt_internodes]).T
@@ -142,7 +157,7 @@ def main(args):
     out_csv = join(args.db_path, args.scan, 'dtw_result.csv')
     logger.info(f"Exporting result CSV to '{out_csv}'")
     df.to_csv(out_csv, index=False)
-    dtwcomputer.plot_results(figname=join(args.db_path, args.scan, "SM-DTW_alignment.png"))
+    dtwcomputer.plot_results(figname=join(args.db_path, args.scan, f"SM-DTW_alignment.{args.figure_format}"))
 
 
 if __name__ == '__main__':
