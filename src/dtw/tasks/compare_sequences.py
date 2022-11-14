@@ -84,6 +84,16 @@ def sequence_comparison(seq_test, seq_ref, constraint=DEF_CONSTRAINT, dist_type=
     mixed_weight : list(float), optional
         A vector of positive weights, of size ``2``. Does not necessarily sum to 1, but normalized if not.
 
+    Returns
+    -------
+    dtw.DTW
+        A Dynamic Time Warping instance with the `run` method called with given or estimated `free_ends` attribute.
+        Estimation of the 2-tuple `free_ends` is perfomred by `brute_force_free_ends_search` if a float is given.
+
+    See Also
+    --------
+    dtw.tasks.search_free_ends.brute_force_free_ends_search
+
     Notes
     -----
     For the `free_ends` as a 2-tuple of integers ``(k, l)``, we must have:
