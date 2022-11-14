@@ -115,8 +115,8 @@ def main(args):
     gt_angles = scan.get_measures('angles')
     gt_internodes = scan.get_measures('internodes')
     # Create ground-truth & predicted angles and inter-nodes arrays
-    seq_gt = np.array([pred_angles, pred_internodes]).T
-    seq_pred = np.array([gt_angles, gt_internodes]).T
+    seq_pred = np.array([pred_angles, pred_internodes]).T
+    seq_gt = np.array([gt_angles, gt_internodes]).T
 
     mixed_kwargs = {}
     if args.dist_type == 'mixed':
@@ -133,14 +133,16 @@ def main(args):
                    'graphic_optimal_path_flag': False, 'graphic_seq_alignment': False}
 
     dtwcomputer = sequence_comparison(seq_pred, seq_gt, constraint=args.constraint, dist_type=args.dist_type,
-                             free_ends=args.free_ends, delins_cost=args.delins_cost, max_stretch=args.max_stretch,
-                             beam_size=args.beam_size, verbose=True, **mixed_kwargs)
+                                      free_ends=args.free_ends, delins_cost=args.delins_cost,
+                                      max_stretch=args.max_stretch, beam_size=args.beam_size, verbose=True,
+                                      names=['angles', 'internodes'], **mixed_kwargs)
     df = dtwcomputer.print_results(**flag_kwargs)
 
     logger.name = logger_name
     out_csv = join(args.db_path, args.scan, 'dtw_result.csv')
     logger.info(f"Exporting result CSV to '{out_csv}'")
     df.to_csv(out_csv, index=False)
+    dtwcomputer.plot_results(figname=join(args.db_path, args.scan, "SM-DTW_alignment.png"))
 
 
 if __name__ == '__main__':
