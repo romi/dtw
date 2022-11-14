@@ -550,7 +550,6 @@ class DTW(object):
         pred_types = results['type']
         pred_types[np.where(pred_types == '=')] = ''
 
-        print(valrange)
         if valrange is not None:
             try:
                 assert len(valrange) == self.n_dim
@@ -568,7 +567,7 @@ class DTW(object):
             valrange = [None] * self.n_dim
 
         if figsize is None:
-            figsize = (10, 5 * self.n_dim)
+            figsize = (0.4 * self.n_ref, 5 * self.n_dim)
         fig, axs = plt.subplots(ncols=1, nrows=self.n_dim, figsize=figsize, constrained_layout=True)
         if self.n_dim == 1:
             ref_val = self.seq_ref
@@ -610,11 +609,11 @@ class DTW(object):
             The name of the sequence dimension (values).
 
         """
-        ax.plot(ref_x, ref_y, marker='+', linestyle='dashed', label='Reference')
-        ax.plot(test_x, test_y, marker='o', linestyle='dashed', label='Test')
+        ax.plot(ref_x, ref_y, marker='+', linestyle='dashed', label='Reference', color= "#fb757c")
+        ax.plot(test_x, test_y, marker='o', markersize=15, linestyle='dashed', label='Prediction', color="#6431fc")
         for x, y, t in zip(test_x, test_y, pred_types):
-            ax.text(x, y, t.upper(), ha='center', va='center', fontfamily='monospace', fontsize='large',
-                    fontweight='medium')
+            ax.text(x, y, t.upper(), ha='center', va='center_baseline', fontfamily='monospace', fontsize='large',
+                    fontweight='bold', color='white')
         x_ticks = np.arange(0, max(ref_x) + 1, 1)
         ax.set_xticks(x_ticks)
         ax.set_title(f"{name.upper()}")
