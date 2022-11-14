@@ -107,7 +107,7 @@ def sequence_comparison(seq_test, seq_ref, constraint=DEF_CONSTRAINT, dist_type=
     >>> print(df)
 
     """
-    logger = kwargs.get('logger', None)
+    logger = kwargs.pop('logger', None)
     if logger is None:
         logger = get_logger(__name__)
     else:
@@ -131,8 +131,9 @@ def sequence_comparison(seq_test, seq_ref, constraint=DEF_CONSTRAINT, dist_type=
     else:  # mixed normalized distance
         ld = mixed_dist
 
-    dtwcomputer = DTW(seq_test, seq_ref, constraints=constraint, ldist=ld, mixed_type=mixed_type, mixed_spread=mixed_spread,
-                      mixed_weight=mixed_weight, beam_size=beam_size, max_stretch=max_stretch, delins_cost=delins_cost)
+    dtwcomputer = DTW(seq_test, seq_ref, constraints=constraint, ldist=ld, mixed_type=mixed_type,
+                      mixed_spread=mixed_spread, mixed_weight=mixed_weight, beam_size=beam_size,
+                      max_stretch=max_stretch, delins_cost=delins_cost, **kwargs)
     if type(free_ends) == tuple:
         # if `free_ends` is tuple: NOT AUTOMATIC --> uses the tuple values
         dtwcomputer.free_ends = free_ends
