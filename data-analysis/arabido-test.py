@@ -14,9 +14,7 @@
 #       Mosaic Inria team, RDP Lab, Lyon
 # ------------------------------------------------------------------------------
 
-"""
-Data provided by F. Besnard, INRAe, RDP, ENS de Lyon - UMR 5667, April 2020.
-"""
+"""Data provided by F. Besnard, INRAe, RDP, ENS de Lyon - UMR 5667, April 2020."""
 
 import pandas as pd
 from dtw.dtw import sequence_comparison
@@ -27,7 +25,7 @@ from os.path import join
 
 
 def plant_dataframe(df, plant_name):
-    """Returns a sub-dataframe corresponding to the selected plant name.
+    """Return a sub-dataframe corresponding to the selected plant name.
 
     Parameters
     ----------

@@ -13,19 +13,17 @@
 #       Mosaic Inria team, RDP Lab, Lyon
 # ------------------------------------------------------------------------------
 
-"""
-Metrics used by DTW.
-"""
+"""Metrics used by DTW."""
 
 import numpy as np
 
 def euclidean_dist(v1, v2, **kwargs):
-    """Compute the Euclidean distance between two inter-nodes lengths.
+    """Compute the Euclidean distance between two internodes lengths.
 
     Parameters
     ----------
     v1, v2 : float
-        Inter-node lengths to compare.
+        Internodes lengths to compare.
 
     Returns
     -------
@@ -147,7 +145,7 @@ def mixed_dist(v1, v2, **kwargs):
     spread1 = np.extract(is_angular, spread)  # sub-array of spread factors for angles
     spread2 = np.extract(nottype, spread)  # sub-array of spread factors for coordinates
 
-    if not dim1 == 0:
+    if dim1 != 0:
         DD1 = vangular_dist(v1_angles, v2_angles) ** 2  # angle dist (squared)
         DD1 = DD1 / spread1 ** 2
         DD1 = DD1 * weight1  # adding weights
@@ -155,7 +153,7 @@ def mixed_dist(v1, v2, **kwargs):
         DD1 = []
 
     # case of normal coordinates
-    if not dim2 == 0:
+    if dim2 != 0:
         DD2 = (v1_coords - v2_coords) ** 2  # euclidean L2 norm (no sqrt yet)
         DD2 = DD2 / spread2 ** 2
         DD2 = DD2 * weight2  # adding weights

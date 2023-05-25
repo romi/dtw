@@ -14,8 +14,7 @@
 #       Mosaic Inria team, RDP Lab, Lyon
 # ------------------------------------------------------------------------------
 
-"""
-# Test of the generic time warping algorithm.
+"""# Test of the generic time warping algorithm.
 
 ## Create a test
 To define a test, create a class with a chosen ``testname`` and create attributes
@@ -41,17 +40,17 @@ To define a test, create a class with a chosen ``testname`` and create attribute
 
 import numpy as np
 from dtw.dtw import DTW
-from dtw.dtw import angular_dist
+from dtw.metrics import angular_dist
 from dtw.dtw import euclidean_dist
-from dtw.dtw import mixed_dist
+from dtw.metrics import mixed_dist
 
 
 def runtest(test, cum_dist_flag=True, bp_flag=False, ld_flag=False, free_ends_flag=False, optimal_path_flag=True, graphic_optimal_path_flag=True,
             graphic_seq_alignment=True):
-    """Run one of the test examples below. """
-    print("Test: ", test.__name__)
-    print("test seq (1) = ", test.seq1)
-    print("ref  seq (2) = ", test.seq2)
+    """Run one of the test examples below."""
+    print(f"Test: {test.__name__}")
+    print(f"test seq (1) = {test.seq1}")
+    print(f"ref  seq (2) = {test.seq2}")
 
     if hasattr(test, 'constraints'):
         ct = test.constraints
@@ -70,7 +69,7 @@ def runtest(test, cum_dist_flag=True, bp_flag=False, ld_flag=False, free_ends_fl
             ld = euclidean_dist
         print(stg, " distance used for local distance ...")
     else:  # Default
-        print("euclidean distance used for local distance ...")
+        print("Euclidean distance used for local distance ...")
         ld = euclidean_dist
 
     if hasattr(test, 'free_ends'):

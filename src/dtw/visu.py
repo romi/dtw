@@ -10,9 +10,7 @@
 #       Mosaic Inria team, RDP Lab, Lyon
 # ------------------------------------------------------------------------------
 
-"""
-Plotly methods to use in jupyter notebooks with DTW objects.
-"""
+"""Plotly based methods to use in jupyter notebooks with DTW objects."""
 
 import dtw
 import numpy as np
@@ -21,7 +19,7 @@ from plotly.subplots import make_subplots
 
 
 def sequences_table(dtw: dtw.DTW):
-    """Plotly table presenting reference and test sequences found in DTW object."""
+    """Create a Plotly based table to present reference and test sequences found in DTW object."""
     titles = ['test', 'reference']
     fig = make_subplots(rows=1, cols=2, shared_yaxes=True, subplot_titles=titles,
                         horizontal_spacing=0.03, specs=[[{"type": "table"}] * 2])
@@ -37,13 +35,13 @@ def sequences_table(dtw: dtw.DTW):
 def _sequence_plot(fig, fig_idx, ref_idx, ref_val, test_idx, test_val, name, pred_type=None):
     # Scatter plot of the reference sequence:
     ref_sc = go.Scatter(x=ref_idx, y=ref_val, name='reference', legendgroup=fig_idx,
-                        mode='lines+markers', line=dict(color='firebrick', width=2, dash='dash'))
+                        mode='lines+markers', line={'color': 'firebrick', 'width': 2, 'dash': 'dash'})
     # Scatter plot of the test sequence:
     test_sc = go.Scatter(x=test_idx, y=test_val, name='test', legendgroup=fig_idx,
-                         mode='lines+markers', line=dict(color='royalblue', width=2, dash='dash'))
+                         mode='lines+markers', line={'color': 'royalblue', 'width': 2, 'dash': 'dash'})
     if pred_type is not None:
         for idx, pred in enumerate(pred_type):
-            if pred != '':
+            if pred:
                 fig.add_annotation(x=test_idx[idx], y=test_val[idx], text=pred, bgcolor='rgba(0,0,0,0.1)',
                                    font={"family": "Courier New", "size": 14, 'color': 'black'}, row=fig_idx + 1, col=1)
     # Add the scatter plots to the figure:
@@ -57,7 +55,7 @@ def _sequence_plot(fig, fig_idx, ref_idx, ref_val, test_idx, test_val, name, pre
 
 
 def plot_sequences(dtw: dtw.DTW):
-    """Plotly scatter plot presenting reference and test sequences found in DTW object."""
+    """Create a Plotly scatter plot to present reference and test sequences found in DTW object."""
     n_figs = dtw.n_dim
     ref_indexes = np.array(range(dtw.n_ref))
     test_indexes = np.array(range(dtw.n_test))
@@ -76,7 +74,7 @@ def plot_sequences(dtw: dtw.DTW):
 
 
 def plot_aligned_sequences(dtw: dtw.DTW):
-    """Plotly scatter plot presenting aligned reference and test sequences found in DTW object."""
+    """Create a Plotly scatter plot to present aligned reference and test sequences found in DTW object."""
     n_figs = dtw.n_dim
 
     ref_indexes = np.array(range(dtw.n_ref))

@@ -13,8 +13,7 @@
 #       Mosaic Inria team, RDP Lab, Lyon
 # ------------------------------------------------------------------------------
 
-"""
-Generic dynamic time warping algorithms.
+"""Generic dynamic time warping algorithms.
 
 Implementation of a generic DTW algorithm with symmetric asymmetric or classical edit distance or split-merge constraints.
 
@@ -24,18 +23,16 @@ DTW techniques are based in particular on basic DTW algorithm described in:
 - F. Itakura, *Minimum prediction residual principle applied to speech recognition*, in **IEEE Transactions on Acoustics, Speech, and Signal Processing**, 1975, vol. 23 , no. 1, pp. 67-72, doi: `10.1109/TASSP.1975.1162641 <https://doi.org/10.1109/TASSP.1975.1162641>`_
 
 and new dynamic time warping based techniques such as "merge split".
-
 """
 
 import matplotlib.pyplot as plt
 import numpy as np
 
+from dtw.metrics import euclidean_dist
 from dtw.tasks.logger import get_logger
+from dtw.tools import print_matrix_bp
 
 logger = get_logger('DTW')
-
-from dtw.metrics import euclidean_dist
-from dtw.tools import print_matrix_bp
 
 
 class DTW(object):
@@ -151,8 +148,8 @@ class DTW(object):
         -----
         An *element* can be a scalar (``n_dim=1``) or a vector.
 
-        Example
-        -------
+        Examples
+        --------
         >>> from dtw.dtw import DTW
         >>> test_seq = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]
         >>> ref_seq = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
@@ -243,9 +240,11 @@ class DTW(object):
 
         # border array for boundary conditions on cum_dist array
         self.cum_dist_boundary_test = np.full(self.n_test, np.Infinity)
-        if a != 0: self.cum_dist_boundary_test[:a] = 0.0
+        if a != 0:
+            self.cum_dist_boundary_test[:a] = 0.0
         self.cum_dist_boundary_ref = np.full(self.n_ref, np.Infinity)
-        if a != 0: self.cum_dist_boundary_ref[:a] = 0.0
+        if a != 0:
+            self.cum_dist_boundary_ref[:a] = 0.0
 
         # initialization and computation of the matrix of local distances
         self.l_dist = np.full((self.n_test, self.n_ref), np.Infinity)
@@ -297,8 +296,8 @@ class DTW(object):
         (int, int)
             a tuple with the left and right free-end values
 
-        Example
-        -------
+        Examples
+        --------
         >>> from dtw.dtw import DTW
         >>> test_seq = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]
         >>> ref_seq = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
@@ -322,8 +321,8 @@ class DTW(object):
         -----
         Changing the free-ends values reset several attributes trought ``initdtw()``.
 
-        Example
-        -------
+        Examples
+        --------
         >>> from dtw.dtw import DTW
         >>> test_seq = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]
         >>> ref_seq = [0, 0, 4, 3, 3, 3, 3, 3, 2, 1, 2, 1, 3, 4]
@@ -344,7 +343,7 @@ class DTW(object):
         try:
             assert (a + b < self.n_test and a + b < self.n_ref)
         except AssertionError:
-            raise ValueError(f"The sum of both `free_ends` values should be inferior to the length of each sequence!")
+            raise ValueError("The sum of both `free_ends` values should be inferior to the length of each sequence!")
 
         self._free_ends = tuple(values)
         self.initdtw()  # depends on left free-end
@@ -380,8 +379,8 @@ class DTW(object):
           - ``d``: deletion
           - ``i``: insertion
 
-        Example
-        -------
+        Examples
+        --------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
         >>> from dtw.metrics import mixed_dist
@@ -389,7 +388,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "internodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_results()
 
@@ -397,7 +396,7 @@ class DTW(object):
         return self.find_path(self.opt_backtrack_path, self.editop, verbose)
 
     def get_verbose_results(self, start_index=1):
-        """
+        """Get a verbose description of the resulting alignment.
 
         Parameters
         ----------
@@ -409,28 +408,28 @@ class DTW(object):
         dict
             the result dictionary with aligned sequences, event types and associated local costs.
 
-        Example
-        -------
+        Examples
+        --------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
         >>> from dtw.metrics import mixed_dist
 
-        >>> # Example #1 - Alignment of angles and inter-nodes sequences without free-ends:
+        >>> # Example #1 - Alignment of angles and internodes sequences without free-ends:
         >>> seq_test = np.array([[96, 163, 137, 113, 24, 170, 152, 137, 255, 148, 111, 16, 334, 160, 94, 116, 144, 132, 145], [50, 60, 48, 19, 31, 0, 37, 20, 31, 25, 7, 1, 51, 29, 26, 16, 22, 12, 23]]).T
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "internodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_results()
         >>> dtwcomputer.get_verbose_results()
 
-        >>> # Example #2 - Alignment of angles and inter-nodes sequences with right free-ends:
+        >>> # Example #2 - Alignment of angles and internodes sequences with right free-ends:
         >>> seq_test = np.array([[123, 169, 224, 103, 131, 143, 113, 163, 148, 11, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124], [70, 1, 32, 15, 56, 42, 39, 46, 4, 29, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0]]).T
         >>> seq_ref = np.array([[123, 136, 131, 143, 113, 163, 159, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124, 152, 124, 107, 126], [70, 48, 56, 42, 39, 46, 33, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0, 13, 16, 0, 1]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "internodes"])
         >>> dtwcomputer.free_ends = (0, 5)
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_results()
@@ -447,7 +446,7 @@ class DTW(object):
         logger.debug(f"List of merge indexes: {merge_indexes}")
         logger.debug(f"List of split indexes: {split_indexes}")
 
-        logger.debug(f"Updating MERGE events...")
+        logger.debug("Updating MERGE events...")
         idx_test, idx_ref = list(idx_test), list(idx_ref)
         for i, merge_idx in enumerate(merge_indexes):
             logger.debug(f"Test sequence indexes: {idx_test}")
@@ -477,7 +476,7 @@ class DTW(object):
             merge_indexes[i + 1:] += added_test
             logger.debug(f"Updated merge index: {merge_indexes}")
 
-        logger.debug(f"Updating SPLIT events...")
+        logger.debug("Updating SPLIT events...")
         split_indexes = np.where(np.array(event_types) == 's')[0]
         logger.debug(f"New split indexes after updating merge events: {split_indexes}")
         idx_test, idx_ref = list(idx_test), list(idx_ref)
@@ -518,7 +517,7 @@ class DTW(object):
         return {'test': idx_test, 'reference': idx_ref, 'type': np.array(event_types), 'cost': np.array(event_costs)}
 
     def plot_results(self, figname="", figsize=None, valrange=None):
-        """Generates a figure showing sequence(s) alignment and event types.
+        """Generate a figure showing sequence(s) alignment and event types.
 
         Parameters
         ----------
@@ -538,7 +537,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "internodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.plot_results(valrange=[(0, 360), None])
 
@@ -554,13 +553,13 @@ class DTW(object):
             try:
                 assert len(valrange) == self.n_dim
             except AssertionError:
-                logger.warning(f"Not enough dimensions in the list of `valrange`!")
+                logger.warning("Not enough dimensions in the list of `valrange`!")
                 valrange = None
         if valrange is not None:
             try:
-                assert all([vr is None or len(vr) == 2 for vr in valrange])
+                assert all(vr is None or len(vr) == 2 for vr in valrange)
             except AssertionError:
-                logger.warning(f"Parameter `valrange` should be a list of 2-tuples or None values!")
+                logger.warning("Parameter `valrange` should be a list of 2-tuples or None values!")
                 valrange = None
 
         if valrange is None:
@@ -582,7 +581,7 @@ class DTW(object):
                                    valrange[i])
         plt.suptitle(f"DTW - {self.constraints.replace('_', ' ')} alignment")
 
-        if figname != "":
+        if figname:
             plt.savefig(figname)
         else:
             plt.show()
@@ -609,7 +608,7 @@ class DTW(object):
             The name of the sequence dimension (values).
 
         """
-        ax.plot(ref_x, ref_y, marker='+', linestyle='dashed', label='Reference', color= "#fb757c")
+        ax.plot(ref_x, ref_y, marker='+', linestyle='dashed', label='Reference', color="#fb757c")
         ax.plot(test_x, test_y, marker='o', markersize=15, linestyle='dashed', label='Prediction', color="#6431fc")
         for x, y, t in zip(test_x, test_y, pred_types):
             ax.text(x, y, t.upper(), ha='center', va='center_baseline', fontfamily='monospace', fontsize='large',
@@ -628,8 +627,8 @@ class DTW(object):
     def get_split_events(self):
         """Return the split events.
 
-        Example
-        -------
+        Examples
+        --------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
         >>> from dtw.metrics import mixed_dist
@@ -637,7 +636,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "internodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.plot_results()
         >>> dtwcomputer.get_split_events()
@@ -659,8 +658,8 @@ class DTW(object):
     def get_added_organ_per_merge(self):
         """Return the number of added organ per merge event.
 
-        Example
-        -------
+        Examples
+        --------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
         >>> from dtw.metrics import mixed_dist
@@ -668,7 +667,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "internodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.plot_results()
         >>> dtwcomputer.get_added_organ_per_merge(indexed=True)
@@ -695,8 +694,8 @@ class DTW(object):
         numpy.ndarray
             Aligned reference sequence.
 
-        Example
-        -------
+        Examples
+        --------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
         >>> from dtw.metrics import mixed_dist
@@ -704,7 +703,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "internodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_aligned_reference_sequence()
 
@@ -720,8 +719,8 @@ class DTW(object):
         numpy.ndarray
             Aligned test sequence.
 
-        Example
-        -------
+        Examples
+        --------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
         >>> from dtw.metrics import mixed_dist
@@ -729,7 +728,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "internodes"])
         >>> dtwcomputer.run()
         >>> dtwcomputer.get_aligned_test_sequence()
 
@@ -747,8 +746,8 @@ class DTW(object):
         numpy.ndarray
             Test sequence for matching events.
 
-        Example
-        -------
+        Examples
+        --------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
         >>> from dtw.metrics import mixed_dist
@@ -771,22 +770,22 @@ class DTW(object):
     def summarize(self):
         """Summarize alignment information.
 
-        Example
-        -------
+        Examples
+        --------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
         >>> from dtw.metrics import mixed_dist
-        >>> # Alignment of angles and inter-nodes sequences with left and right free-ends:
+        >>> # Alignment of angles and internodes sequences with left and right free-ends:
         >>> seq_test = np.array([[166, 348, 150, 140, 294, 204, 168, 125, 125, 145, 173, 123, 127, 279, 102, 144, 136, 146, 137, 175, 103], [42, 31, 70, 55, 0, 0, 42, 27, 31, 33, 21, 23, 1, 56, 26, 18, 17, 16, 3, 0, 8]]).T
         >>> seq_ref = np.array([[150, 140, 138, 168, 125, 125, 145, 173, 123, 127, 99, 180, 102, 144, 136, 146, 137, 142, 136, 134], [70, 55, 0, 42, 27, 31, 33, 21, 23, 1, 28, 28, 26, 18, 17, 16, 3, 0, 8, 18]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "internodes"])
         >>> dtwcomputer.free_ends = (2, 4)
         >>> dtwcomputer.run()
         >>> dtwcomputer.summarize()
 
-         """
+        """
         results = self.get_results()
         aligned_results = self.get_verbose_results(0)
         merge_indexes = np.where(results['type'] == 'm')[0]
@@ -825,14 +824,14 @@ class DTW(object):
         return summary
 
     def print_alignment(self, path, editoparray):
-        """Print ???.
+        """Print the alignment.
 
         Parameters
         ----------
-        path :
-
-        editoparray :
-
+        path : ???
+            ???
+        editoparray : ???
+            ???
 
         """
         # print "Matrix["+("%d" %a.shape[0])+"]["+("%d" %a.shape[1])+"]"
@@ -911,7 +910,7 @@ class DTW(object):
         print()
 
     def backtrack_path_old(self, n1, n2):
-        """Returns a list containing the cells on the path ending at indexes (n1, n2).
+        """Return a list containing the cells on the path ending at indexes (n1, n2).
 
         Parameters
         ----------
@@ -933,13 +932,14 @@ class DTW(object):
             k = n1 - i
             path.append(self.bp[k, j])
             j = self.bp[k, j][1]
-            if j == -1: break
+            if j == -1:
+                break
             # assert(self.bp[k,j][0] == k-1) # for asymmetric constraints
         # print "Backtracked path", path
         return np.array(path)
 
     def backtrack_path(self, n1, n2):
-        """Returns a list containing the cells on the path ending at indexes (n1, n2).
+        """Return a list containing the cells on the path ending at indexes (n1, n2).
 
         Parameters
         ----------
@@ -966,7 +966,7 @@ class DTW(object):
                 path.append((i, j))
             logger.debug(i, j)
 
-        logger.debug("Backtracked path: {path}")
+        logger.debug(f"Backtracked path: {path}")
         return np.array(path)
 
     def _graphic_optimal_path_flag(self):
@@ -1032,7 +1032,7 @@ class DTW(object):
                     if delta > maxh:
                         maxh = delta
                 score_array = np.zeros(maxh - minh + 1)
-                print("-----> minh, maxh=", minh, maxh, )
+                print(f"-----> minh={minh}, maxh={maxh}")
                 # Second finds a shift s that would best compensate the different shifts:
                 # the alignment would become j - (i+s)
                 for s in range(minh, maxh + 1):
@@ -1044,9 +1044,9 @@ class DTW(object):
                         score += delta
                     score_array[s - minh] = score
                 # shift = minh - index of minimal score
-                print("score array=", score_array)
+                print(f"score array = {score_array}")
                 shift = minh + np.argmin(score_array)  # take the first available shift
-                print(" shift = ", shift)
+                print(f" shift = {shift}")
                 test_indexes = np.arange(shift, shift + len(seqX))
             plt.plot(test_indexes, seqX, 'b^', label='test sequence')  # test sequence + shift
             plt.plot(seqY, 'ro', label='ref sequence')  # ref sequence
@@ -1114,7 +1114,7 @@ class DTW(object):
         >>> seq_ref = np.array([[96, 163, 137, 137, 170, 152, 137, 132, 123, 148, 127, 191, 143, 160, 94, 116, 144, 132, 145], [50, 60, 48, 50, 0, 37, 20, 0, 31, 25, 8, 27, 24, 29, 26, 16, 22, 12, 23 ]]).T
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
-        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "inter-nodes"])
+        >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[1, 1],names=["angles", "internodes"])
         >>> dtwcomputer.run()
         >>> flag_kwargs = {'cum_dist_flag': False, 'bp_flag': False, 'ld_flag': False, 'free_ends_flag': False, 'optimal_path_flag': True, 'graphic_optimal_path_flag': False, 'graphic_seq_alignment': False, 'verbose':False}
         >>> df = dtwcomputer.print_results(**flag_kwargs)
@@ -1127,14 +1127,14 @@ class DTW(object):
             print(f"Test sequence length: {self.n_test}")
             print(f"ference sequence length: {self.n_ref}")
             print(f"Type of constraints: {self.constraints}")
-            print(f"Beam size: ", (self.beam_size if self.beam_size != -1 else "None"))
+            print("Beam size: ", (self.beam_size if self.beam_size != -1 else "None"))
             print(f"Free endings: {self.free_ends}")
             if self.constraints == 'merge_split':
                 print(f"Mixed type: {self.mixed_type}")
                 print(f"Mixed spread: {self.mixed_spread}")
                 print(f"Mixed weight: {self.mixed_weight}")
             print(f"{' RESULTS ':*^80}")
-            print(f"Alignment:")
+            print("Alignment:")
             self.print_alignment(self.opt_backtrack_path, self.editop)
             print(f"Optimal path length: {len(self.opt_backtrack_path)}")
             print(
@@ -1285,7 +1285,7 @@ class DTW(object):
         .. [sakoe_chiba78] H. Sakoe and S. Chiba, *Dynamic programming algorithm optimization for spoken word recognition*, in **IEEE Transactions on Acoustics, Speech, and Signal Processing**, 1978, vol. 26, no. 1, pp. 43-49, doi: `10.1109/TASSP.1978.1163055 <https://doi.org/10.1109/TASSP.1978.1163055>`_
         .. [itakura75] F. Itakura, *Minimum Prediction Residual Principle Applied to Speech Recognition*, in **IEEE Transactions on Acoustics, Speech, and Signal Processing**, 1975, vol. 23 , no. 1, pp. 67-72, doi: `10.1109/TASSP.1975.1162641 <https://doi.org/10.1109/TASSP.1975.1162641>`_
 
-         """
+        """
         tmpcumdistindexes[0] = (i - 1, j)
         tmpcumdistindexes[1] = (i - 1, j - 1)
         tmpcumdistindexes[2] = (i - 1, j - 2)
@@ -1370,7 +1370,7 @@ class DTW(object):
         return tmpcumdist, tmpcumdistindexes
 
     def editdist_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, max_stretch):
-        """Implements edit distance constraints.
+        """Implement edit distance constraints.
 
         When processing point `i`,`j`, paths may be coming from either ``(i-1,j)``, ``(i-1,j-1)``, ``(i,j-1)``
         like in the symmetric distance but and can go in principle several times consecutively
@@ -1414,7 +1414,7 @@ class DTW(object):
         return tmpcumdist, tmpcumdistindexes
 
     def merge_split_constraints(self, i, j, tmpcumdist, tmpcumdistindexes, ldist, max_stretch):
-        """Implements merge/split edit distance constraints.
+        """Implement merge/split edit distance constraints.
 
         When processing point `i`, `j`, paths may be coming from either
         ``(i-k, j)``, ``(i-1, j-1)``, ``(i, j-k)`` to ``(i, j)``.
@@ -1479,7 +1479,8 @@ class DTW(object):
                     tmpcumdistindexes[2] = (i - 1, -1)
             # first horizontal
             for k in range(Ki):
-                if k == 0: continue  # (diagonal case as j-k-1 = j-1)
+                if k == 0:
+                    continue  # (diagonal case as j-k-1 = j-1)
                 cumD0 = self.cum_dist[i - k - 1, j - 1] + self.ldist_cum_test_seq((i - k, i), j, ldist)
                 if cumD0 < tmpcumdist[0]:
                     tmpcumdist[0] = cumD0
@@ -1487,7 +1488,8 @@ class DTW(object):
 
             # Second vertical
             for k in range(Kj):
-                if k == 0: continue  # (diagonal case as j-k-1 = j-1)
+                if k == 0:
+                    continue  # (diagonal case as j-k-1 = j-1)
                 cumD2 = self.cum_dist[i - 1, j - k - 1] + self.ldist_cum_ref_seq(i, (j - k, j), ldist)
                 if cumD2 < tmpcumdist[2]:
                     tmpcumdist[2] = cumD2
@@ -1529,8 +1531,8 @@ class DTW(object):
           - ``k + l < min(N_test, N_ref)``
           - ``k >= 0`` and ``l >= 1``
 
-        Example
-        -------
+        Examples
+        --------
         >>> import numpy as np
         >>> from dtw.dtw import DTW
         >>> from dtw.metrics import mixed_dist
@@ -1717,10 +1719,10 @@ def dtw_eval_summarize(df, reference_df, verbose=True):
     ----------
     df : pandas.DataFrame
         A dataframe with the column headers ["PlantID" "test_interval" "N_align" "align_score" "dtw_predict" "dtw_true" "dtw_cost" "code_eval" "dtw_eval"].
-        Typically the output of ``compare_align``.
+        Typically, the output of ``compare_align``.
     reference_df : pandas.DataFrame
         A dataframe with the column headers ["PlantID" "reference" "modified" "dtw"].
-        Typically the ``align_interval.csv`` file generated by ``Rscript test_dtw.R``.
+        Typically, the ``align_interval.csv`` file generated by ``Rscript test_dtw.R``.
     verbose : bool, optional
         Control the code verbosity.
 

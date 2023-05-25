@@ -14,12 +14,11 @@
 #       Mosaic Inria team, RDP Lab, Lyon
 # ------------------------------------------------------------------------------
 
-"""
-Need to add tests for:
- - every type of constraint: "merge_split", "edit_distance", "asymmetric", "symmetric"
- - mixed distances (phylotaxis sequences?)
- - brute force search of free-ends
- - cost evaluation ?
+"""Need to add tests for:
+- every type of constraint: "merge_split", "edit_distance", "asymmetric", "symmetric"
+- mixed distances (phyllotaxis sequences?)
+- brute force search of free-ends
+- cost evaluation ?.
 """
 
 import unittest

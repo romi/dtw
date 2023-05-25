@@ -1,13 +1,13 @@
-# {# pkglts, pysetup.kwds
-# format setup arguments
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from setuptools import setup, find_packages
+from setuptools import find_packages
+from setuptools import setup
 
-short_descr = "Dynamic time warping algorithm(s)"
+short_descr = "Dynamic time warping algorithm(s)."
 readme = open('README.md').read()
 history = open('HISTORY.rst').read()
 
-# find packages
 pkgs = find_packages('src')
 
 setup_kwds = dict(
@@ -28,15 +28,10 @@ setup_kwds = dict(
     entry_points={},
     scripts=[
         'src/dtw/bin/romi_compare_to_manual_gt.py',
-        'src/dtw/bin/align_csv_database.py'
+        'src/dtw/bin/align_csv_database.py',
     ],
     keywords='',
     test_suite='nose.collector',
 )
-# #}
-# change setup_kwds below before the next pkglts tag
 
-# do not change things below
-# {# pkglts, pysetup.call
 setup(**setup_kwds)
-# #}

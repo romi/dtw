@@ -13,9 +13,7 @@
 #       Mosaic Inria team, RDP Lab, Lyon
 # ------------------------------------------------------------------------------
 
-"""
-Tools.
-"""
+"""Tools."""
 
 def print_matrix_bp(a):
     """Print matrix of back-pointers.
@@ -25,8 +23,8 @@ def print_matrix_bp(a):
     a : numpy.ndarray
         The matrix of back-pointer to print
 
-    Example
-    -------
+    Examples
+    --------
     >>> from dtw.dtw import DTW
     >>> from dtw.dtw import print_matrix_bp
     >>> test_seq = [2, 3, 4, 3, 3, 4, 0, 3, 3, 2, 1, 1, 1, 3, 3, 4, 4]

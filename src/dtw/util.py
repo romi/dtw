@@ -13,16 +13,13 @@
 #       Mosaic Inria team, RDP Lab, Lyon
 # ------------------------------------------------------------------------------
 
-"""Utilities module.
-"""
+"""Utilities module."""
+from pathlib import Path
 from os import mkdir
-from os.path import abspath
-from os.path import dirname
-from os.path import exists
-from os.path import join
 
-_ROOT = abspath(join(dirname(__file__), '..', '..'))
-DATA_DIR = abspath(join(_ROOT, 'data-analysis'))
+
+_ROOT = Path.resolve(Path(__file__).parent/'..'/'..')
+DATA_DIR = _ROOT/'data-analysis'
 
 
 def shared_folder(subdir=''):
@@ -35,7 +32,7 @@ def shared_folder(subdir=''):
 
     Returns
     -------
-    str
+    pathlib.Path
         the absolute path to shared folder
 
     Examples
@@ -45,9 +42,8 @@ def shared_folder(subdir=''):
     >>> shared_folder('DB_eval_v1')
 
     """
-    shared_dir = abspath(join(DATA_DIR, subdir))
-    if not exists(shared_dir):
-        mkdir(shared_dir)
+    shared_dir = DATA_DIR / subdir
+    shared_dir.mkdir(exist_ok=True)
 
     return shared_dir
 
@@ -66,7 +62,7 @@ def shared_data(filename, subdir=''):
 
     Returns
     -------
-    str
+    pathlib.Path
         absolute path to the filename
 
     Examples
@@ -77,18 +73,18 @@ def shared_data(filename, subdir=''):
 
     """
     shared_dir = shared_folder(subdir)
-    return join(shared_dir, str(filename))
+    return shared_dir / str(filename)
 
 
 def default_test_db():
-    """Returns the default database, ground-truth and prediction, to use for testing and demo.
+    """Return the default database, ground-truth and prediction, to use for testing and demo.
 
     Returns
     -------
-    str
-        Path to the ground-truth CSV with angles and inter-nodes data.
-    str
-        Path to the prediction CSV with angles and inter-nodes data.
+    pathlib.Path
+        Path to the ground-truth CSV with angles and internodes data.
+    pathlib.Path
+        Path to the prediction CSV with angles and internodes data.
 
     Examples
     --------

@@ -13,9 +13,7 @@
 #       Mosaic Inria team, RDP Lab, Lyon
 # ------------------------------------------------------------------------------
 
-"""
-Searching free-ends.
-"""
+"""Searching free-ends."""
 
 import numpy as np
 from joblib import Parallel
@@ -26,7 +24,7 @@ from dtw.tasks.logger import get_logger
 
 
 def _get_ndist(test_seq, ref_seq, free_ends, **kwargs) -> float:
-    """Creates and run DTW algorithm for selected free-ends."""
+    """Create and run DTW algorithm for selected free-ends."""
     dtwcomputer = DTW(test_seq, ref_seq, free_ends=free_ends, **kwargs)
     _ndist, _, _, _, _ = dtwcomputer.run()
     return _ndist
@@ -99,11 +97,12 @@ def brute_force_free_ends_search(dtw, max_value=0.4, free_ends_eps=1e-4, n_jobs=
         "mixed_spread": dtw.mixed_spread,
         "mixed_weight": dtw.mixed_weight,
         "beamsize": dtw.beam_size,
-        "max_stretch": dtw.max_stretch
+        "max_stretch": dtw.max_stretch,
     }
     free_ends = [(left_fe, right_fe + 1) for left_fe in range(N) for right_fe in range(N)]
     logger.info(f"Starting brute force search for {len(free_ends)} pairs of free-ends...")
-    norm_dists = Parallel(n_jobs=n_jobs)(delayed(_get_ndist)(dtw.seq_test, dtw.seq_ref, fe, **kwargs) for fe in free_ends)
+    norm_dists = Parallel(n_jobs=n_jobs)(
+        delayed(_get_ndist)(dtw.seq_test, dtw.seq_ref, fe, **kwargs) for fe in free_ends)
 
     # return the free-ends for first occurrence of the min norm distance
     min_ndist = np.Infinity

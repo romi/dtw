@@ -13,9 +13,7 @@
 #       Mosaic Inria team, RDP Lab, Lyon
 # ------------------------------------------------------------------------------
 
-"""
-Method for sequences comparison and alignment.
-"""
+"""Method for sequences comparison and alignment."""
 
 from dtw import DTW
 from dtw.metrics import angular_dist
@@ -49,14 +47,14 @@ def sequence_comparison(seq_test, seq_ref, constraint=DEF_CONSTRAINT, dist_type=
                         free_ends=DEF_FREE_ENDS, free_ends_eps=DEF_FREE_ENDS_EPS, beam_size=DEF_BEAMSIZE,
                         delins_cost=DEF_DELINS_COST, max_stretch=DEF_MAX_STRETCH,
                         mixed_type=None, mixed_spread=None, mixed_weight=None, **kwargs):
-    """Run the DTW comparison between two angles & inter-nodes sequences.
+    """Run the DTW comparison between two angles & internodes sequences.
 
-    Phylotaxis comparison by means of angles & inter-nodes sequences alignment & comparison.
+    phyllotaxis comparison by means of angles & internodes sequences alignment & comparison.
 
     Parameters
     ----------
     seq_test, seq_ref : numpy.ndarray
-        Arrays of angles & inter-nodes to compare, respectively of shape ``(N_test, 2)`` and ``(N_ref, 2)``.
+        Arrays of angles & internodes to compare, respectively of shape ``(N_test, 2)`` and ``(N_ref, 2)``.
     constraint : {"merge_split", "edit_distance", "asymmetric", "symmetric"}, optional
         Type of constraint to use, default "merge_split".
     dist_type : {"euclidean", "angular", "mixed"}, optional
@@ -107,7 +105,7 @@ def sequence_comparison(seq_test, seq_ref, constraint=DEF_CONSTRAINT, dist_type=
     >>> from dtw.tasks.compare_sequences import sequence_comparison
     >>> seq_test = np.array([[123, 169, 224, 103, 131, 143, 113, 163, 148, 11, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124], [70, 1, 32, 15, 56, 42, 39, 46, 4, 29, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0]]).T
     >>> seq_ref = np.array([[123, 136, 131, 143, 113, 163, 159, 153, 164, 118, 139, 135, 125, 147, 174, 121, 91, 127, 124, 152, 124, 107, 126], [70, 48, 56, 42, 39, 46, 33, 29, 10, 12, 30, 0, 14, 12, 15, 0, 0, 12, 0, 13, 16, 0, 1]]).T
-    >>> # Get the max value for inter-nodes, used by `mixed_spread`
+    >>> # Get the max value for internodes, used by `mixed_spread`
     >>> max_ref = np.max(seq_ref[:, 1])
     >>> max_test = np.max(seq_test[:, 1])
     >>> # Update the keyword arguments to use with this type of distance

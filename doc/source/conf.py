@@ -47,7 +47,7 @@ myst_enable_extensions = [
     "amsmath",
     "dollarmath",
     "colon_fence",
-    "deflist"
+    "deflist",
 ]
 
 # sphinx.ext.autodoc settings:

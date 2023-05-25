@@ -17,11 +17,8 @@
 # ------------------------------------------------------------------------------
 
 import argparse
-import logging
 from math import degrees
-from os import remove
-from os.path import exists
-from os.path import join
+from pathlib import Path
 
 import numpy as np
 from plantdb.fsdb import FSDB
@@ -45,8 +42,8 @@ DESCRIPTION = """Compare the sequence obtained with the ROMI reconstruction pipe
 The manual measures are assumed to be the ground-truth.
 """
 
-
 DEFAULT_FIG_FMT = 'png'
+
 
 def parsing():
     parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -72,7 +69,7 @@ def parsing():
 
     fig_opt = parser.add_argument_group('figure arguments')
     fig_opt.add_argument('--to_degrees', action="store_true",
-                         help=f"use it to convert angles in degrees.")
+                         help="use it to convert angles in degrees.")
     fig_opt.add_argument('--figure_format', type=str, default=DEFAULT_FIG_FMT, choices=['png', 'jpeg', "svg", 'eps'],
                          help=f"set the file format of the alignment figure, '{DEFAULT_FIG_FMT}' by default.")
 
@@ -86,16 +83,12 @@ def parsing():
 
 def main(args):
     logger_name = "romi_compare_to_manual_gt"
-    # Get logging level from input & convert it to corresponding numeric level value
-    numeric_level = getattr(logging, args.log_level.upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError(f"Invalid log level: {args.log_level}")
-    logger = get_logger(logger_name, join(args.db_path, args.scan, "compare_to_manual_gt.log"),
-                        numeric_level, BIN_LOG_FMT)
+    args.db_path = Path(args.db_path)
+    logger = get_logger(logger_name, args.db_path / args.scan / "compare_to_manual_gt.log",
+                        args.log_level.upper(), BIN_LOG_FMT)
 
-    lock_file = join(args.db_path, 'lock')
-    if exists(lock_file):
-        remove(lock_file)
+    lock_file = args.db_path / 'lock'
+    lock_file.unlink(missing_ok=True)
 
     # TODO: Add SSHFSDB if given `args.db_path` is an URL ??
     db = FSDB(args.db_path)
@@ -117,25 +110,25 @@ def main(args):
     logger.info(f"Performing sequence comparison to ground-truth for '{args.scan}'...")
     # Load the JSON file produced by task `AnglesAndInternodes`:
     json_dict = read_json(fs.files[0])
-    # Get the predicted angles and inter-nodes sequences:
+    # Get the predicted angles and internodes sequences:
     pred_internodes = json_dict['internodes']
     pred_angles = json_dict['angles']
     if args.to_degrees:
         pred_angles = [degrees(angle) for angle in pred_angles]
 
-    # Get the ground-truth angles and inter-nodes sequences:
+    # Get the ground-truth angles and internodes sequences:
     gt_internodes = scan.get_measures('internodes')
     gt_angles = scan.get_measures('angles')
     if args.to_degrees:
         gt_angles = [degrees(angle) for angle in gt_angles]
 
-    # Create ground-truth & predicted angles and inter-nodes arrays
+    # Create ground-truth & predicted angles and internodes arrays
     seq_pred = np.array([pred_angles, pred_internodes]).T
     seq_gt = np.array([gt_angles, gt_internodes]).T
 
     mixed_kwargs = {}
     if args.dist_type == 'mixed':
-        # Get the max value for inter-nodes, used by `mixed_spread`
+        # Get the max value for internodes, used by `mixed_spread`
         max_gt = np.max(seq_gt[:, 1])
         max_pred = np.max(seq_pred[:, 1])
         # Update the keyword arguments to use with this type of distance
@@ -154,10 +147,10 @@ def main(args):
     df = dtwcomputer.print_results(**flag_kwargs)
 
     logger.name = logger_name
-    out_csv = join(args.db_path, args.scan, 'dtw_result.csv')
+    out_csv = args.db_path / args.scan / 'dtw_result.csv'
     logger.info(f"Exporting result CSV to '{out_csv}'")
     df.to_csv(out_csv, index=False)
-    dtwcomputer.plot_results(figname=join(args.db_path, args.scan, f"SM-DTW_alignment.{args.figure_format}"))
+    dtwcomputer.plot_results(figname=args.db_path / args.scan / f"SM-DTW_alignment.{args.figure_format}")
 
 
 if __name__ == '__main__':
