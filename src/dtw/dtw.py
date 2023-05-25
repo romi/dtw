@@ -121,7 +121,7 @@ class DTW(object):
             relaxed by ``k`` at the sequence beginning and relaxed by ``l`` at the sequence ending.
         ldist : function, optional
             The function to compute the local distance used to compare values of both sequences.
-            Typically `euclidean_dist()` (default), `angular_dist()` or `mixed_dist()`.
+            Typically, `euclidean_dist()` (default), `angular_dist()` or `mixed_dist()`.
         beam_size : int, optional
             maximum amount of distortion allowed for signal warping, default ``-1``.
         max_stretch : bool, optional
@@ -1008,15 +1008,15 @@ class DTW(object):
             # print bparray[:,0]
             # print bparray[:,1]
             if dim == 1:
-                seqX = self.seq_test  # Test sequence
-                seqY = self.seq_ref  # Ref sequence
+                seq_test = self.seq_test  # Test sequence
+                seq_ref = self.seq_ref  # Ref sequence
             else:
-                seqX = self.seq_test[:, d]  # take the dth scalar sequence of the vector-sequence
-                seqY = self.seq_ref[:, d]
+                seq_test = self.seq_test[:, d]  # take the dth scalar sequence of the vector-sequence
+                seq_ref = self.seq_ref[:, d]
 
             # Find the best shift of the two sequences
             optpathlen = len(self.opt_backtrack_path)
-            test_indexes = np.arange(len(seqX))
+            test_indexes = np.arange(len(seq_test))
             shift = 0
             if True:  # OPTIMIZE_ALIGNMENT_DISPLAY:
                 # compute a more optimal test_index
@@ -1047,23 +1047,23 @@ class DTW(object):
                 print(f"score array = {score_array}")
                 shift = minh + np.argmin(score_array)  # take the first available shift
                 print(f" shift = {shift}")
-                test_indexes = np.arange(shift, shift + len(seqX))
-            plt.plot(test_indexes, seqX, 'b^', label='test sequence')  # test sequence + shift
-            plt.plot(seqY, 'ro', label='ref sequence')  # ref sequence
+                test_indexes = np.arange(shift, shift + len(seq_test))
+            plt.plot(test_indexes, seq_test, 'b^', label='test sequence')  # test sequence + shift
+            plt.plot(seq_ref, 'ro', label='ref sequence')  # ref sequence
             pi, pj = -1, -1  # previous i,j
             for k in range(optpathlen):
                 i = self.opt_backtrack_path[k, 0]
                 j = self.opt_backtrack_path[k, 1]
                 if i != pi + 1:
                     for h in range(pi + 1, i):
-                        plt.plot([h + shift, j], [seqX[h], seqY[j]], 'g--')
+                        plt.plot([h + shift, j], [seq_test[h], seq_ref[j]], 'g--')
                 elif j != pj + 1:
                     for h in range(pj + 1, j):
-                        plt.plot([i + shift, h], [seqX[i], seqY[h]], 'g--')
-                plt.plot([i + shift, j], [seqX[i], seqY[j]], 'g--')
+                        plt.plot([i + shift, h], [seq_test[i], seq_ref[h]], 'g--')
+                plt.plot([i + shift, j], [seq_test[i], seq_ref[j]], 'g--')
                 pi = i
                 pj = j
-            maxval = max(max(seqX), max(seqY)) * 1.2
+            maxval = max(max(seq_test), max(seq_ref)) * 1.2
             plt.ylim([-1, maxval])
             plt.xlim([-1 + shift, max(self.n_test, self.n_ref)])
             plt.xlabel('Rank')
@@ -1197,7 +1197,7 @@ class DTW(object):
             Index in reference sequence.
         ldist : function, optional
             The function to compute the local distance used to compare values of both sequences.
-            Typically `euclidean_dist()` (default),  `angular_dist()` or `mixed_dist()`.
+            Typically, `euclidean_dist()` (default),  `angular_dist()` or `mixed_dist()`.
 
         Returns
         -------
@@ -1234,7 +1234,7 @@ class DTW(object):
             Pair of indexes in reference sequence.
         ldist : function, optional
             The function to compute the local distance used to compare values of both sequences.
-            Typically `euclidean_dist()` (default), `angular_dist()` or `mixed_dist()`.
+            Typically, `euclidean_dist()` (default), `angular_dist()` or `mixed_dist()`.
 
         Returns
         -------
@@ -1458,10 +1458,10 @@ class DTW(object):
 
             ii = i - max_stretch  # min index to test within memory `max_stretch`
             jj = j - max_stretch  # min index to test within memory `max_stretch`
-            Ki = Kj = max_stretch
+            ki = kj = max_stretch
 
             if ii < 0:  # Horizontal initialization
-                Ki = max_stretch + ii  # update memory so that min index to test is at least 0
+                ki = max_stretch + ii  # update memory so that min index to test is at least 0
                 if j == 0:
                     tmpcumdist[0] = self.ldist_cum_test_seq((0, i), j, ldist)
                     tmpcumdistindexes[0] = (-1, -1)
@@ -1470,7 +1470,7 @@ class DTW(object):
                     tmpcumdistindexes[0] = (-1, j - 1)
 
             if jj < 0:  # Vertical initialization
-                Kj = max_stretch + jj  # update memory so that min index to test is at least 0
+                kj = max_stretch + jj  # update memory so that min index to test is at least 0
                 if i == 0:
                     tmpcumdist[2] = self.ldist_cum_ref_seq(i, (0, j), ldist)
                     tmpcumdistindexes[2] = (-1, -1)
@@ -1478,7 +1478,7 @@ class DTW(object):
                     tmpcumdist[2] = self.cum_dist_boundary_test[i - 1] + self.ldist_cum_ref_seq(i, (0, j), ldist)
                     tmpcumdistindexes[2] = (i - 1, -1)
             # first horizontal
-            for k in range(Ki):
+            for k in range(ki):
                 if k == 0:
                     continue  # (diagonal case as j-k-1 = j-1)
                 cumD0 = self.cum_dist[i - k - 1, j - 1] + self.ldist_cum_test_seq((i - k, i), j, ldist)
@@ -1487,7 +1487,7 @@ class DTW(object):
                     tmpcumdistindexes[0] = (i - k - 1, j - 1)
 
             # Second vertical
-            for k in range(Kj):
+            for k in range(kj):
                 if k == 0:
                     continue  # (diagonal case as j-k-1 = j-1)
                 cumD2 = self.cum_dist[i - 1, j - k - 1] + self.ldist_cum_ref_seq(i, (j - k, j), ldist)

@@ -56,10 +56,10 @@ def angular_dist(a1, a2, **kwargs):
       - A distance of ``0.5`` corresponds to a difference of 90 degrees between the two angles.
 
     """
-    Da = a1 - a2
+    da = a1 - a2
     # da is the angle corresponding to the difference between
     # the original angles. 0 <= da < 360.
-    da = Da % 360.
+    da = da % 360.
     # assert (da >= 0.)
     return 1 - np.abs(180 - da) / 180.
 
@@ -73,7 +73,7 @@ def mixed_dist(v1, v2, **kwargs):
 
     Parameters
     ----------
-    v1, v2 : float
+    v1, v2 : list of float
         Input vectors to compare (should be of same dimension ``dim``).
 
     Other Parameters
@@ -121,7 +121,7 @@ def mixed_dist(v1, v2, **kwargs):
     if weight is None:
         weight = np.full((dim,), 1)  # equal weights by default
 
-    # if the array alpha is not normalized, it is is normalized first here
+    # if the array alpha is not normalized, it is normalized first here
     weight = np.array(weight)
     sumweight = sum(weight)  # should be 1
     if not np.isclose(sumweight, 1.0):
