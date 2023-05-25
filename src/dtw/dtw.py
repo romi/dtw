@@ -516,7 +516,7 @@ class DTW(object):
         idx_ref = np.array(idx_ref) + start_index
         return {'test': idx_test, 'reference': idx_ref, 'type': np.array(event_types), 'cost': np.array(event_costs)}
 
-    def plot_results(self, figname="", figsize=None, valrange=None):
+    def plot_results(self, figname="", figsize=None, valrange=None, **kwargs):
         """Generate a figure showing sequence(s) alignment and event types.
 
         Parameters
@@ -526,7 +526,12 @@ class DTW(object):
         figsize : 2-tuple of floats, optional
             Figure dimension (width, height) in inches.
         valrange : list
-            list of 2-tuples specifying min and max range of value for each sequence
+            A list of 2-tuples specifying min and max range of value for each sequence
+
+        Other Parameters
+        ----------------
+        dataset_name : str
+            A dataset name, used in figure suptitle.
 
         Examples
         --------
@@ -579,7 +584,10 @@ class DTW(object):
                 test_val = [self.seq_test[e, i] for e in seq_test]
                 self._plot_results(axs[i], ref_indexes + 1, ref_val, seq_ref + 1, test_val, pred_types, self.names[i],
                                    valrange[i])
-        plt.suptitle(f"DTW - {self.constraints.replace('_', ' ')} alignment")
+        suptitle = f"DTW - {self.constraints.replace('_', ' ')} alignment"
+        if kwargs.get('dataset_name', ''):
+            suptitle+=f" for {kwargs.get('dataset_name')}"
+        plt.suptitle(suptitle)
 
         if figname:
             plt.savefig(figname)
