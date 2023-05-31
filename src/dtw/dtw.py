@@ -521,8 +521,8 @@ class DTW(object):
 
         Parameters
         ----------
-        figname : str, optional
-            If specified, save the figure uder this file name and path.
+        figname : str or pathlib.Path or io.BytesIO, optional
+            If specified, save the figure under this file name and path or buffer.
         figsize : 2-tuple of floats, optional
             Figure dimension (width, height) in inches.
         valrange : list
@@ -543,7 +543,7 @@ class DTW(object):
         >>> max_ref = np.max(seq_ref[:, 1])
         >>> max_test = np.max(seq_test[:, 1])
         >>> dtwcomputer = DTW(seq_test,seq_ref,constraints='merge_split',ldist=mixed_dist,mixed_type=[True, False],mixed_spread=[1, max(max_ref, max_test)],mixed_weight=[0.5, 0.5],names=["angles", "internodes"])
-        >>> dtwcomputer.run()
+        >>> ndist, path, length, ndistarray, backpointers = dtwcomputer.run()
         >>> dtwcomputer.plot_results(valrange=[(0, 360), None])
 
         """
