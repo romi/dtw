@@ -21,7 +21,7 @@ from math import degrees
 from pathlib import Path
 
 import numpy as np
-from plantdb.commons.fsdb import FSDB
+from plantdb.commons.fsdb.core import FSDB
 from plantdb.commons.io import read_json
 
 from dtw.tasks.compare_sequences import CONSTRAINTS
