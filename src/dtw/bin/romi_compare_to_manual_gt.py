@@ -21,8 +21,8 @@ from math import degrees
 from pathlib import Path
 
 import numpy as np
-from plantdb.fsdb import FSDB
-from plantdb.io import read_json
+from plantdb.commons.fsdb.core import FSDB
+from plantdb.commons.io import read_json
 
 from dtw.tasks.compare_sequences import CONSTRAINTS
 from dtw.tasks.compare_sequences import DEF_BEAMSIZE
